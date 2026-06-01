@@ -1,0 +1,10 @@
+{
+  "preset_id": "liuchao",
+  "realm_order": [
+    "QI_REFINEMENT",
+    "FOUNDATION_ESTABLISHMENT",
+    "CORE_FORMATION",
+    "NASCENT_SOUL"
+  ],
+  "stage_order": ["EARLY_STAGE", "MIDDLE_STAGE", "LATE_STAGE"]
+}

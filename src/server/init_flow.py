@@ -17,7 +17,16 @@ def _create_save_slot(*, config, get_events_db_path) -> tuple[Any, Any]:
 
 
 def _select_existed_sects(*, sects_by_id, needed_sects: int) -> list[Any]:
-    all_sects = list(sects_by_id.values())
+    from src.config.presets import get_active_preset_id, get_preset_sect_ids
+
+    preset_sect_ids = get_preset_sect_ids(get_active_preset_id())
+    all_sects = [
+        sects_by_id[sect_id]
+        for sect_id in preset_sect_ids
+        if sect_id in sects_by_id
+    ]
+    if not preset_sect_ids:
+        all_sects = list(sects_by_id.values())
     if needed_sects <= 0 or not all_sects:
         return []
 

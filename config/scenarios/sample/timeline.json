@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.1",
+  "events": [
+    {
+      "id": "sample-main-event",
+      "type": "main",
+      "trigger": {
+        "year": 1,
+        "month": 1
+      },
+      "name": "Sample Main Event",
+      "description": "A minimal event used by loader tests.",
+      "choices": [
+        {
+          "id": "continue",
+          "text": "Continue"
+        }
+      ],
+      "default_outcome": "continue",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "sample_event_seen"
+        }
+      ]
+    }
+  ]
+}

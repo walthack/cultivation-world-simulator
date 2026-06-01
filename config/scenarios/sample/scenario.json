@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1",
+  "scenario_id": "sample",
+  "title": "Stage 1 Sample",
+  "version": "1.0",
+  "author": "Codex",
+  "description": "Minimal Scenario Schema v0.1 validation fixture.",
+  "world_preset": {
+    "preset_id": "default"
+  },
+  "initial_state": {
+    "year": 1,
+    "month": 1,
+    "avatars": [
+      {
+        "id": "sample-avatar",
+        "surname": "测",
+        "given_name": "试",
+        "gender": "男",
+        "age": 28,
+        "sect_id": null,
+        "realm": "QI_REFINEMENT",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "persona_traits": ["RATIONAL"],
+        "goldfinger_id": "CHILD_OF_FORTUNE",
+        "long_term_objective": "Validate the scenario loader."
+      }
+    ],
+    "sects": [],
+    "relationships": [],
+    "world_flags": {
+      "sample_loaded": true
+    }
+  }
+}

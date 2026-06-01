@@ -111,6 +111,7 @@ from src.classes.language import language_manager
 from src.systems.sect_relations import compute_sect_relations
 from src.i18n import t
 from src.config import get_settings_service
+from src.config.presets import get_preset_realm_enum_order, set_active_preset
 from src.config.data_paths import get_data_paths
 from src.i18n.locale_registry import uses_space_separated_names
 from src.utils.llm.config import LLMConfig
@@ -183,6 +184,19 @@ AVATAR_ASSETS = {
 IS_DEV_MODE = "--dev" in sys.argv
 
 
+def _read_cli_option(name: str, default: str | None = None) -> str | None:
+    prefix = f"{name}="
+    for idx, item in enumerate(sys.argv):
+        if item == name and idx + 1 < len(sys.argv):
+            return sys.argv[idx + 1]
+        if item.startswith(prefix):
+            return item[len(prefix):]
+    return default
+
+
+ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
+
+
 def apply_runtime_content_locale(lang_code: str) -> None:
     """兼容保留：按当前主运行时切换内容语言。"""
     _apply_runtime_content_locale(
@@ -246,7 +260,7 @@ public_query_builders = create_public_query_builders(
     get_game_data_query=get_game_data_query,
     races_by_id=races_by_id,
     personas_by_id=personas_by_id,
-    realm_order=REALM_ORDER,
+    realm_order=get_preset_realm_enum_order(ACTIVE_PRESET_ID),
     techniques_by_id=techniques_by_id,
     weapons_by_id=weapons_by_id,
     auxiliaries_by_id=auxiliaries_by_id,
