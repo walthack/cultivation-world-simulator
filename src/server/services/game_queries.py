@@ -367,6 +367,7 @@ def get_world_state(
         "events": recent_events,
         "active_domains": serialize_active_domains(world),
         "phenomenon": serialize_phenomenon(world.current_phenomenon),
+        "world_flags": dict(getattr(world, "world_flags", {}) or {}),
         "is_paused": runtime.is_effectively_paused() if hasattr(runtime, "is_effectively_paused") else runtime.get("is_paused", False),
     }
 

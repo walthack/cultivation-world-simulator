@@ -44,6 +44,7 @@ def create_command_handlers(
     create_custom_content_from_draft,
     set_long_term_objective_for_avatar,
     clear_long_term_objective_for_avatar,
+    bulk_import_world,
     set_user_long_term_objective,
     clear_user_long_term_objective,
     save_current_game,
@@ -146,6 +147,14 @@ def create_command_handlers(
             runtime,
             phenomenon_id=phenomenon_id,
             celestial_phenomena_by_id=celestial_phenomena_by_id,
+        )
+
+    async def run_bulk_import_world(req) -> dict:
+        return await runtime.run_mutation(
+            bulk_import_world,
+            runtime,
+            avatars=[model_to_dict(item) for item in req.avatars],
+            world_flags=dict(req.world_flags or {}),
         )
 
     async def run_create_avatar(req) -> dict:
@@ -273,6 +282,7 @@ def create_command_handlers(
         run_resume_game=run_resume_game,
         run_cleanup_events=run_cleanup_events,
         run_set_phenomenon=run_set_phenomenon,
+        run_bulk_import_world=run_bulk_import_world,
         run_create_avatar=run_create_avatar,
         run_delete_avatar=run_delete_avatar,
         run_update_avatar_adjustment=run_update_avatar_adjustment,

@@ -188,6 +188,38 @@ def test_v1_game_start_uses_lifecycle_service_and_ok_envelope():
         main.game_instance.update(original)
 
 
+def test_v1_world_bulk_import_adds_avatar_and_world_flags():
+    original = _reset_state()
+    try:
+        client = TestClient(main.app)
+
+        response = client.post(
+            "/api/v1/command/world/bulk-import",
+            json={
+                "avatars": [{"id": "test-1", "name": "TestAvatar"}],
+                "world_flags": {"test_flag": True},
+            },
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["ok"] is True
+        assert payload["data"]["imported_avatar_ids"] == ["test-1"]
+        assert payload["data"]["world_flags"]["test_flag"] is True
+
+        list_response = client.get("/api/v1/query/meta/avatar-list")
+        assert list_response.status_code == 200
+        avatars = list_response.json()["data"]["avatars"]
+        assert any(item["id"] == "test-1" and item["name"] == "TestAvatar" for item in avatars)
+
+        state_response = client.get("/api/v1/query/world/state")
+        assert state_response.status_code == 200
+        assert state_response.json()["data"]["world_flags"]["test_flag"] is True
+    finally:
+        main.game_instance.clear()
+        main.game_instance.update(original)
+
+
 def test_v1_rankings_uses_ok_envelope():
     original = _reset_state()
     try:

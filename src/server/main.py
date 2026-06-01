@@ -86,6 +86,7 @@ from src.server.services.save_load_control import (
     save_current_game,
 )
 from src.server.services.world_control import set_world_phenomenon
+from src.server.services.world_bulk_import import bulk_import_world
 from src.run.load_map import load_cultivation_world_map
 from src.sim.avatar_init import make_avatars as _new_make_random, create_avatar_from_request
 from src.systems.dynasty_generator import generate_dynasty, generate_emperor
@@ -446,6 +447,7 @@ command_handlers = create_command_handlers(
     create_custom_content_from_draft=create_custom_content_from_draft,
     set_long_term_objective_for_avatar=set_long_term_objective_for_avatar,
     clear_long_term_objective_for_avatar=clear_long_term_objective_for_avatar,
+    bulk_import_world=bulk_import_world,
     set_user_long_term_objective=set_user_long_term_objective,
     clear_user_long_term_objective=clear_user_long_term_objective,
     save_current_game=save_current_game,
@@ -473,6 +475,7 @@ run_pause_game = command_handlers.run_pause_game
 run_resume_game = command_handlers.run_resume_game
 run_cleanup_events = command_handlers.run_cleanup_events
 run_set_phenomenon = command_handlers.run_set_phenomenon
+run_bulk_import_world = command_handlers.run_bulk_import_world
 run_create_avatar = command_handlers.run_create_avatar
 run_delete_avatar = command_handlers.run_delete_avatar
 run_update_avatar_adjustment = command_handlers.run_update_avatar_adjustment
@@ -655,6 +658,7 @@ configure_routes_and_mounts(
     run_generate_custom_content=run_generate_custom_content,
     run_create_custom_content=run_create_custom_content,
     run_set_phenomenon=run_set_phenomenon,
+    run_bulk_import_world=run_bulk_import_world,
     run_cleanup_events=run_cleanup_events,
     run_save_game=run_save_game,
     run_delete_save=run_delete_save,
