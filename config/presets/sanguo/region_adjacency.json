@@ -1,0 +1,53 @@
+{
+  "preset_id": "sanguo",
+  "edges": [
+    {
+      "from_region_id": "sg-chengdu",
+      "to_region_id": "sg-hanzhong",
+      "relation": "friendly",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "sg-hanzhong",
+      "to_region_id": "sg-jingzhou",
+      "relation": "neutral",
+      "difficulty": 3
+    },
+    {
+      "from_region_id": "sg-jingzhou",
+      "to_region_id": "sg-chibi",
+      "relation": "hostile",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "sg-chibi",
+      "to_region_id": "sg-jianye",
+      "relation": "friendly",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "sg-jingzhou",
+      "to_region_id": "sg-xuchang",
+      "relation": "hostile",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "sg-xuchang",
+      "to_region_id": "sg-luoyang",
+      "relation": "friendly",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "sg-luoyang",
+      "to_region_id": "sg-hebei",
+      "relation": "friendly",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "sg-hebei",
+      "to_region_id": "sg-xuchang",
+      "relation": "friendly",
+      "difficulty": 1
+    }
+  ]
+}

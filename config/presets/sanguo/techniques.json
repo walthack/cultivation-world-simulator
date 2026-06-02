@@ -1,0 +1,16 @@
+{
+  "preset_id": "sanguo",
+  "techniques": [
+    {
+      "id": "sanguo-basic-breath",
+      "name": "诸侯吐纳法",
+      "grade": "mortal",
+      "attributes": [
+        "WOOD"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    }
+  ]
+}

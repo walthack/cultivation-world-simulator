@@ -1,0 +1,141 @@
+{
+  "preset_id": "sanguo",
+  "regions": [
+    {
+      "id": "sg-chengdu",
+      "name": "成都",
+      "type": "city",
+      "description": "蜀地都城与盆地粮仓，锦官城中龙气温厚。",
+      "dynasty_id": "shu",
+      "climate": "basin",
+      "economic_focus": "agriculture-commerce",
+      "key_landmarks": [
+        "锦官城",
+        "蜀道"
+      ],
+      "tags": [
+        "sanguo",
+        "capital"
+      ]
+    },
+    {
+      "id": "sg-hanzhong",
+      "name": "汉中",
+      "type": "normal",
+      "description": "连接关中与巴蜀的山口要地，粮道与兵道皆系于此。",
+      "dynasty_id": "shu",
+      "climate": "mountain",
+      "economic_focus": "passes",
+      "key_landmarks": [
+        "汉中栈道",
+        "褒斜道"
+      ],
+      "tags": [
+        "sanguo",
+        "frontier"
+      ]
+    },
+    {
+      "id": "sg-xuchang",
+      "name": "许昌",
+      "type": "city",
+      "description": "魏地政令中枢，汉廷名分与曹氏军府并立。",
+      "dynasty_id": "wei",
+      "climate": "temperate",
+      "economic_focus": "administration-military",
+      "key_landmarks": [
+        "许昌宫",
+        "丞相府"
+      ],
+      "tags": [
+        "sanguo",
+        "capital"
+      ]
+    },
+    {
+      "id": "sg-luoyang",
+      "name": "洛阳",
+      "type": "city",
+      "description": "旧汉都城，宫阙残脉仍牵动天下正朔。",
+      "dynasty_id": "wei",
+      "climate": "temperate",
+      "economic_focus": "administration",
+      "key_landmarks": [
+        "旧汉宫",
+        "洛水"
+      ],
+      "tags": [
+        "sanguo",
+        "old-capital"
+      ]
+    },
+    {
+      "id": "sg-hebei",
+      "name": "河北",
+      "type": "normal",
+      "description": "北方兵源与屯田重地，魏军大营连绵于平原。",
+      "dynasty_id": "wei",
+      "climate": "dry",
+      "economic_focus": "military-agriculture",
+      "key_landmarks": [
+        "屯田营",
+        "黄河渡口"
+      ],
+      "tags": [
+        "sanguo",
+        "north"
+      ]
+    },
+    {
+      "id": "sg-jianye",
+      "name": "建业",
+      "type": "city",
+      "description": "江东中枢，水军、士族与商路汇聚于长江南岸。",
+      "dynasty_id": "wu",
+      "climate": "humid",
+      "economic_focus": "commerce-navy",
+      "key_landmarks": [
+        "建业城",
+        "江东水寨"
+      ],
+      "tags": [
+        "sanguo",
+        "capital"
+      ]
+    },
+    {
+      "id": "sg-jingzhou",
+      "name": "荆州",
+      "type": "normal",
+      "description": "三方争夺的腹心通衢，水陆要道交错。",
+      "dynasty_id": "wu",
+      "climate": "humid",
+      "economic_focus": "transport-agriculture",
+      "key_landmarks": [
+        "荆州城",
+        "江汉水道"
+      ],
+      "tags": [
+        "sanguo",
+        "contested"
+      ]
+    },
+    {
+      "id": "sg-chibi",
+      "name": "赤壁",
+      "type": "normal",
+      "description": "长江战场要冲，风、火、水势皆可改写天下大局。",
+      "dynasty_id": "wu",
+      "climate": "river",
+      "economic_focus": "military-river",
+      "key_landmarks": [
+        "赤壁江面",
+        "连环船阵"
+      ],
+      "tags": [
+        "sanguo",
+        "battlefield"
+      ]
+    }
+  ]
+}
