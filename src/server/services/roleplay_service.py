@@ -120,6 +120,19 @@ def _require_world(runtime):
     return world
 
 
+def _sync_scripted_scenario_controlled_avatar(runtime, avatar_id: str | None) -> None:
+    world = runtime.get("world") if hasattr(runtime, "get") else getattr(runtime, "world", None)
+    if world is None:
+        return
+    sc = getattr(world, "scripted_scenario", None)
+    if sc is None or not isinstance(getattr(sc, "state", None), dict):
+        return
+    if avatar_id is None:
+        sc.state.pop("controlled_avatar", None)
+        return
+    sc.state["controlled_avatar"] = str(avatar_id)
+
+
 def _find_avatar_or_raise(world, avatar_id: str):
     avatar = world.avatar_manager.get_avatar(avatar_id)
     if avatar is None:
@@ -182,6 +195,7 @@ def _make_pending_conversation_request(
 def _set_observing(runtime, *, avatar_id: str, prompt_context: dict[str, Any] | None = None) -> dict[str, Any]:
     session = runtime.get_roleplay_session()
     session["controlled_avatar_id"] = str(avatar_id)
+    _sync_scripted_scenario_controlled_avatar(runtime, str(avatar_id))
     session["status"] = "observing"
     session["pending_request"] = None
     session["last_prompt_context"] = prompt_context
@@ -208,6 +222,7 @@ def finish_roleplay_choice_wait(runtime, *, avatar_id: str, selected_key: str | 
 def _set_waiting_decision(runtime, *, avatar, prompt_context: dict[str, Any]) -> dict[str, Any]:
     session = runtime.get_roleplay_session()
     session["controlled_avatar_id"] = str(avatar.id)
+    _sync_scripted_scenario_controlled_avatar(runtime, str(avatar.id))
     session["status"] = "awaiting_decision"
     session["pending_request"] = _make_pending_decision_request(avatar=avatar)
     session["last_prompt_context"] = prompt_context
@@ -246,6 +261,7 @@ def begin_roleplay_choice(
     }
     choice_future = asyncio.get_running_loop().create_future()
     session["controlled_avatar_id"] = str(avatar.id)
+    _sync_scripted_scenario_controlled_avatar(runtime, str(avatar.id))
     session["status"] = "awaiting_choice"
     session["pending_request"] = _make_pending_choice_request(
         avatar=avatar,
@@ -421,6 +437,7 @@ def begin_roleplay_conversation(runtime, *, avatar, target_avatar) -> dict[str, 
     )
     messages: list[dict[str, Any]] = []
     session["controlled_avatar_id"] = str(avatar.id)
+    _sync_scripted_scenario_controlled_avatar(runtime, str(avatar.id))
     session["status"] = "conversing"
     session["pending_request"] = _make_pending_conversation_request(
         avatar=avatar,
@@ -472,6 +489,7 @@ def stop_roleplay(runtime, *, avatar_id: str | None = None) -> dict[str, Any]:
     if avatar_id and current_avatar_id and str(current_avatar_id) != str(avatar_id):
         raise HTTPException(status_code=409, detail=t("Roleplay target does not match"))
     runtime.clear_roleplay_session()
+    _sync_scripted_scenario_controlled_avatar(runtime, None)
     return get_roleplay_session(runtime)
 
 

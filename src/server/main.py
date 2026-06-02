@@ -115,6 +115,8 @@ from src.config.presets import get_preset_realm_enum_order, set_active_preset
 from src.config.data_paths import get_data_paths
 from src.i18n.locale_registry import uses_space_separated_names
 from src.utils.llm.config import LLMConfig
+from src.scenario.injector import inject_scenario_into_world
+from src.scenario import scenario_loader
 from src.server.runtime import GameSessionRuntime, create_default_game_state
 from src.server.host_runtime import (
     ConnectionManager,
@@ -196,8 +198,16 @@ def _read_cli_option(name: str, default: str | None = None) -> str | None:
 
 ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
 ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
-# Scenario engine load 留 v0.2 完整集成；Stage 1 MVP 只在 CLI 层暴露 flag，
-# in-process E2E（tests/test_scenario_e2e_liuchao.py）已验证 scenario_loader+engine 链路。
+ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
+
+
+class ScenarioInjectedWorld:
+    @classmethod
+    def create_with_db(cls, *args, **kwargs):
+        world = World.create_with_db(*args, **kwargs)
+        if ACTIVE_SCENARIO is not None:
+            inject_scenario_into_world(world, ACTIVE_SCENARIO)
+        return world
 
 
 def apply_runtime_content_locale(lang_code: str) -> None:
@@ -346,7 +356,7 @@ async def init_game_async():
         load_cultivation_world_map=load_cultivation_world_map,
         get_events_db_path=get_events_db_path,
         get_runtime_run_config=_get_runtime_run_config,
-        world_cls=World,
+        world_cls=ScenarioInjectedWorld,
         create_month_stamp=create_month_stamp,
         year_cls=Year,
         month_enum=Month,
