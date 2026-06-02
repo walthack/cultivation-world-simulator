@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "events": [
     {
       "id": "liuchao-opening",
@@ -23,9 +23,11 @@
     {
       "id": "wang-zhe-passes-jiuyang",
       "type": "main",
+      "dynasty_id": "song",
       "trigger": {
         "year": 2,
         "month": 3,
+        "at_region_id": "linan",
         "condition": {
           "all": [
             {
@@ -84,6 +86,284 @@
       ],
       "default_outcome": "accept",
       "effects": []
+    },
+    {
+      "id": "cheng-zongyang-arrives-at-linan-gate",
+      "type": "main",
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 2,
+        "at_region_id": "linan",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "cheng-zongyang"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "liuchao_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "程宗扬抵临安门",
+      "description": "临安城门前，程宗扬随众人第一次看清宋地中枢的繁华与戒备。",
+      "choices": [
+        {
+          "id": "observe",
+          "title": "先看清门路",
+          "description": "借入城的片刻观察城防、商旅与王哲的反应。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "linan_gate_seen_by_{controlled_avatar}"
+            },
+            {
+              "type": "gain_stat",
+              "stat": "linan_awareness",
+              "amount": 1
+            }
+          ]
+        }
+      ],
+      "default_outcome": "observe",
+      "effects": []
+    },
+    {
+      "id": "wang-zhe-arrives-at-linan-gate",
+      "type": "main",
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 2,
+        "at_region_id": "linan",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "wang-zhe"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "liuchao_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "王哲抵临安门",
+      "description": "临安城门前，王哲留意守军气息与城中暗流，判断传承之事不可久拖。",
+      "choices": [
+        {
+          "id": "measure",
+          "title": "细观程宗扬",
+          "description": "暂不明说传承，只在入城前观察程宗扬的取舍。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "linan_gate_seen_by_{controlled_avatar}"
+            },
+            {
+              "type": "relation_change",
+              "a": "cheng-zongyang",
+              "b": "wang-zhe",
+              "delta": 5
+            }
+          ]
+        }
+      ],
+      "default_outcome": "measure",
+      "effects": []
+    },
+    {
+      "id": "xiao-zi-arrives-at-linan-gate",
+      "type": "main",
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 2,
+        "at_region_id": "linan",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "xiao-zi"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "liuchao_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "小紫抵临安门",
+      "description": "临安城门前，小紫藏在人群边缘，像是早已知道这座城会让程宗扬作出选择。",
+      "choices": [
+        {
+          "id": "watch",
+          "title": "藏身旁观",
+          "description": "不急着介入，只把两人的反应记在心里。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "linan_gate_seen_by_{controlled_avatar}"
+            },
+            {
+              "type": "relation_change",
+              "a": "cheng-zongyang",
+              "b": "xiao-zi",
+              "delta": 5
+            }
+          ]
+        }
+      ],
+      "default_outcome": "watch",
+      "effects": []
+    },
+    {
+      "id": "qin-guanzhong-muster",
+      "type": "main",
+      "dynasty_id": "qin",
+      "trigger": {
+        "year": 1,
+        "month": 6,
+        "at_region_id": "guanzhong",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "秦军关中点兵",
+      "description": "秦地在关中清点军籍，法令与军粮同日下达，西北诸关随之紧张。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "qin_guanzhong_mustered"
+        }
+      ]
+    },
+    {
+      "id": "han-luoyang-edict",
+      "type": "main",
+      "dynasty_id": "han",
+      "trigger": {
+        "year": 1,
+        "month": 9,
+        "at_region_id": "luoyang",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "汉廷洛阳颁诏",
+      "description": "洛阳旧都颁下诏书，重申汉统名分，北境军镇奉命整肃驿路。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "han_luoyang_edict_issued"
+        }
+      ]
+    },
+    {
+      "id": "jin-jiankang-clan-council",
+      "type": "main",
+      "dynasty_id": "jin",
+      "trigger": {
+        "year": 2,
+        "month": 1,
+        "at_region_id": "jiankang",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "晋地建康族议",
+      "description": "建康士族闭门清议，表面谈玄，实则分配江南粮道与朝中人事。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "jin_jiankang_clans_convened"
+        }
+      ]
+    },
+    {
+      "id": "song-linan-river-tax",
+      "type": "main",
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 2,
+        "month": 5,
+        "at_region_id": "linan",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "宋地临安征水税",
+      "description": "临安增设水路税卡，商帮与官府互相试探，江南水网一时议论四起。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "song_linan_river_tax_set"
+        }
+      ]
+    },
+    {
+      "id": "han-north-border-watchfires",
+      "type": "main",
+      "dynasty_id": "han",
+      "trigger": {
+        "year": 2,
+        "month": 8,
+        "at_region_id": "north_border",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "汉北境烽燧连明",
+      "description": "北境烽燧连夜传警，边镇将吏催调民夫，汉地朝堂被迫正视边患。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "han_north_border_watchfires_lit"
+        }
+      ]
+    },
+    {
+      "id": "qin-changan-law-revision",
+      "type": "main",
+      "dynasty_id": "qin",
+      "trigger": {
+        "year": 3,
+        "month": 2,
+        "at_region_id": "chang_an",
+        "condition": {
+          "world_flag": {
+            "flag": "liuchao_started"
+          }
+        }
+      },
+      "name": "秦都长安修律",
+      "description": "长安廷议修订军功与徭役条目，秦地以新律压住关中豪强。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "qin_changan_law_revised"
+        }
+      ]
     }
   ]
 }

@@ -401,12 +401,14 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
 def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenario_schema_version: str) -> list[dict[str, Any]]:
     if not timeline_data:
         return []
-    _validate_schema_version(timeline_data, "timeline")
+    timeline_schema_version = _schema_version(timeline_data, "timeline")
     events = timeline_data.get("events", [])
     if not isinstance(events, list):
         raise ScenarioValidationError("timeline.events", "list", events)
     event_ids: set[str] = set()
-    region_ids = get_preset_region_ids(preset_id) if scenario_schema_version == "0.2" else set()
+    uses_v02_timeline = scenario_schema_version == "0.2" or timeline_schema_version == "0.2"
+    region_ids = get_preset_region_ids(preset_id) if uses_v02_timeline else set()
+    dynasty_ids = get_preset_dynasty_ids(preset_id) if uses_v02_timeline else set()
     for idx, event in enumerate(events):
         path = f"timeline.events[{idx}]"
         if not isinstance(event, dict):
@@ -420,6 +422,9 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
         event_type = _require(event, "type", path)
         if event_type not in EVENT_TYPES:
             raise ScenarioValidationError(f"{path}.type", f"one of {sorted(EVENT_TYPES)}", event_type)
+        dynasty_id = event.get("dynasty_id")
+        if uses_v02_timeline and dynasty_id is not None and str(dynasty_id) not in dynasty_ids:
+            raise MissingReferenceError(f"{path}.dynasty_id", dynasty_id, "preset dynasties.json")
         trigger = _require(event, "trigger", path)
         if not isinstance(trigger, dict):
             raise ScenarioValidationError(f"{path}.trigger", "object", trigger)
@@ -428,7 +433,7 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
             if not isinstance(value, int):
                 raise ScenarioValidationError(f"{path}.trigger.{key}", "integer", value)
         at_region_id = trigger.get("at_region_id")
-        if scenario_schema_version == "0.2" and at_region_id is not None and str(at_region_id) not in region_ids:
+        if uses_v02_timeline and at_region_id is not None and str(at_region_id) not in region_ids:
             raise MissingReferenceError(f"{path}.trigger.at_region_id", at_region_id, "preset regions.json")
 
     for idx, event in enumerate(events):
