@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
+from .schema_constants import CANONICAL_PREDICATES
 from .state_access import (
     as_id,
     get_npc,
@@ -123,6 +124,8 @@ def _eval_atomic(state: Any, predicate: str, params: Any, expression: Any, *, rn
         event_id = as_id(_require(params, "event_id", expression))
         return event_id in set(get_scenario_runtime(state).get("triggered_event_ids", []) or [])
 
+    if predicate not in CANONICAL_PREDICATES:
+        raise ConditionEvaluationError(expression, f"unknown predicate: {predicate}")
     raise ConditionEvaluationError(expression, f"unknown predicate: {predicate}")
 
 

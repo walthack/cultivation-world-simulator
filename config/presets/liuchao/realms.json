@@ -11,5 +11,56 @@
     "DU_JIE",
     "DA_CHENG"
   ],
-  "stage_order": ["EARLY_STAGE", "MIDDLE_STAGE", "LATE_STAGE"]
+  "stage_order": [
+    "EARLY_STAGE",
+    "MIDDLE_STAGE",
+    "LATE_STAGE"
+  ],
+  "realms": [
+    {
+      "id": "LIAN_QI",
+      "canonical_name": "LIAN_QI",
+      "display_name": "炼气"
+    },
+    {
+      "id": "ZHU_JI",
+      "canonical_name": "ZHU_JI",
+      "display_name": "筑基"
+    },
+    {
+      "id": "JIE_DAN",
+      "canonical_name": "JIE_DAN",
+      "display_name": "结丹"
+    },
+    {
+      "id": "YUAN_YING",
+      "canonical_name": "YUAN_YING",
+      "display_name": "元婴"
+    },
+    {
+      "id": "HUA_SHEN",
+      "canonical_name": "HUA_SHEN",
+      "display_name": "化神"
+    },
+    {
+      "id": "LIAN_XU",
+      "canonical_name": "LIAN_XU",
+      "display_name": "炼虚"
+    },
+    {
+      "id": "HE_Ti",
+      "canonical_name": "HE_TI",
+      "display_name": "合体"
+    },
+    {
+      "id": "DU_JIE",
+      "canonical_name": "DU_JIE",
+      "display_name": "渡劫"
+    },
+    {
+      "id": "DA_CHENG",
+      "canonical_name": "DA_CHENG",
+      "display_name": "大乘"
+    }
+  ]
 }

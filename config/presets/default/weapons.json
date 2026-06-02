@@ -1,0 +1,545 @@
+{
+  "preset_id": "default",
+  "weapons": [
+    {
+      "id": "1001",
+      "name": "练气剑",
+      "tier": 1,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1002",
+      "name": "练气刀",
+      "tier": 1,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1003",
+      "name": "练气枪",
+      "tier": 1,
+      "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1004",
+      "name": "练气棍",
+      "tier": 1,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1005",
+      "name": "练气扇",
+      "tier": 1,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1006",
+      "name": "练气鞭",
+      "tier": 1,
+      "attributes": [
+        "WHIP"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1007",
+      "name": "练气琴",
+      "tier": 1,
+      "attributes": [
+        "ZITHER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1008",
+      "name": "练气笛",
+      "tier": 1,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1009",
+      "name": "练气暗器",
+      "tier": 1,
+      "attributes": [
+        "HIDDEN_WEAPON"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "1021",
+      "name": "青霜剑",
+      "tier": 3,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1022",
+      "name": "水月刀",
+      "tier": 3,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1023",
+      "name": "火尖枪",
+      "tier": 3,
+      "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, extra_max_hp: 50}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1024",
+      "name": "囚龙棒",
+      "tier": 3,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, extra_max_hp: 50}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1025",
+      "name": "绯花扇",
+      "tier": 3,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, extra_observation_radius: 1}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1026",
+      "name": "打神鞭",
+      "tier": 3,
+      "attributes": [
+        "WHIP"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1027",
+      "name": "天魔琴",
+      "tier": 3,
+      "attributes": [
+        "ZITHER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, respire_duration_reduction: 0.1}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1028",
+      "name": "御鬼笛",
+      "tier": 3,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, respire_duration_reduction: 0.1}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1029",
+      "name": "无影针",
+      "tier": 3,
+      "attributes": [
+        "HIDDEN_WEAPON"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1030",
+      "name": "万兽笛",
+      "tier": 3,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "[{extra_battle_strength_points: 1}, {when: 'avatar.spirit_animal is not None', when_desc: 'condition_has_spirit_animal', extra_battle_strength_points: 2}]"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1031",
+      "name": "嗜血狂刀",
+      "tier": 3,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1032",
+      "name": "陨星重剑",
+      "tier": 3,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, extra_max_hp: 100}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1033",
+      "name": "灵蛇软剑",
+      "tier": 3,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2, extra_escape_success_rate: 0.1}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1034",
+      "name": "水火囚龙棍",
+      "tier": 3,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "FOUNDATION_ESTABLISHMENT"
+    },
+    {
+      "id": "1051",
+      "name": "天雷竹剑",
+      "tier": 6,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1052",
+      "name": "随心铁杆兵",
+      "tier": 6,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_observation_radius: 1}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1053",
+      "name": "五火七禽扇",
+      "tier": 6,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_observation_radius: 2}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1054",
+      "name": "弑神枪",
+      "tier": 9,
+      "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: '3 + avatar.weapon_proficiency * 0.02', _desc: 'effect_god_slaying_spear_desc'}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1055",
+      "name": "赤血战矛",
+      "tier": 9,
+      "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "[{extra_battle_strength_points: 3}, {when: 'avatar.cultivation_progress.level >= 30', when_desc: 'condition_level_ge_30', extra_battle_strength_points: 2, realm_suppression_bonus: 0.1}]"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1056",
+      "name": "斩仙飞刀",
+      "tier": 6,
+      "attributes": [
+        "HIDDEN_WEAPON"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_observation_radius: 1, extra_escape_success_rate: 0.15}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1057",
+      "name": "诛仙剑",
+      "tier": 9,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, realm_suppression_bonus: 0.1}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1058",
+      "name": "干将莫邪",
+      "tier": 6,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_max_hp: 150}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1059",
+      "name": "芭蕉扇",
+      "tier": 6,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_observation_radius: 2, extra_move_step: 1}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1060",
+      "name": "紫金降魔杵",
+      "tier": 6,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, damage_reduction: 0.1}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1061",
+      "name": "九环金背刀",
+      "tier": 6,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, damage_reduction: 0.05}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1062",
+      "name": "寒铁银枪",
+      "tier": 6,
+      "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_max_hp: 80}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1063",
+      "name": "七节紫竹鞭",
+      "tier": 6,
+      "attributes": [
+        "WHIP"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_catch_success_rate: 0.1}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1064",
+      "name": "玉琵琶",
+      "tier": 6,
+      "attributes": [
+        "ZITHER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, respire_duration_reduction: 0.1}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1065",
+      "name": "沧海龙吟笛",
+      "tier": 6,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_fortune_probability: 0.005}"
+      ],
+      "required_realm": "CORE_FORMATION"
+    },
+    {
+      "id": "1071",
+      "name": "凶虎煞刃",
+      "tier": 9,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, extra_plunder_multiplier: 0.5}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1072",
+      "name": "擎天白玉柱",
+      "tier": 9,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, extra_max_hp: 200}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1073",
+      "name": "阴阳扇",
+      "tier": 9,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, extra_move_step: 1}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1074",
+      "name": "龙骨鞭",
+      "tier": 9,
+      "attributes": [
+        "WHIP"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, realm_suppression_bonus: 0.05}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1075",
+      "name": "伏羲琴",
+      "tier": 9,
+      "attributes": [
+        "ZITHER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, respire_duration_reduction: 0.2}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1076",
+      "name": "唤魔笛",
+      "tier": 9,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, extra_hunt_materials: 2}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    },
+    {
+      "id": "1077",
+      "name": "七彩雀羽",
+      "tier": 9,
+      "attributes": [
+        "HIDDEN_WEAPON"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 4, extra_assassinate_success_rate: 0.1}"
+      ],
+      "required_realm": "NASCENT_SOUL"
+    }
+  ]
+}

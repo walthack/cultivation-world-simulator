@@ -1,0 +1,678 @@
+{
+  "preset_id": "default",
+  "techniques": [
+    {
+      "id": "1",
+      "name": "混元金身",
+      "grade": "mortal",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "2",
+      "name": "金钟罩",
+      "grade": "earth",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "4",
+      "name": "青元长生功",
+      "grade": "mortal",
+      "attributes": [
+        "WOOD"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "5",
+      "name": "太乙青木气",
+      "grade": "earth",
+      "attributes": [
+        "WOOD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "7",
+      "name": "若水诀",
+      "grade": "mortal",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "8",
+      "name": "北冥玄水拳",
+      "grade": "earth",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "10",
+      "name": "火灵诀",
+      "grade": "mortal",
+      "attributes": [
+        "FIRE"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "11",
+      "name": "纯阳真功",
+      "grade": "earth",
+      "attributes": [
+        "FIRE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "13",
+      "name": "搬山诀",
+      "grade": "mortal",
+      "attributes": [
+        "EARTH"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "14",
+      "name": "不动明王诀",
+      "grade": "earth",
+      "attributes": [
+        "EARTH"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "16",
+      "name": "凝神冰心诀",
+      "grade": "mortal",
+      "attributes": [
+        "ICE"
+      ],
+      "effects": [
+        "{extra_retreat_success_rate: 0.1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "17",
+      "name": "玄冰劲",
+      "grade": "earth",
+      "attributes": [
+        "ICE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "19",
+      "name": "流云百变身",
+      "grade": "mortal",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "20",
+      "name": "踏云步",
+      "grade": "earth",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "22",
+      "name": "敛息术",
+      "grade": "mortal",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "23",
+      "name": "幻影迷踪步",
+      "grade": "earth",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "25",
+      "name": "掌心雷",
+      "grade": "mortal",
+      "attributes": [
+        "THUNDER"
+      ],
+      "effects": [],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "26",
+      "name": "五雷正法",
+      "grade": "earth",
+      "attributes": [
+        "THUNDER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "28",
+      "name": "燃血爆元术",
+      "grade": "mortal",
+      "attributes": [
+        "EVIL"
+      ],
+      "effects": [
+        "{extra_breakthrough_success_rate: -0.1, extra_respire_exp: 50, extra_battle_strength_points: 2}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "29",
+      "name": "吞灵归元功",
+      "grade": "earth",
+      "attributes": [
+        "EVIL"
+      ],
+      "effects": [
+        "{\"extra_breakthrough_success_rate\": -0.1, \"extra_respire_exp\": 50, \"extra_battle_strength_points\": 3}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": null
+    },
+    {
+      "id": "30",
+      "name": "斩星枯荣剑",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 1
+    },
+    {
+      "id": "31",
+      "name": "九霄御雷术",
+      "grade": "heaven",
+      "attributes": [
+        "THUNDER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 1
+    },
+    {
+      "id": "32",
+      "name": "沧浪剑意",
+      "grade": "heaven",
+      "attributes": [
+        "FIRE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 1
+    },
+    {
+      "id": "33",
+      "name": "乙木长生诀",
+      "grade": "heaven",
+      "attributes": [
+        "WOOD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 5, \"extra_refine_success_rate\": 0.1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 2
+    },
+    {
+      "id": "34",
+      "name": "龙象镇魔功",
+      "grade": "heaven",
+      "attributes": [
+        "EARTH"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 2
+    },
+    {
+      "id": "35",
+      "name": "垂天阴阳翼",
+      "grade": "heaven",
+      "attributes": [
+        "EVIL"
+      ],
+      "effects": [
+        "{\"extra_breakthrough_success_rate\": -0.1, \"extra_respire_exp\": 50, \"extra_battle_strength_points\": 6, \"extra_move_step\": 1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 2
+    },
+    {
+      "id": "36",
+      "name": "太虚行者录",
+      "grade": "heaven",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 3
+    },
+    {
+      "id": "37",
+      "name": "太上忘情篇",
+      "grade": "heaven",
+      "attributes": [
+        "ICE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 3
+    },
+    {
+      "id": "38",
+      "name": "逍遥游",
+      "grade": "heaven",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6, \"extra_move_step\": 1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 3
+    },
+    {
+      "id": "39",
+      "name": "混沌噬灵诀",
+      "grade": "heaven",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 4
+    },
+    {
+      "id": "40",
+      "name": "罗刹魔典",
+      "grade": "heaven",
+      "attributes": [
+        "EVIL"
+      ],
+      "effects": [
+        "{\"extra_breakthrough_success_rate\": -0.1, \"extra_respire_exp\": 50, \"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 4
+    },
+    {
+      "id": "41",
+      "name": "血海不灭经",
+      "grade": "heaven",
+      "attributes": [
+        "ICE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 4
+    },
+    {
+      "id": "42",
+      "name": "九转火源经",
+      "grade": "heaven",
+      "attributes": [
+        "FIRE"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6, \"extra_cast_success_rate\": 0.1, \"extra_refine_success_rate\": 0.1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 5
+    },
+    {
+      "id": "43",
+      "name": "种魔夺天诀",
+      "grade": "heaven",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 5
+    },
+    {
+      "id": "44",
+      "name": "千念分神术",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 5
+    },
+    {
+      "id": "45",
+      "name": "大乐赋",
+      "grade": "heaven",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 6
+    },
+    {
+      "id": "46",
+      "name": "天魔舞",
+      "grade": "heaven",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 6
+    },
+    {
+      "id": "47",
+      "name": "烟波渺步",
+      "grade": "heaven",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6, \"extra_escape_success_rate\": 0.2}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 6
+    },
+    {
+      "id": "48",
+      "name": "无量寂灭经",
+      "grade": "heaven",
+      "attributes": [
+        "EARTH"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 7
+    },
+    {
+      "id": "49",
+      "name": "大威德金刚雷",
+      "grade": "heaven",
+      "attributes": [
+        "THUNDER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 7
+    },
+    {
+      "id": "50",
+      "name": "六字大明咒",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 7
+    },
+    {
+      "id": "51",
+      "name": "幽冥玄阴爪",
+      "grade": "heaven",
+      "attributes": [
+        "DARK"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 8
+    },
+    {
+      "id": "52",
+      "name": "雷影瞬遁",
+      "grade": "heaven",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 8
+    },
+    {
+      "id": "53",
+      "name": "修罗血煞功",
+      "grade": "heaven",
+      "attributes": [
+        "EVIL"
+      ],
+      "effects": [
+        "{\"extra_breakthrough_success_rate\": -0.1, \"extra_respire_exp\": 50, \"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 8
+    },
+    {
+      "id": "54",
+      "name": "天工造物诀",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 4, \"extra_cast_success_rate\": 0.2}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 9
+    },
+    {
+      "id": "55",
+      "name": "万星飞仙阵",
+      "grade": "heaven",
+      "attributes": [
+        "EARTH"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 9
+    },
+    {
+      "id": "56",
+      "name": "金光遁法",
+      "grade": "heaven",
+      "attributes": [
+        "WIND"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6, \"extra_move_step\": 2}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 9
+    },
+    {
+      "id": "57",
+      "name": "浩然正气歌",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 13
+    },
+    {
+      "id": "58",
+      "name": "春秋笔法",
+      "grade": "heaven",
+      "attributes": [
+        "WOOD"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 13
+    },
+    {
+      "id": "59",
+      "name": "言出法随",
+      "grade": "heaven",
+      "attributes": [
+        "THUNDER"
+      ],
+      "effects": [
+        "{\"extra_battle_strength_points\": 6}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 13
+    },
+    {
+      "id": "60",
+      "name": "旭日锻体术",
+      "grade": "mortal",
+      "attributes": [
+        "FIRE"
+      ],
+      "effects": [
+        "{extra_max_hp: 50}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 12
+    },
+    {
+      "id": "61",
+      "name": "圣光琉璃身",
+      "grade": "earth",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, damage_reduction: 0.1}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 12
+    },
+    {
+      "id": "62",
+      "name": "大光明金身",
+      "grade": "heaven",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 8, extra_hp_recovery_rate: 1.0, extra_max_lifespan: 50}"
+      ],
+      "prereq_realm": null,
+      "source_sect_id": 12
+    }
+  ]
+}

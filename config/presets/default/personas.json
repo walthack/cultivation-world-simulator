@@ -2,9 +2,1076 @@
   "preset_id": "default",
   "persona_keys": [
     "RATIONAL",
+    "FICKLE",
+    "LAZY",
+    "ADVENTUROUS",
+    "CASUAL",
+    "GREEDY",
+    "GATHERER",
+    "HUNTER",
+    "PENSIVE",
+    "LIFE_CHERISHING",
+    "FRIENDLY",
+    "VENGEFUL",
+    "ALOOF",
+    "INDIFFERENT",
+    "AGGRESSIVE",
+    "RASH",
+    "TIMID",
+    "OVERBEARING",
+    "CULTIVATION_OBSESSED",
+    "INTROVERTED",
+    "EXTROVERTED",
+    "MEAN",
+    "ENTHUSIASTIC",
+    "EXTREMELY_RIGHTEOUS",
+    "EXTREMELY_EVIL",
+    "OPEN_MINDED",
+    "SHY",
+    "SIMP",
+    "ENVIOUS",
+    "SWORD_FANATIC",
     "SCHEMING",
     "LOYAL",
     "RUTHLESS",
-    "CULTIVATION_OBSESSED"
+    "SUSPICIOUS",
+    "BODY_CULTIVATOR",
+    "ALCHEMIST",
+    "SWORD_CULTIVATOR",
+    "SABER_CULTIVATOR",
+    "SPEAR_CULTIVATOR",
+    "STAFF_CULTIVATOR",
+    "MUSICAL_MASTER",
+    "HIDDEN_WEAPON_EXPERT",
+    "FAN_CULTIVATOR",
+    "WHIP_CULTIVATOR",
+    "SABER_FANATIC",
+    "SPEAR_FANATIC",
+    "STAFF_SAINT",
+    "FAN_FANATIC",
+    "WHIP_FANATIC",
+    "MASTER_ASSASSIN",
+    "LUSTFUL",
+    "DESIRELESS",
+    "EXPLORER",
+    "HOMEBODY",
+    "JINX",
+    "LATE_BLOOMER",
+    "ARTIFACT_REFINER",
+    "EMOTIONAL",
+    "MINER",
+    "STEADY",
+    "ENVIOUS_2",
+    "FAMILY_ORIENTED",
+    "RIGHTEOUS",
+    "FRIENDLESS",
+    "DEVOTED",
+    "ROMANTIC",
+    "HEARTLESS",
+    "PLAYFUL",
+    "BOOKWORM",
+    "TEA_LOVER",
+    "MUSICIAN",
+    "TRAVELER",
+    "CHESS_PLAYER",
+    "FARMER",
+    "SECLUDED",
+    "RECLUSIVE_CULTIVATOR",
+    "INTO_WORLD",
+    "ORTHODOX_GENTLEMAN",
+    "BEAUTY_CONSCIOUS",
+    "APPEARANCE_OBSESSED",
+    "PLAY_WEAK_HIDE_STRONG",
+    "KIN_TO_OUTSIDERS",
+    "HATES_OUTSIDERS"
+  ],
+  "personas": [
+    {
+      "id": "RATIONAL",
+      "name": "理性",
+      "description": "你总是会用逻辑来思考问题，做事会谋定而后动。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_retreat_success_rate: 0.05}",
+      "tags": [
+        "N",
+        "excludes:FICKLE",
+        "excludes:CASUAL"
+      ]
+    },
+    {
+      "id": "FICKLE",
+      "name": "无常",
+      "description": "目标飘忽不定，不会长期坚持一个目标。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_retreat_success_rate: -0.1}",
+      "tags": [
+        "N",
+        "excludes:RATIONAL",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL",
+        "excludes:PENSIVE"
+      ]
+    },
+    {
+      "id": "LAZY",
+      "name": "怠惰",
+      "description": "你总是会拖延，不想努力，更热衷于享受人生。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_cast_success_rate: -0.05, extra_retreat_success_rate: -0.1, extra_rest_hp_recovery_rate: 0.15}",
+      "tags": [
+        "N",
+        "excludes:ADVENTUROUS",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "ADVENTUROUS",
+      "name": "冒险",
+      "description": "你总是会冒险，喜欢刺激，总想放手一搏。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:LAZY",
+        "excludes:LIFE_CHERISHING"
+      ]
+    },
+    {
+      "id": "CASUAL",
+      "name": "随性",
+      "description": "你总是会随机应变，性子到哪里了就是哪里，没有一定之规。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:RATIONAL",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "GREEDY",
+      "name": "贪财",
+      "description": "你对灵石和财富有着强烈的渴望。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_item_sell_price_multiplier: 0.1}",
+      "tags": [
+        "N"
+      ]
+    },
+    {
+      "id": "GATHERER",
+      "name": "采集者",
+      "description": "喜欢在山林中寻找各种奇花异草和灵药，对植物有着敏锐的直觉和深厚的兴趣。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_harvest_materials: 1}",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "HUNTER",
+      "name": "猎人",
+      "description": "享受在野外追踪猎物的刺激感，对各种动物的习性了如指掌。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_hunt_materials: 1}",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "PENSIVE",
+      "name": "沉思",
+      "description": "你总是会深思熟虑，思考问题比较有哲理。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_retreat_success_rate: 0.1}",
+      "tags": [
+        "N",
+        "excludes:FICKLE"
+      ]
+    },
+    {
+      "id": "LIFE_CHERISHING",
+      "name": "惜命",
+      "description": "你总是会珍惜自己的生命，不会轻易冒险。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_escape_success_rate: 0.15}",
+      "tags": [
+        "R",
+        "excludes:ADVENTUROUS",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "FRIENDLY",
+      "name": "友爱",
+      "description": "你重视同伴与和谐，乐于助人。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:AGGRESSIVE",
+        "excludes:VENGEFUL",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "VENGEFUL",
+      "name": "复仇",
+      "description": "你绝不轻易放下仇怨，为了复仇愿意付出代价与时间。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:INDIFFERENT"
+      ]
+    },
+    {
+      "id": "ALOOF",
+      "name": "孤僻",
+      "description": "你喜欢独处，避免与人深交。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY"
+      ]
+    },
+    {
+      "id": "INDIFFERENT",
+      "name": "淡漠",
+      "description": "你情感克制，对外界冷静疏离。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:VENGEFUL",
+        "excludes:AGGRESSIVE",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "AGGRESSIVE",
+      "name": "好斗",
+      "description": "你直面冲突，偏好以力量与对抗解决问题。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_battle_strength_points: 1}",
+      "tags": [
+        "R",
+        "excludes:FRIENDLY",
+        "excludes:INDIFFERENT",
+        "excludes:LIFE_CHERISHING",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "RASH",
+      "name": "鲁莽",
+      "description": "你行事冲动、少考虑后果，常凭直觉立刻行动。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_cast_success_rate: -0.05, extra_retreat_success_rate: -0.1}",
+      "tags": [
+        "N",
+        "excludes:RATIONAL",
+        "excludes:PENSIVE",
+        "excludes:LIFE_CHERISHING"
+      ]
+    },
+    {
+      "id": "TIMID",
+      "name": "胆小",
+      "description": "你谨小慎微，容易畏惧风险。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_escape_success_rate: 0.1}",
+      "tags": [
+        "N",
+        "excludes:ADVENTUROUS",
+        "excludes:AGGRESSIVE",
+        "excludes:VENGEFUL",
+        "excludes:EXTREMELY_RIGHTEOUS",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "OVERBEARING",
+      "name": "霸道",
+      "description": "你行事强势，不讲道理，习惯以自己的利益为先。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "CULTIVATION_OBSESSED",
+      "name": "修行痴迷",
+      "description": "你将绝大多数时间用于修炼，厌恶享乐。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_respire_exp: 30, extra_retreat_success_rate: 0.15}",
+      "tags": [
+        "R",
+        "excludes:FICKLE",
+        "excludes:LAZY",
+        "excludes:CASUAL"
+      ]
+    },
+    {
+      "id": "INTROVERTED",
+      "name": "内向",
+      "description": "你更享受独处与自我思考，倾向回避不必要的社交。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_retreat_success_rate: 0.05}",
+      "tags": [
+        "N",
+        "excludes:EXTROVERTED"
+      ]
+    },
+    {
+      "id": "EXTROVERTED",
+      "name": "外向",
+      "description": "你乐于与人交流，主动结识伙伴。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:INTROVERTED"
+      ]
+    },
+    {
+      "id": "MEAN",
+      "name": "刻薄",
+      "description": "你在对话中倾向以讽刺、嘲弄、挖苦的方式表达自己。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:ENTHUSIASTIC"
+      ]
+    },
+    {
+      "id": "ENTHUSIASTIC",
+      "name": "热情",
+      "description": "你待人友好、积极回应，倾向用鼓励与赞美拉近距离。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:MEAN"
+      ]
+    },
+    {
+      "id": "EXTREMELY_RIGHTEOUS",
+      "name": "极端正义",
+      "description": "你对邪恶深恶痛绝，对正义的理想抱有近乎偏执的追求。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_breakthrough_success_rate: 0.05}",
+      "tags": [
+        "SR",
+        "excludes:INTROVERTED",
+        "excludes:EXTREMELY_EVIL"
+      ]
+    },
+    {
+      "id": "EXTREMELY_EVIL",
+      "name": "极端邪恶",
+      "description": "你推崇权力与恐惧，为达目的不择手段。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_breakthrough_success_rate: -0.05, extra_respire_exp: 20}",
+      "tags": [
+        "SR",
+        "excludes:INTROVERTED",
+        "excludes:EXTREMELY_RIGHTEOUS"
+      ]
+    },
+    {
+      "id": "OPEN_MINDED",
+      "name": "开放",
+      "description": "你对待和他人结为道侣或者双修比较随意",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_dual_cultivation_exp: 30}",
+      "tags": [
+        "R",
+        "excludes:SHY"
+      ]
+    },
+    {
+      "id": "SHY",
+      "name": "腼腆",
+      "description": "你对待和他人结为道侣或者双修比较谨慎",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:OPEN_MINDED"
+      ]
+    },
+    {
+      "id": "SIMP",
+      "name": "舔狗",
+      "description": "你对异性中外貌出众者格外友善。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:MEAN",
+        "excludes:SHY"
+      ]
+    },
+    {
+      "id": "ENVIOUS",
+      "name": "嫉妒",
+      "description": "你对远超于你的人容易产生敌意。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:ENTHUSIASTIC"
+      ]
+    },
+    {
+      "id": "SWORD_FANATIC",
+      "name": "剑痴",
+      "description": "以剑入道，剑即是命。你认为剑道至上。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SWORD\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "SCHEMING",
+      "name": "心机深沉",
+      "description": "深藏不露，行事谨慎，善于算计。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:RASH",
+        "excludes:ENTHUSIASTIC",
+        "excludes:EXTROVERTED"
+      ]
+    },
+    {
+      "id": "LOYAL",
+      "name": "忠诚",
+      "description": "重承诺守信义，对认定的人绝不背叛。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:MEAN"
+      ]
+    },
+    {
+      "id": "RUTHLESS",
+      "name": "狠辣",
+      "description": "行事果决狠辣，不留后患，斩草必除根。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:ENTHUSIASTIC",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "SUSPICIOUS",
+      "name": "疑心重",
+      "description": "对任何人都保持怀疑，不轻易信任。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ENTHUSIASTIC",
+        "excludes:EXTROVERTED",
+        "excludes:FRIENDLY"
+      ]
+    },
+    {
+      "id": "BODY_CULTIVATOR",
+      "name": "体修",
+      "description": "专注肉身淬炼，体魄强健，近战无敌。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon is None', when_desc: 'condition_unarmed', extra_battle_strength_points: 5}]",
+      "tags": [
+        "R",
+        "excludes:LIFE_CHERISHING",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "ALCHEMIST",
+      "name": "炼丹师",
+      "description": "精通丹道，对灵药敏感。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_refine_success_rate: 0.15}",
+      "tags": [
+        "R",
+        "excludes:AGGRESSIVE"
+      ]
+    },
+    {
+      "id": "SWORD_CULTIVATOR",
+      "name": "剑修",
+      "description": "对剑道有着深厚的兴趣和独特的天赋。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SWORD\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "SABER_CULTIVATOR",
+      "name": "刀修",
+      "description": "专精刀法，对刀道有着独特的理解。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SABER\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "SPEAR_CULTIVATOR",
+      "name": "枪修",
+      "description": "精通枪法，百兵之王在手。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SPEAR\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "STAFF_CULTIVATOR",
+      "name": "棍修",
+      "description": "棍棒在手，天下我有。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"STAFF\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "MUSICAL_MASTER",
+      "name": "音律大师",
+      "description": "精通音律之道，琴笛在手，可攻可守。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"ZITHER\" or avatar.weapon.type == \"FLUTE\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "HIDDEN_WEAPON_EXPERT",
+      "name": "暗器高手",
+      "description": "擅长使用暗器，出手诡秘莫测。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"HIDDEN_WEAPON\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "FAN_CULTIVATOR",
+      "name": "扇修",
+      "description": "精通扇法，举手投足间尽显风流。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"FAN\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "WHIP_CULTIVATOR",
+      "name": "鞭修",
+      "description": "精通鞭法，软兵器在手，刚柔并济。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"WHIP\"', extra_weapon_proficiency_gain: 0.5, extra_battle_strength_points: 1}]",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "SABER_FANATIC",
+      "name": "刀痴",
+      "description": "以刀入道，刀即是命。你认为刀法至上。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SABER\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "SPEAR_FANATIC",
+      "name": "枪痴",
+      "description": "以枪入道，枪即是命。你认为枪法至上。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"SPEAR\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "STAFF_SAINT",
+      "name": "棍圣",
+      "description": "以棍入道，棍即是命。棍法通神。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"STAFF\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "FAN_FANATIC",
+      "name": "扇痴",
+      "description": "以扇入道，扇即是命。你认为扇法至上。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"FAN\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "WHIP_FANATIC",
+      "name": "鞭痴",
+      "description": "以鞭入道，鞭即是命。你认为鞭法至上。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"WHIP\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "MASTER_ASSASSIN",
+      "name": "刺客宗师",
+      "description": "暗器之道登峰造极，杀人于无形。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.weapon.type == \"HIDDEN_WEAPON\"', extra_weapon_proficiency_gain: 1.0, extra_battle_strength_points: 3}]",
+      "tags": [
+        "SR",
+        "excludes:LAZY",
+        "excludes:TIMID"
+      ]
+    },
+    {
+      "id": "LUSTFUL",
+      "name": "好色",
+      "description": "你对美色有着强烈的渴求。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:DESIRELESS"
+      ]
+    },
+    {
+      "id": "DESIRELESS",
+      "name": "无欲",
+      "description": "你清心寡欲，对男女之事毫无兴趣。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:LUSTFUL"
+      ]
+    },
+    {
+      "id": "EXPLORER",
+      "name": "探险家",
+      "description": "你对未知的世界充满好奇。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "SR",
+        "excludes:HOMEBODY"
+      ]
+    },
+    {
+      "id": "HOMEBODY",
+      "name": "死宅",
+      "description": "你极度排斥长途跋涉，更喜欢待在熟悉的区域。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:EXPLORER",
+        "excludes:ADVENTUROUS"
+      ]
+    },
+    {
+      "id": "JINX",
+      "name": "扫把星",
+      "description": "天生霉运缠身。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_luck: -8, extra_item_sell_price_multiplier: -0.1}",
+      "tags": [
+        "N",
+        "excludes:BLESSED_WITH_GOOD_FORTUNE",
+        "excludes:CHILD_OF_FORTUNE"
+      ]
+    },
+    {
+      "id": "LATE_BLOOMER",
+      "name": "大器晚成",
+      "description": "早年修行多舛；但若能坚持至金丹元婴，便可气运亨通。",
+      "stat_modifiers": {},
+      "effect_dsl": "[{when: 'avatar.cultivation_progress.realm.value in [\"QI_REFINEMENT\", \"FOUNDATION_ESTABLISHMENT\"]', when_desc: 'condition_realm_early', extra_luck: -6}, {when: 'avatar.cultivation_progress.realm.value in [\"CORE_FORMATION\", \"NASCENT_SOUL\"]', when_desc: 'condition_realm_late', extra_luck: 8}]",
+      "tags": [
+        "SR"
+      ]
+    },
+    {
+      "id": "ARTIFACT_REFINER",
+      "name": "炼器师",
+      "description": "精通炼器之道，对材料敏锐。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_cast_success_rate: 0.15}",
+      "tags": [
+        "R",
+        "excludes:AGGRESSIVE"
+      ]
+    },
+    {
+      "id": "EMOTIONAL",
+      "name": "情绪化",
+      "description": "你的情绪波动很大。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:RATIONAL",
+        "excludes:INDIFFERENT"
+      ]
+    },
+    {
+      "id": "MINER",
+      "name": "矿工",
+      "description": "擅长勘探挖掘，对矿脉有着独特的直觉。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_mine_materials: 1}",
+      "tags": [
+        "R",
+        "excludes:LAZY"
+      ]
+    },
+    {
+      "id": "STEADY",
+      "name": "苟",
+      "description": "你躲避风险和风头，尽力不担上任何风险。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_self_heal_efficiency: 0.5",
+      "tags": [
+        "R",
+        "excludes:ADVENTUROUS",
+        "excludes:RASH",
+        "excludes:AGGRESSIVE"
+      ]
+    },
+    {
+      "id": "ENVIOUS_2",
+      "name": "妒忌",
+      "description": "心胸狭窄，见不得别人比自己好。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:ENTHUSIASTIC"
+      ]
+    },
+    {
+      "id": "FAMILY_ORIENTED",
+      "name": "重亲情",
+      "description": "你重视家庭和血缘关系，以家族利益为重。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:INDIFFERENT"
+      ]
+    },
+    {
+      "id": "RIGHTEOUS",
+      "name": "重义气",
+      "description": "你重视朋友义气，为朋友可以两肋插刀。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:ALOOF",
+        "excludes:INDIFFERENT",
+        "excludes:MEAN"
+      ]
+    },
+    {
+      "id": "FRIENDLESS",
+      "name": "孤身一人",
+      "description": "你习惯独来独往，不轻易与人深交。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:FRIENDLY",
+        "excludes:EXTROVERTED",
+        "excludes:ENTHUSIASTIC"
+      ]
+    },
+    {
+      "id": "DEVOTED",
+      "name": "专情",
+      "description": "你对爱情专一，一旦认定便不会改变。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:LUSTFUL",
+        "excludes:ROMANTIC",
+        "excludes:HEARTLESS"
+      ]
+    },
+    {
+      "id": "ROMANTIC",
+      "name": "多情",
+      "description": "你容易动情，对美好的感情充满向往。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:DESIRELESS",
+        "excludes:HEARTLESS",
+        "excludes:DEVOTED"
+      ]
+    },
+    {
+      "id": "HEARTLESS",
+      "name": "薄情",
+      "description": "你对感情淡漠，不会轻易动心。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:DEVOTED",
+        "excludes:ROMANTIC",
+        "excludes:FRIENDLY"
+      ]
+    },
+    {
+      "id": "PLAYFUL",
+      "name": "贪玩",
+      "description": "沉迷玩乐，不思进取。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:RATIONAL",
+        "excludes:CULTIVATION_OBSESSED"
+      ]
+    },
+    {
+      "id": "BOOKWORM",
+      "name": "书痴",
+      "description": "嗜书如命。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:RASH"
+      ]
+    },
+    {
+      "id": "TEA_LOVER",
+      "name": "茶痴",
+      "description": "宁可三日无食，不可一日无茶。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "MUSICIAN",
+      "name": "琴师",
+      "description": "善抚琴。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "TRAVELER",
+      "name": "游历者",
+      "description": "读万卷书不如行万里路。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:HOMEBODY"
+      ]
+    },
+    {
+      "id": "CHESS_PLAYER",
+      "name": "棋痴",
+      "description": "善弈者长生。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "FARMER",
+      "name": "灵农",
+      "description": "你出身底层，对灵植种植颇有心得，能靠种田获得更多灵石。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_plant_income: 50}",
+      "tags": [
+        "R"
+      ]
+    },
+    {
+      "id": "SECLUDED",
+      "name": "出世",
+      "description": "你疏离尘世，不喜卷入凡俗权柄与庙堂机务。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:INTO_WORLD",
+        "excludes:ORTHODOX_GENTLEMAN"
+      ]
+    },
+    {
+      "id": "RECLUSIVE_CULTIVATOR",
+      "name": "山泽孤修",
+      "description": "你惯于山泽独修，最厌与朝廷往来。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "SR",
+        "excludes:INTO_WORLD",
+        "excludes:ORTHODOX_GENTLEMAN"
+      ]
+    },
+    {
+      "id": "INTO_WORLD",
+      "name": "入世",
+      "description": "你愿意踏入尘世，以凡俗事务磨砺自身与名望。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:SECLUDED",
+        "excludes:RECLUSIVE_CULTIVATOR"
+      ]
+    },
+    {
+      "id": "ORTHODOX_GENTLEMAN",
+      "name": "名教中人",
+      "description": "你崇尚名教秩序，乐于以文章教化与政务匡世。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "SR",
+        "excludes:SECLUDED",
+        "excludes:RECLUSIVE_CULTIVATOR"
+      ]
+    },
+    {
+      "id": "BEAUTY_CONSCIOUS",
+      "name": "爱美",
+      "description": "你很在意自己的容貌，也会花心思打理仪容，让自己看起来更体面。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "N",
+        "excludes:APPEARANCE_OBSESSED"
+      ]
+    },
+    {
+      "id": "APPEARANCE_OBSESSED",
+      "name": "悦己",
+      "description": "你非常在意自己的容貌，几乎把“变得更好看”当成执念。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_appearance: 1}",
+      "tags": [
+        "R",
+        "excludes:BEAUTY_CONSCIOUS"
+      ]
+    },
+    {
+      "id": "PLAY_WEAK_HIDE_STRONG",
+      "name": "扮猪吃老虎",
+      "description": "你习惯收敛锋芒、示敌以弱，他人常常误判你的实力与危险性，甚至有时候欺辱你，反而被你打脸。",
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": [
+        "R",
+        "excludes:OVERBEARING",
+        "excludes:RASH"
+      ]
+    },
+    {
+      "id": "KIN_TO_OUTSIDERS",
+      "name": "亲近异类",
+      "description": "你对不同种族的修士抱有天然好奇与亲近，愿意越过出身差异建立关系。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_cross_race_friendliness: 20}",
+      "tags": [
+        "R",
+        "excludes:HATES_OUTSIDERS"
+      ]
+    },
+    {
+      "id": "HATES_OUTSIDERS",
+      "name": "痛恨异类",
+      "description": "你本能地排斥与自己种族不同的修士，很难真正信任异族。",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_cross_race_friendliness: -25}",
+      "tags": [
+        "R",
+        "excludes:KIN_TO_OUTSIDERS"
+      ]
+    }
   ]
 }

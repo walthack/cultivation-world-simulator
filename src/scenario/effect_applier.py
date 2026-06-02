@@ -6,6 +6,7 @@ from typing import Any
 
 from src.scenario.scenario_loader import MissingReferenceError
 
+from .schema_constants import CANONICAL_EFFECT_TYPES
 from .state_access import (
     as_id,
     ensure_dict,
@@ -129,7 +130,9 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
         logger.info("Scenario economy_event no-op: %s", effect)
         return
 
-    raise EffectError(f"Unknown effect type: {effect_type}")
+    if effect_type not in CANONICAL_EFFECT_TYPES:
+        raise EffectError(f"Unknown effect type: {effect_type}")
+    raise EffectError(f"Unhandled canonical effect type: {effect_type}")
 
 
 def apply_effects(state: Any, effects: list[dict[str, Any]]) -> Any:

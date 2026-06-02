@@ -9,14 +9,19 @@ from typing import Any
 from src.config.presets import (
     get_preset_goldfinger_keys,
     get_preset_persona_keys,
+    get_preset_race_ids,
     get_preset_realm_order,
+    get_preset_root_ids,
     get_preset_sect_ids,
+    get_preset_technique_ids,
+    get_preset_weapon_ids,
     get_presets_root,
     get_project_root,
 )
 
 
 SCHEMA_VERSION = "0.1"
+SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2"}
 SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 EVENT_TYPES = {
     "main",
@@ -79,14 +84,20 @@ def _require(data: dict[str, Any], key: str, path: str) -> Any:
     return data[key]
 
 
-def _validate_schema_version(data: dict[str, Any], path: str) -> None:
+def _schema_version(data: dict[str, Any], path: str) -> str:
     actual = _require(data, "schema_version", path)
-    if str(actual) != SCHEMA_VERSION:
-        raise ScenarioValidationError(f"{path}.schema_version", SCHEMA_VERSION, actual)
+    normalized = str(actual)
+    if normalized not in SUPPORTED_SCHEMA_VERSIONS:
+        raise ScenarioValidationError(f"{path}.schema_version", f"one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}", actual)
+    return normalized
+
+
+def _validate_schema_version(data: dict[str, Any], path: str) -> None:
+    _schema_version(data, path)
 
 
 def _validate_scenario_top_level(data: dict[str, Any]) -> str:
-    _validate_schema_version(data, "scenario")
+    _schema_version(data, "scenario")
     scenario_id = _require(data, "scenario_id", "scenario")
     if not isinstance(scenario_id, str) or not SCENARIO_ID_RE.match(scenario_id):
         raise ScenarioValidationError("scenario.scenario_id", "snake_case scenario id", scenario_id)
@@ -106,6 +117,90 @@ def _validate_scenario_top_level(data: dict[str, Any]) -> str:
     return preset_id
 
 
+def _is_v02(data: dict[str, Any]) -> bool:
+    return str(data.get("schema_version")) == "0.2"
+
+
+def _persona_trait_id(trait: Any) -> str:
+    if isinstance(trait, dict):
+        trait = trait.get("id")
+    return str(trait).upper()
+
+
+def _validate_persona_trait(trait: Any, path: str) -> str:
+    if isinstance(trait, str):
+        return trait
+    if not isinstance(trait, dict):
+        raise ScenarioValidationError(path, "persona id string or object", trait)
+    trait_id = trait.get("id")
+    if not isinstance(trait_id, str) or not trait_id.strip():
+        raise ScenarioValidationError(f"{path}.id", "non-empty string", trait_id)
+    stat_modifiers = trait.get("stat_modifiers", {})
+    if stat_modifiers is not None and not isinstance(stat_modifiers, dict):
+        raise ScenarioValidationError(f"{path}.stat_modifiers", "object", stat_modifiers)
+    tags = trait.get("tags", [])
+    if tags is not None and (not isinstance(tags, list) or not all(isinstance(item, str) for item in tags)):
+        raise ScenarioValidationError(f"{path}.tags", "list[str]", tags)
+    return trait_id
+
+
+def _validate_goldfinger_model(value: Any, path: str) -> str:
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, dict):
+        raise ScenarioValidationError(path, "goldfinger id string or object", value)
+    goldfinger_id = value.get("id")
+    if not isinstance(goldfinger_id, str) or not goldfinger_id.strip():
+        raise ScenarioValidationError(f"{path}.id", "non-empty string", goldfinger_id)
+    for field_name in ("side_effects", "synergies"):
+        entries = value.get(field_name, [])
+        if entries is not None and not isinstance(entries, list):
+            raise ScenarioValidationError(f"{path}.{field_name}", "list", entries)
+        for idx, entry in enumerate(entries or []):
+            if not isinstance(entry, dict):
+                raise ScenarioValidationError(f"{path}.{field_name}[{idx}]", "object", entry)
+    patch = value.get("initial_state_patch", {})
+    if patch is not None and not isinstance(patch, dict):
+        raise ScenarioValidationError(f"{path}.initial_state_patch", "object", patch)
+    return goldfinger_id
+
+
+def _validate_avatar_techniques(avatar: dict[str, Any], path: str, technique_ids: set[str]) -> None:
+    techniques = avatar.get("techniques", [])
+    if techniques is None:
+        return
+    if not isinstance(techniques, list):
+        raise ScenarioValidationError(f"{path}.techniques", "list", techniques)
+    for idx, entry in enumerate(techniques):
+        entry_path = f"{path}.techniques[{idx}]"
+        if not isinstance(entry, dict):
+            raise ScenarioValidationError(entry_path, "object", entry)
+        technique_id = entry.get("technique_id")
+        if str(technique_id) not in technique_ids:
+            raise MissingReferenceError(f"{entry_path}.technique_id", technique_id, "preset techniques.json")
+        level = entry.get("level", 1)
+        if not isinstance(level, int) or level < 1:
+            raise ScenarioValidationError(f"{entry_path}.level", "positive integer", level)
+
+
+def _validate_avatar_weapons(avatar: dict[str, Any], path: str, weapon_ids: set[str]) -> None:
+    weapons = avatar.get("weapons", [])
+    if weapons is None:
+        return
+    if not isinstance(weapons, list):
+        raise ScenarioValidationError(f"{path}.weapons", "list", weapons)
+    for idx, entry in enumerate(weapons):
+        entry_path = f"{path}.weapons[{idx}]"
+        if not isinstance(entry, dict):
+            raise ScenarioValidationError(entry_path, "object", entry)
+        weapon_id = entry.get("weapon_id")
+        if str(weapon_id) not in weapon_ids:
+            raise MissingReferenceError(f"{entry_path}.weapon_id", weapon_id, "preset weapons.json")
+        quantity = entry.get("quantity", 1)
+        if not isinstance(quantity, int) or quantity < 1:
+            raise ScenarioValidationError(f"{entry_path}.quantity", "positive integer", quantity)
+
+
 def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
     initial_state = data.get("initial_state", {})
     if initial_state is None:
@@ -118,6 +213,10 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
     realm_ids = set(get_preset_realm_order(preset_id))
     persona_keys = get_preset_persona_keys(preset_id)
     goldfinger_keys = get_preset_goldfinger_keys(preset_id)
+    race_ids = get_preset_race_ids(preset_id) if _is_v02(data) else set()
+    root_ids = get_preset_root_ids(preset_id) if _is_v02(data) else set()
+    technique_ids = get_preset_technique_ids(preset_id) if _is_v02(data) else set()
+    weapon_ids = get_preset_weapon_ids(preset_id) if _is_v02(data) else set()
 
     avatars = initial_state.get("avatars", [])
     if not isinstance(avatars, list):
@@ -139,12 +238,33 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         realm = avatar.get("realm")
         if realm is not None and str(realm) not in realm_ids:
             raise MissingReferenceError(f"{path}.realm", realm, "preset realms.json")
+        if _is_v02(data):
+            race_id = avatar.get("race_id")
+            if race_id is not None and str(race_id) not in race_ids:
+                raise MissingReferenceError(f"{path}.race_id", race_id, "preset races.json")
+            root_id = avatar.get("root_id")
+            if root_id is not None and str(root_id).upper() not in root_ids:
+                raise MissingReferenceError(f"{path}.root_id", root_id, "preset roots.json")
         goldfinger_id = avatar.get("goldfinger_id")
-        if goldfinger_id is not None and str(goldfinger_id).upper() not in goldfinger_keys:
-            raise MissingReferenceError(f"{path}.goldfinger_id", goldfinger_id, "preset goldfingers.json")
-        for trait in avatar.get("persona_traits", []) or []:
-            if str(trait).upper() not in persona_keys:
+        if goldfinger_id is not None:
+            resolved_goldfinger_id = (
+                _validate_goldfinger_model(goldfinger_id, f"{path}.goldfinger_id")
+                if _is_v02(data)
+                else str(goldfinger_id)
+            )
+            if str(resolved_goldfinger_id).upper() not in goldfinger_keys:
+                raise MissingReferenceError(f"{path}.goldfinger_id", resolved_goldfinger_id, "preset goldfingers.json")
+        for trait_idx, trait in enumerate(avatar.get("persona_traits", []) or []):
+            resolved_trait = (
+                _validate_persona_trait(trait, f"{path}.persona_traits[{trait_idx}]")
+                if _is_v02(data)
+                else _persona_trait_id(trait)
+            )
+            if str(resolved_trait).upper() not in persona_keys:
                 raise MissingReferenceError(f"{path}.persona_traits", trait, "preset personas.json")
+        if _is_v02(data):
+            _validate_avatar_techniques(avatar, path, technique_ids)
+            _validate_avatar_weapons(avatar, path, weapon_ids)
 
     for idx, relation in enumerate(initial_state.get("relationships", []) or []):
         path = f"scenario.initial_state.relationships[{idx}]"
