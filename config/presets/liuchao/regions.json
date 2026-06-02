@@ -1,0 +1,169 @@
+{
+  "preset_id": "liuchao",
+  "regions": [
+    {
+      "id": "linan",
+      "name": "临安",
+      "type": "city",
+      "description": "宋地都城与江南商贸中枢。",
+      "dynasty_id": "song",
+      "climate": "humid",
+      "economic_focus": "commerce",
+      "key_landmarks": [
+        "临安城",
+        "江南水网"
+      ],
+      "tags": [
+        "liuchao",
+        "capital"
+      ]
+    },
+    {
+      "id": "jiangnan",
+      "name": "江南",
+      "type": "normal",
+      "description": "水网、书院与士族庄园交错的富庶地域。",
+      "dynasty_id": "song",
+      "climate": "humid",
+      "economic_focus": "agriculture-commerce",
+      "key_landmarks": [
+        "书院",
+        "水路"
+      ],
+      "tags": [
+        "liuchao"
+      ]
+    },
+    {
+      "id": "luoyang",
+      "name": "洛阳",
+      "type": "city",
+      "description": "汉统名分的重要旧都与北地交通节点。",
+      "dynasty_id": "han",
+      "climate": "temperate",
+      "economic_focus": "administration",
+      "key_landmarks": [
+        "旧都宫城"
+      ],
+      "tags": [
+        "liuchao",
+        "capital"
+      ]
+    },
+    {
+      "id": "north_border",
+      "name": "北境",
+      "type": "normal",
+      "description": "边地军镇与胡汉杂处之地。",
+      "dynasty_id": "han",
+      "climate": "cold",
+      "economic_focus": "military",
+      "key_landmarks": [
+        "边镇",
+        "关塞"
+      ],
+      "tags": [
+        "liuchao",
+        "frontier"
+      ]
+    },
+    {
+      "id": "jiankang",
+      "name": "建康",
+      "type": "city",
+      "description": "晋地士族与清谈风气聚集的都邑。",
+      "dynasty_id": "jin",
+      "climate": "humid",
+      "economic_focus": "administration-culture",
+      "key_landmarks": [
+        "士族府邸"
+      ],
+      "tags": [
+        "liuchao",
+        "capital"
+      ]
+    },
+    {
+      "id": "chengdu",
+      "name": "成都",
+      "type": "city",
+      "description": "西蜀盆地中心，商路与地方豪族交会。",
+      "dynasty_id": "xishu",
+      "climate": "basin",
+      "economic_focus": "commerce-agriculture",
+      "key_landmarks": [
+        "蜀道",
+        "锦官城"
+      ],
+      "tags": [
+        "liuchao",
+        "capital"
+      ]
+    },
+    {
+      "id": "bashu_mountains",
+      "name": "巴蜀群山",
+      "type": "normal",
+      "description": "蜀地山岭与关隘，易守难攻。",
+      "dynasty_id": "xishu",
+      "climate": "mountain",
+      "economic_focus": "passes",
+      "key_landmarks": [
+        "蜀道关隘"
+      ],
+      "tags": [
+        "liuchao",
+        "mountain"
+      ]
+    },
+    {
+      "id": "chang_an",
+      "name": "长安",
+      "type": "city",
+      "description": "TODO: 秦势力都城占位，待 Stage 2c content pass 补细节。",
+      "dynasty_id": "qin",
+      "climate": "dry",
+      "economic_focus": "administration-military",
+      "key_landmarks": [
+        "关中旧城"
+      ],
+      "tags": [
+        "liuchao",
+        "capital",
+        "todo"
+      ]
+    },
+    {
+      "id": "guanzhong",
+      "name": "关中",
+      "type": "normal",
+      "description": "TODO: 秦势力核心地带占位。",
+      "dynasty_id": "qin",
+      "climate": "dry",
+      "economic_focus": "military-agriculture",
+      "key_landmarks": [
+        "关隘"
+      ],
+      "tags": [
+        "liuchao",
+        "todo"
+      ]
+    },
+    {
+      "id": "taiyi_mountain",
+      "name": "太一山",
+      "type": "cultivate",
+      "description": "太乙真宗所在的山门灵地。",
+      "dynasty_id": null,
+      "climate": "mountain",
+      "economic_focus": "cultivation",
+      "key_landmarks": [
+        "太乙真宗"
+      ],
+      "tags": [
+        "liuchao",
+        "sect"
+      ]
+    }
+  ]
+}

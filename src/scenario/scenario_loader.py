@@ -7,10 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from src.config.presets import (
+    get_preset_dynasty_ids,
     get_preset_goldfinger_keys,
+    get_preset_orthodoxy_ids,
     get_preset_persona_keys,
     get_preset_race_ids,
     get_preset_realm_order,
+    get_preset_region_ids,
     get_preset_root_ids,
     get_preset_sect_ids,
     get_preset_technique_ids,
@@ -201,6 +204,81 @@ def _validate_avatar_weapons(avatar: dict[str, Any], path: str, weapon_ids: set[
             raise ScenarioValidationError(f"{entry_path}.quantity", "positive integer", quantity)
 
 
+def _validate_dynasty_entries(
+    dynasties: Any,
+    path: str,
+    *,
+    avatar_ids: set[str],
+    dynasty_ids: set[str],
+    region_ids: set[str],
+    orthodoxy_ids: set[str],
+) -> set[str]:
+    if dynasties is None:
+        return set()
+    if not isinstance(dynasties, list):
+        raise ScenarioValidationError(path, "list", dynasties)
+
+    scenario_dynasty_ids: set[str] = set()
+    for idx, dynasty in enumerate(dynasties):
+        entry_path = f"{path}[{idx}]"
+        if not isinstance(dynasty, dict):
+            raise ScenarioValidationError(entry_path, "object", dynasty)
+        dynasty_id = _require(dynasty, "id", entry_path)
+        if not isinstance(dynasty_id, str) or not dynasty_id.strip():
+            raise ScenarioValidationError(f"{entry_path}.id", "non-empty string", dynasty_id)
+        if dynasty_id in scenario_dynasty_ids:
+            raise ScenarioValidationError(f"{entry_path}.id", "unique dynasty id", dynasty_id)
+        scenario_dynasty_ids.add(dynasty_id)
+
+        status = dynasty.get("status", "active")
+        if status not in {"active", "declining", "fallen"}:
+            raise ScenarioValidationError(f"{entry_path}.status", "active | declining | fallen", status)
+        founding_year = dynasty.get("founding_year", 1)
+        if not isinstance(founding_year, (int, float)):
+            raise ScenarioValidationError(f"{entry_path}.founding_year", "number", founding_year)
+        ruler_avatar_id = dynasty.get("ruler_avatar_id")
+        if ruler_avatar_id is not None and ruler_avatar_id not in avatar_ids:
+            raise MissingReferenceError(f"{entry_path}.ruler_avatar_id", ruler_avatar_id, "initial_state.avatars")
+        capital_region_id = dynasty.get("capital_region_id")
+        if capital_region_id is not None and str(capital_region_id) not in region_ids:
+            raise MissingReferenceError(f"{entry_path}.capital_region_id", capital_region_id, "preset regions.json")
+        territory_region_ids = dynasty.get("territory_region_ids", [])
+        if not isinstance(territory_region_ids, list):
+            raise ScenarioValidationError(f"{entry_path}.territory_region_ids", "list", territory_region_ids)
+        for region_id in territory_region_ids:
+            if str(region_id) not in region_ids:
+                raise MissingReferenceError(f"{entry_path}.territory_region_ids", region_id, "preset regions.json")
+        for orthodoxy_id in dynasty.get("orthodoxy_ids", []) or []:
+            if str(orthodoxy_id) not in orthodoxy_ids:
+                raise MissingReferenceError(f"{entry_path}.orthodoxy_ids", orthodoxy_id, "preset orthodoxies.json")
+        relations = dynasty.get("relations", [])
+        if not isinstance(relations, list):
+            raise ScenarioValidationError(f"{entry_path}.relations", "list", relations)
+        for rel_idx, relation in enumerate(relations):
+            rel_path = f"{entry_path}.relations[{rel_idx}]"
+            if not isinstance(relation, dict):
+                raise ScenarioValidationError(rel_path, "object", relation)
+            relation_type = relation.get("type")
+            if relation_type not in {"ally", "rival", "vassal", "enemy", "neutral"}:
+                raise ScenarioValidationError(f"{rel_path}.type", "ally | rival | vassal | enemy | neutral", relation_type)
+            value = relation.get("value")
+            if not isinstance(value, (int, float)) or not -100 <= float(value) <= 100:
+                raise ScenarioValidationError(f"{rel_path}.value", "number -100..100", value)
+
+    known_dynasty_ids = dynasty_ids | scenario_dynasty_ids
+    for idx, dynasty in enumerate(dynasties):
+        entry_path = f"{path}[{idx}]"
+        for rel_idx, relation in enumerate(dynasty.get("relations", []) or []):
+            other_id = relation.get("other_dynasty_id")
+            if str(other_id) not in known_dynasty_ids:
+                raise MissingReferenceError(
+                    f"{entry_path}.relations[{rel_idx}].other_dynasty_id",
+                    other_id,
+                    "preset/scenario dynasties",
+                )
+    return scenario_dynasty_ids
+
+
 def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
     initial_state = data.get("initial_state", {})
     if initial_state is None:
@@ -217,6 +295,7 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
     root_ids = get_preset_root_ids(preset_id) if _is_v02(data) else set()
     technique_ids = get_preset_technique_ids(preset_id) if _is_v02(data) else set()
     weapon_ids = get_preset_weapon_ids(preset_id) if _is_v02(data) else set()
+    region_ids = get_preset_region_ids(preset_id) if _is_v02(data) else set()
 
     avatars = initial_state.get("avatars", [])
     if not isinstance(avatars, list):
@@ -245,6 +324,9 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
             root_id = avatar.get("root_id")
             if root_id is not None and str(root_id).upper() not in root_ids:
                 raise MissingReferenceError(f"{path}.root_id", root_id, "preset roots.json")
+            location_region_id = avatar.get("location_region_id")
+            if location_region_id is not None and str(location_region_id) not in region_ids:
+                raise MissingReferenceError(f"{path}.location_region_id", location_region_id, "preset regions.json")
         goldfinger_id = avatar.get("goldfinger_id")
         if goldfinger_id is not None:
             resolved_goldfinger_id = (
@@ -284,9 +366,39 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         for member_id in sect.get("member_avatar_ids", []) or []:
             if member_id not in avatar_ids:
                 raise MissingReferenceError(f"{path}.member_avatar_ids", member_id, "initial_state.avatars")
+        if _is_v02(data):
+            headquarters_region_id = sect.get("headquarters_region_id")
+            if headquarters_region_id is not None and str(headquarters_region_id) not in region_ids:
+                raise MissingReferenceError(f"{path}.headquarters_region_id", headquarters_region_id, "preset regions.json")
+
+    if _is_v02(data) and "dynasties" in initial_state:
+        dynasty_entries = initial_state.get("dynasties")
+        region_refs_present = (
+            isinstance(dynasty_entries, list)
+            and any(
+                isinstance(item, dict)
+                and (
+                    item.get("capital_region_id") is not None
+                    or bool(item.get("territory_region_ids", []) or [])
+                )
+                for item in dynasty_entries
+            )
+        )
+        orthodoxy_refs_present = (
+            isinstance(dynasty_entries, list)
+            and any(isinstance(item, dict) and bool(item.get("orthodoxy_ids", []) or []) for item in dynasty_entries)
+        )
+        _validate_dynasty_entries(
+            dynasty_entries,
+            "scenario.initial_state.dynasties",
+            avatar_ids=avatar_ids,
+            dynasty_ids=get_preset_dynasty_ids(preset_id),
+            region_ids=region_ids if region_refs_present else set(),
+            orthodoxy_ids=get_preset_orthodoxy_ids(preset_id) if orthodoxy_refs_present else set(),
+        )
 
 
-def _validate_timeline(timeline_data: dict[str, Any]) -> list[dict[str, Any]]:
+def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenario_schema_version: str) -> list[dict[str, Any]]:
     if not timeline_data:
         return []
     _validate_schema_version(timeline_data, "timeline")
@@ -294,6 +406,7 @@ def _validate_timeline(timeline_data: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(events, list):
         raise ScenarioValidationError("timeline.events", "list", events)
     event_ids: set[str] = set()
+    region_ids = get_preset_region_ids(preset_id) if scenario_schema_version == "0.2" else set()
     for idx, event in enumerate(events):
         path = f"timeline.events[{idx}]"
         if not isinstance(event, dict):
@@ -314,6 +427,9 @@ def _validate_timeline(timeline_data: dict[str, Any]) -> list[dict[str, Any]]:
             value = _require(trigger, key, f"{path}.trigger")
             if not isinstance(value, int):
                 raise ScenarioValidationError(f"{path}.trigger.{key}", "integer", value)
+        at_region_id = trigger.get("at_region_id")
+        if scenario_schema_version == "0.2" and at_region_id is not None and str(at_region_id) not in region_ids:
+            raise MissingReferenceError(f"{path}.trigger.at_region_id", at_region_id, "preset regions.json")
 
     for idx, event in enumerate(events):
         path = f"timeline.events[{idx}]"
@@ -331,7 +447,7 @@ def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedSce
     timeline_data = _load_json(scenario_dir / "timeline.json", required=False)
     preset_id = _validate_scenario_top_level(scenario)
     _validate_initial_state(scenario, preset_id)
-    timeline = _validate_timeline(timeline_data)
+    timeline = _validate_timeline(timeline_data, preset_id=preset_id, scenario_schema_version=str(scenario["schema_version"]))
     return ResolvedScenario(
         scenario_id=str(scenario["scenario_id"]),
         title=str(scenario["title"]),

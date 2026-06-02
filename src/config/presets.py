@@ -9,6 +9,10 @@ from typing import Any
 DEFAULT_PRESET_ID = "default"
 _ACTIVE_PRESET_ID = DEFAULT_PRESET_ID
 TECHNIQUE_GRADES = {"mortal", "earth", "heaven", "divine"}
+DYNASTY_STATUSES = {"active", "declining", "fallen"}
+DYNASTY_RELATION_TYPES = {"ally", "rival", "vassal", "enemy", "neutral"}
+REGION_TYPES = {"city", "cultivate", "normal"}
+REGION_EDGE_RELATIONS = {"friendly", "hostile", "neutral", "restricted"}
 
 
 class PresetConfigError(ValueError):
@@ -224,3 +228,111 @@ def get_preset_weapons(preset_id: str | None = None) -> list[dict[str, Any]]:
 
 def get_preset_weapon_ids(preset_id: str | None = None) -> set[str]:
     return {str(item.get("id")) for item in get_preset_weapons(preset_id)}
+
+
+def get_preset_dynasties(preset_id: str | None = None) -> list[dict[str, Any]]:
+    items = _collection_items(load_preset_json(preset_id, "dynasties.json"), "dynasties")
+    for item in items:
+        dynasty_id = item.get("id")
+        status = item.get("status")
+        if status not in DYNASTY_STATUSES:
+            raise PresetConfigError(f"dynasties.json invalid status for {dynasty_id}: {status}")
+        founding_year = item.get("founding_year")
+        if not isinstance(founding_year, (int, float)):
+            raise PresetConfigError(f"dynasties.json invalid founding_year for {dynasty_id}: {founding_year}")
+        relations = item.get("relations", [])
+        if not isinstance(relations, list):
+            raise PresetConfigError(f"dynasties.json relations must be a list for {dynasty_id}")
+        for relation in relations:
+            if not isinstance(relation, dict):
+                raise PresetConfigError(f"dynasties.json relation must be an object for {dynasty_id}")
+            relation_type = relation.get("type")
+            if relation_type not in DYNASTY_RELATION_TYPES:
+                raise PresetConfigError(f"dynasties.json invalid relation type for {dynasty_id}: {relation_type}")
+            value = relation.get("value")
+            if not isinstance(value, (int, float)) or not -100 <= float(value) <= 100:
+                raise PresetConfigError(f"dynasties.json invalid relation value for {dynasty_id}: {value}")
+    return items
+
+
+def get_preset_dynasty_ids(preset_id: str | None = None) -> set[str]:
+    return {str(item.get("id")) for item in get_preset_dynasties(preset_id)}
+
+
+def get_preset_orthodoxies(preset_id: str | None = None) -> list[dict[str, Any]]:
+    items = _collection_items(load_preset_json(preset_id, "orthodoxies.json"), "orthodoxies")
+    for item in items:
+        orthodoxy_id = item.get("id")
+        axes = item.get("axes", {})
+        if not isinstance(axes, dict):
+            raise PresetConfigError(f"orthodoxies.json axes must be an object for {orthodoxy_id}")
+        for axis, value in axes.items():
+            if not isinstance(axis, str) or not axis:
+                raise PresetConfigError(f"orthodoxies.json axis key must be a non-empty string for {orthodoxy_id}")
+            if not isinstance(value, (int, float)):
+                raise PresetConfigError(f"orthodoxies.json axis value must be numeric for {orthodoxy_id}.{axis}: {value}")
+        tags = item.get("tags", [])
+        if tags is not None and (not isinstance(tags, list) or not all(isinstance(tag, str) for tag in tags)):
+            raise PresetConfigError(f"orthodoxies.json tags must be list[str] for {orthodoxy_id}")
+    return items
+
+
+def get_preset_orthodoxy_ids(preset_id: str | None = None) -> set[str]:
+    return {str(item.get("id")) for item in get_preset_orthodoxies(preset_id)}
+
+
+def get_preset_regions(preset_id: str | None = None) -> list[dict[str, Any]]:
+    items = _collection_items(load_preset_json(preset_id, "regions.json"), "regions")
+    dynasty_ids = get_preset_dynasty_ids(preset_id)
+    for item in items:
+        region_id = item.get("id")
+        region_type = item.get("type")
+        if region_type not in REGION_TYPES:
+            raise PresetConfigError(f"regions.json invalid type for {region_id}: {region_type}")
+        dynasty_id = item.get("dynasty_id")
+        if dynasty_id is not None and str(dynasty_id) not in dynasty_ids:
+            raise PresetConfigError(f"regions.json unknown dynasty_id for {region_id}: {dynasty_id}")
+        for field_name in ("key_landmarks", "tags"):
+            values = item.get(field_name, [])
+            if values is not None and (not isinstance(values, list) or not all(isinstance(value, str) for value in values)):
+                raise PresetConfigError(f"regions.json {field_name} must be list[str] for {region_id}")
+    return items
+
+
+def get_preset_region_ids(preset_id: str | None = None) -> set[str]:
+    return {str(item.get("id")) for item in get_preset_regions(preset_id)}
+
+
+def get_preset_region_adjacency(preset_id: str | None = None) -> list[dict[str, Any]]:
+    data = load_preset_json(preset_id, "region_adjacency.json")
+    edges = data.get("edges", [])
+    if not isinstance(edges, list):
+        raise PresetConfigError("region_adjacency.json field edges must be a list")
+    region_ids = get_preset_region_ids(preset_id)
+    normalized_edges: list[dict[str, Any]] = []
+    for idx, edge in enumerate(edges):
+        if not isinstance(edge, dict):
+            raise PresetConfigError(f"region_adjacency.json edges[{idx}] must be an object")
+        from_region_id = str(edge.get("from_region_id"))
+        to_region_id = str(edge.get("to_region_id"))
+        if from_region_id not in region_ids:
+            raise PresetConfigError(f"region_adjacency.json unknown from_region_id: {from_region_id}")
+        if to_region_id not in region_ids:
+            raise PresetConfigError(f"region_adjacency.json unknown to_region_id: {to_region_id}")
+        if from_region_id == to_region_id:
+            raise PresetConfigError(f"region_adjacency.json self edge is not allowed: {from_region_id}")
+        relation = edge.get("relation", "neutral")
+        if relation not in REGION_EDGE_RELATIONS:
+            raise PresetConfigError(f"region_adjacency.json invalid relation: {relation}")
+        difficulty = edge.get("difficulty", 1)
+        if not isinstance(difficulty, (int, float)) or float(difficulty) <= 0:
+            raise PresetConfigError(f"region_adjacency.json difficulty must be positive: {difficulty}")
+        normalized_edges.append(
+            {
+                "from_region_id": from_region_id,
+                "to_region_id": to_region_id,
+                "relation": relation,
+                "difficulty": difficulty,
+            }
+        )
+    return normalized_edges

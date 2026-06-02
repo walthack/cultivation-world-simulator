@@ -1,0 +1,182 @@
+{
+  "preset_id": "liuchao",
+  "dynasties": [
+    {
+      "id": "song",
+      "name": "宋",
+      "description": "临安一带的南朝政权，重文治与商业网络，是六朝局势的重要中枢。",
+      "capital_region_id": "linan",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "linan",
+        "jiangnan"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "han",
+          "type": "rival",
+          "value": -30
+        },
+        {
+          "other_dynasty_id": "jin",
+          "type": "neutral",
+          "value": 0
+        },
+        {
+          "other_dynasty_id": "xishu",
+          "type": "neutral",
+          "value": 10
+        }
+      ],
+      "orthodoxy_ids": [
+        "confucianism"
+      ],
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "han",
+      "name": "汉",
+      "description": "北地汉统势力，强调正朔名分与边地军政。",
+      "capital_region_id": "luoyang",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "luoyang",
+        "north_border"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "song",
+          "type": "rival",
+          "value": -30
+        },
+        {
+          "other_dynasty_id": "jin",
+          "type": "rival",
+          "value": -20
+        }
+      ],
+      "orthodoxy_ids": [
+        "confucianism"
+      ],
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "jin",
+      "name": "晋",
+      "description": "门阀与玄学风气浓厚的旧族政权，士族影响深重。",
+      "capital_region_id": "jiankang",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "jiankang",
+        "jiangnan"
+      ],
+      "status": "declining",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "song",
+          "type": "neutral",
+          "value": 0
+        },
+        {
+          "other_dynasty_id": "han",
+          "type": "rival",
+          "value": -20
+        }
+      ],
+      "orthodoxy_ids": [
+        "confucianism",
+        "dao"
+      ],
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "xishu",
+      "name": "西蜀",
+      "description": "蜀地山川险阻中的割据政权，倚重关隘、商路与地方豪族。",
+      "capital_region_id": "chengdu",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "chengdu",
+        "bashu_mountains"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "song",
+          "type": "neutral",
+          "value": 10
+        },
+        {
+          "other_dynasty_id": "qin",
+          "type": "enemy",
+          "value": -60
+        }
+      ],
+      "orthodoxy_ids": [
+        "dao"
+      ],
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "qin",
+      "name": "秦",
+      "description": "TODO: 秦的六朝细节待 Stage 2c content pass 补全；暂按西北尚法重军势力占位。",
+      "capital_region_id": "chang_an",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "chang_an",
+        "guanzhong"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "xishu",
+          "type": "enemy",
+          "value": -60
+        }
+      ],
+      "orthodoxy_ids": [],
+      "tags": [
+        "todo",
+        "placeholder",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "placeholder-sixth",
+      "name": "第六势力占位",
+      "description": "TODO: 六朝第六势力待 Hassan 确认后替换；当前只为 schema graph 验证保留。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "declining",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "todo",
+        "placeholder",
+        "liuchao"
+      ]
+    }
+  ]
+}

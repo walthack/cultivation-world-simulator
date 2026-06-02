@@ -1,0 +1,85 @@
+{
+  "preset_id": "liuchao",
+  "orthodoxies": [
+    {
+      "id": "confucianism",
+      "name": "名教",
+      "description": "以礼法、宗族与正朔为核心的士族秩序。",
+      "axes": {
+        "汉统": 100,
+        "胡": 0,
+        "玄学": 35,
+        "名教": 95,
+        "武": 25
+      },
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "dao",
+      "name": "玄门",
+      "description": "承接清谈、方术与山林修行的玄门道统。",
+      "axes": {
+        "汉统": 45,
+        "胡": 10,
+        "玄学": 95,
+        "名教": 35,
+        "武": 20
+      },
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "buddhism",
+      "name": "佛门",
+      "description": "以寺院、戒律与度化为核心的出世道统。",
+      "axes": {
+        "汉统": 40,
+        "胡": 20,
+        "玄学": 70,
+        "名教": 45,
+        "武": 10
+      },
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "wu",
+      "name": "武脉",
+      "description": "以军功、强者秩序与边地武力为核心的实战道统。",
+      "axes": {
+        "汉统": 45,
+        "胡": 35,
+        "玄学": 25,
+        "名教": 30,
+        "武": 100
+      },
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "sanxiu",
+      "name": "散修",
+      "description": "不依附大宗与朝廷的民间修行路径。",
+      "axes": {
+        "汉统": 20,
+        "胡": 20,
+        "玄学": 55,
+        "名教": 5,
+        "武": 40
+      },
+      "tags": [
+        "confirmed",
+        "liuchao"
+      ]
+    }
+  ]
+}

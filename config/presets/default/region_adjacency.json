@@ -1,0 +1,257 @@
+{
+  "preset_id": "default",
+  "edges": [
+    {
+      "from_region_id": "102",
+      "to_region_id": "103",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "102",
+      "to_region_id": "108",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "102",
+      "to_region_id": "117",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "102",
+      "to_region_id": "302",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "103",
+      "to_region_id": "113",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "103",
+      "to_region_id": "117",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "103",
+      "to_region_id": "206",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "104",
+      "to_region_id": "108",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "104",
+      "to_region_id": "116",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "106",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "107",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "112",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "113",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "118",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "105",
+      "to_region_id": "207",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "107",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "108",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "109",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "110",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "115",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "116",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "203",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "303",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "106",
+      "to_region_id": "304",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "107",
+      "to_region_id": "110",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "107",
+      "to_region_id": "112",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "107",
+      "to_region_id": "116",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "108",
+      "to_region_id": "117",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "108",
+      "to_region_id": "305",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "109",
+      "to_region_id": "117",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "109",
+      "to_region_id": "201",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "110",
+      "to_region_id": "202",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "110",
+      "to_region_id": "301",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "110",
+      "to_region_id": "303",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "111",
+      "to_region_id": "116",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "111",
+      "to_region_id": "204",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "113",
+      "to_region_id": "114",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "113",
+      "to_region_id": "206",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "114",
+      "to_region_id": "117",
+      "relation": "neutral",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "114",
+      "to_region_id": "205",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "117",
+      "to_region_id": "201",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "117",
+      "to_region_id": "302",
+      "relation": "neutral",
+      "difficulty": 1
+    }
+  ]
+}
