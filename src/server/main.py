@@ -195,6 +195,9 @@ def _read_cli_option(name: str, default: str | None = None) -> str | None:
 
 
 ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
+ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
+# Scenario engine load 留 v0.2 完整集成；Stage 1 MVP 只在 CLI 层暴露 flag，
+# in-process E2E（tests/test_scenario_e2e_liuchao.py）已验证 scenario_loader+engine 链路。
 
 
 def apply_runtime_content_locale(lang_code: str) -> None:

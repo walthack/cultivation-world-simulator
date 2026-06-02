@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1",
+  "scenario_id": "liuchao",
+  "title": "六朝纪事",
+  "version": "1.0",
+  "author": "Chaldeas",
+  "description": "Stage 1 minimal 六朝 scenario demo.",
+  "world_preset": {
+    "preset_id": "liuchao"
+  },
+  "world_background": "六朝并立，仙道隐现。程宗扬初入局中，王哲以太乙真宗传承引路，小紫则在暗处观察。",
+  "initial_state": {
+    "year": 1,
+    "month": 1,
+    "avatars": [
+      {
+        "id": "cheng-zongyang",
+        "surname": "程",
+        "given_name": "宗扬",
+        "gender": "男",
+        "age": 28,
+        "sect_id": null,
+        "realm": "ZHU_JI",
+        "stage": "LATE_STAGE",
+        "level": 30,
+        "backstory": "来自异世的程宗扬卷入六朝风云。",
+        "persona_traits": ["谋略", "现代知识", "野心", "灰色道德"],
+        "goldfinger_id": "SHENGSI-GEN",
+        "long_term_objective": "在六朝乱世中活下去并掌握主动权。"
+      },
+      {
+        "id": "wang-zhe",
+        "surname": "王",
+        "given_name": "哲",
+        "gender": "男",
+        "age": 82,
+        "sect_id": 1,
+        "realm": "YUAN_YING",
+        "stage": "LATE_STAGE",
+        "level": 90,
+        "backstory": "太乙真宗高人，持有九阳传承。",
+        "persona_traits": ["忠义"],
+        "goldfinger_id": "TAIYI-JIUYANG",
+        "long_term_objective": "寻找可托付传承之人。"
+      },
+      {
+        "id": "xiao-zi",
+        "surname": "小",
+        "given_name": "紫",
+        "gender": "女",
+        "age": 18,
+        "sect_id": null,
+        "realm": "LIAN_QI",
+        "stage": "MIDDLE_STAGE",
+        "level": 12,
+        "backstory": "神秘少女，来历不明。",
+        "persona_traits": ["神秘"],
+        "goldfinger_id": "ZI-MYSTERY",
+        "long_term_objective": "观察程宗扬的选择。"
+      }
+    ],
+    "sects": [
+      {
+        "id": 1,
+        "leader_avatar_id": "wang-zhe",
+        "member_avatar_ids": ["wang-zhe"]
+      }
+    ],
+    "relationships": [
+      {
+        "a": "cheng-zongyang",
+        "b": "wang-zhe",
+        "value": 50,
+        "tag": "传承"
+      }
+    ],
+    "world_flags": {
+      "liuchao_started": true
+    }
+  }
+}

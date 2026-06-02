@@ -1,10 +1,15 @@
 {
   "preset_id": "liuchao",
   "realm_order": [
-    "QI_REFINEMENT",
-    "FOUNDATION_ESTABLISHMENT",
-    "CORE_FORMATION",
-    "NASCENT_SOUL"
+    "LIAN_QI",
+    "ZHU_JI",
+    "JIE_DAN",
+    "YUAN_YING",
+    "HUA_SHEN",
+    "LIAN_XU",
+    "HE_Ti",
+    "DU_JIE",
+    "DA_CHENG"
   ],
   "stage_order": ["EARLY_STAGE", "MIDDLE_STAGE", "LATE_STAGE"]
 }

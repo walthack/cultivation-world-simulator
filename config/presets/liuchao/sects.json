@@ -1,4 +1,11 @@
 {
   "preset_id": "liuchao",
-  "sect_ids": []
+  "sect_ids": [1],
+  "sects": [
+    {
+      "id": 1,
+      "scenario_id": "taiyi-zhenzong",
+      "name": "太乙真宗"
+    }
+  ]
 }

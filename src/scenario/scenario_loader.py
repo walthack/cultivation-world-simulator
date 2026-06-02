@@ -22,8 +22,10 @@ EVENT_TYPES = {
     "main",
     "world_event",
     "character_introduction",
+    "relation_change",
     "relationship_event",
     "sect_event",
+    "side_event",
     "ending",
 }
 

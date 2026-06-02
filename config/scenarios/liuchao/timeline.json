@@ -1,0 +1,89 @@
+{
+  "schema_version": "0.1",
+  "events": [
+    {
+      "id": "liuchao-opening",
+      "type": "side_event",
+      "trigger": {
+        "year": 1,
+        "month": 1,
+        "condition": {
+          "always": {}
+        }
+      },
+      "name": "六朝开局",
+      "description": "程宗扬踏入六朝局中。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "liuchao_opening_seen"
+        }
+      ]
+    },
+    {
+      "id": "wang-zhe-passes-jiuyang",
+      "type": "main",
+      "trigger": {
+        "year": 2,
+        "month": 3,
+        "condition": {
+          "all": [
+            {
+              "npc_alive": {
+                "npc_id": "wang-zhe"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "liuchao_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "王哲传程宗扬九阳",
+      "description": "王哲决定将九阳传承交给程宗扬。程宗扬是否接受？",
+      "choices": [
+        {
+          "id": "accept",
+          "title": "接受九阳传承",
+          "description": "承下王哲的九阳真法。",
+          "effects": [
+            {
+              "type": "gain_skill",
+              "skill": "九阳神功"
+            },
+            {
+              "type": "gain_stat",
+              "stat": "yang_qi",
+              "amount": 9
+            },
+            {
+              "type": "set_flag",
+              "flag": "cheng_received_jiuyang"
+            },
+            {
+              "type": "relation_change",
+              "a": "cheng-zongyang",
+              "b": "wang-zhe",
+              "delta": 20
+            }
+          ]
+        },
+        {
+          "id": "decline",
+          "title": "暂缓接受",
+          "description": "先观察形势。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "cheng_delayed_jiuyang"
+            }
+          ]
+        }
+      ],
+      "default_outcome": "accept",
+      "effects": []
+    }
+  ]
+}
