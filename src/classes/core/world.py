@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from src.classes.celestial_phenomenon import CelestialPhenomenon
     from src.classes.core.dynasty import Dynasty
     from src.classes.core.sect import Sect
+    from src.scenario.state import ScriptedScenarioState
 
 
 @dataclass
@@ -59,6 +60,7 @@ class World():
     sect_relation_modifiers: list[dict[str, Any]] = field(default_factory=list)
     sect_wars: list[dict[str, Any]] = field(default_factory=list)
     world_flags: dict[str, Any] = field(default_factory=dict)
+    scripted_scenario: Optional["ScriptedScenarioState"] = None
     # 宗门上下文（惰性初始化），用于统一本局启用宗门作用域
     _sect_context: Any = field(default=None, init=False, repr=False)
 
