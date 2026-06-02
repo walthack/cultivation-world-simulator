@@ -4,6 +4,7 @@ from enum import StrEnum
 
 
 class ScenarioPredicate(StrEnum):
+    CONTROLLED_AVATAR_IS = "controlled_avatar_is"
     PLAYER_REALM = "player_realm"
     PLAYER_SECT = "player_sect"
     PLAYER_HAS_SKILL = "player_has_skill"
@@ -56,7 +57,7 @@ V01_TO_V02_PREDICATE_DRIFT = {
     "relation_at_least": "npc_relation or player_relation",
     "event_triggered": "event_triggered",
     "event_outcome_was": "not implemented in Stage 1 canonical set",
-    "controlled_avatar_is": "not implemented in Stage 1 canonical set",
+    "controlled_avatar_is": "controlled_avatar_is",
 }
 
 V01_TO_V02_EFFECT_DRIFT = {

@@ -24,6 +24,7 @@ def state():
         },
         "world": {"world_flags": {}},
         "relations": {},
+        "controlled_avatar": "cheng-zongyang",
         "scenario_runtime": {"triggered_event_ids": []},
     }
 
@@ -128,6 +129,43 @@ def test_world_event_trigger():
     s = state()
     apply_effects(s, [{"type": "world_event_trigger", "event_id": "intro"}])
     assert s["scenario_runtime"]["triggered_event_ids"] == ["intro"]
+
+
+def test_controlled_avatar_placeholder_is_substituted_in_effect_string():
+    s = state()
+    apply_effects(s, [{"type": "set_flag", "flag": "seen_by_{controlled_avatar}"}])
+    assert s["world"]["world_flags"]["seen_by_cheng-zongyang"] is True
+
+
+def test_controlled_avatar_placeholder_substitutes_multiple_occurrences():
+    s = state()
+    apply_effects(
+        s,
+        [
+            {
+                "type": "npc_set_relation",
+                "a": "{controlled_avatar}",
+                "b": "{controlled_avatar}-shadow",
+                "value": 10,
+            }
+        ],
+    )
+    assert s["relations"]["cheng-zongyang:cheng-zongyang-shadow"] == 10
+
+
+def test_controlled_avatar_placeholder_missing_state_key_raises_and_rolls_back():
+    s = state()
+    s.pop("controlled_avatar")
+    with pytest.raises(EffectError, match="controlled_avatar"):
+        apply_effects(
+            s,
+            [
+                {"type": "gain_skill", "skill": "九阳神功"},
+                {"type": "set_flag", "flag": "seen_by_{controlled_avatar}"},
+            ],
+        )
+    assert s["player"]["skills"] == []
+    assert s["world"]["world_flags"] == {}
 
 
 def test_economy_event_noop(caplog):

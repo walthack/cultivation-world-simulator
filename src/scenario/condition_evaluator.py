@@ -80,6 +80,8 @@ def _eval_atomic(state: Any, predicate: str, params: Any, expression: Any, *, rn
 
     if predicate == "always":
         return bool(params.get("value", True))
+    if predicate == "controlled_avatar_is":
+        return get_value(state, "controlled_avatar") == _require(params, "target_id", expression)
     if predicate == "player_realm":
         return _entity_realm_at_least(state, player, _require(params, "realm", expression))
     if predicate == "player_sect":

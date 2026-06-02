@@ -55,7 +55,25 @@ def _stats(entity: Any) -> dict[str, Any]:
     return ensure_dict(entity, "stats")
 
 
+def _controlled_avatar(state: Any) -> str:
+    controlled_avatar = get_value(state, "controlled_avatar")
+    if controlled_avatar is None:
+        raise EffectError("Missing state placeholder: controlled_avatar")
+    return str(controlled_avatar)
+
+
+def _substitute_placeholders(state: Any, value: Any) -> Any:
+    if isinstance(value, str) and "{controlled_avatar}" in value:
+        return value.replace("{controlled_avatar}", _controlled_avatar(state))
+    if isinstance(value, list):
+        return [_substitute_placeholders(state, item) for item in value]
+    if isinstance(value, dict):
+        return {key: _substitute_placeholders(state, item) for key, item in value.items()}
+    return value
+
+
 def _apply_one(state: Any, effect: dict[str, Any]) -> None:
+    effect = _substitute_placeholders(state, effect)
     effect_type = str(_require(effect, "type"))
     player = get_player(state)
 

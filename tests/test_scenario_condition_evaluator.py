@@ -21,6 +21,7 @@ def state():
         },
         "world": {"year": 2, "month": 3, "world_flags": {"started": True}},
         "relations": {"cheng-zongyang:wang-zhe": 60, "wang-zhe:xiao-zi": 30},
+        "controlled_avatar": "cheng-zongyang",
         "scenario_runtime": {"triggered_event_ids": ["intro"]},
     }
 
@@ -75,6 +76,21 @@ def test_random_chance():
 
 def test_always():
     assert evaluate_condition(state(), {"always": {}})
+
+
+def test_controlled_avatar_is_true_when_avatar_matches():
+    assert evaluate_condition(state(), {"controlled_avatar_is": {"target_id": "cheng-zongyang"}})
+
+
+def test_controlled_avatar_is_false_when_avatar_does_not_match():
+    assert not evaluate_condition(state(), {"controlled_avatar_is": {"target_id": "wang-zhe"}})
+
+
+def test_controlled_avatar_is_false_when_state_key_missing():
+    s = state()
+    s.pop("controlled_avatar")
+
+    assert not evaluate_condition(s, {"controlled_avatar_is": {"target_id": "cheng-zongyang"}})
 
 
 def test_composition_all_any_not():
