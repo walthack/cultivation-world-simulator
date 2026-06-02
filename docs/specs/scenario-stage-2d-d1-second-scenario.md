@@ -58,6 +58,13 @@ Minimum **4 new tests** that prove generality (not just load-validity).
 7. `{controlled_avatar}` placeholder substitutes correctly in sanguo effect strings (mirror liuchao's `linan_gate_seen_by_{controlled_avatar}` pattern).
 8. Scenario subset pytest: 115 → ≥ 119 (+4 sanguo e2e). No liuchao regression.
 9. Full suite: 1623 → ≥ 1627 (or whatever the +new count adds). 3 pre-existing failures unchanged.
+10. **Zero liuchao shadow / ID collision** (御主 2026-06-02 23:04 SGT 加补 criterion). Sanguo content must be its own thing, not 六朝 with names swapped. Concretely:
+    - No avatar ID, event ID, dynasty ID, region ID, orthodoxy ID, sect name, persona key, goldfinger key, flag name, or scene anchor in any `config/scenarios/sanguo/*.json` or `config/presets/sanguo/*.json` may collide with any value that appears in the liuchao equivalents — except where the symbol is genuinely shared by both worlds (例外只允许 `realms.json` 整体复用 liuchao 九境的 realm IDs 因 spec §realms.json 明确允许；其它无 carve-out).
+    - No liuchao narrative tokens leak into sanguo content: strings like "六朝", "临安", "linan", "王哲", "wang-zhe", "程宗扬", "cheng-zongyang", "小紫", "xiao-zi", "太乙真宗", "九阳神功", "jiuyang" must NOT appear in any sanguo file.
+    - Run two greps before reporting done, paste their output into the report:
+      - `grep -rE "linan|wang-zhe|cheng-zongyang|xiao-zi|liuchao_|jiuyang|太乙|九阳|临安" config/scenarios/sanguo/ config/presets/sanguo/ tests/test_scenario_e2e_sanguo.py` → expect zero matches
+      - `comm -12 <(jq -r '.dynasties[].id' config/presets/sanguo/dynasties.json | sort -u) <(jq -r '.dynasties[].id' config/presets/liuchao/dynasties.json | sort -u)` → expect empty (no dynasty ID collision; sanguo uses shu/wei/wu, liuchao uses song/han/jin/etc.)
+    - These greps and their empty results MUST appear in the WROTE/MODIFIED report under a new section `ANTI-SHADOW GREPS:`. If the greps return any match, FIX the content before reporting done — don't ship shadow data.
 
 ## Notes / cribs
 
