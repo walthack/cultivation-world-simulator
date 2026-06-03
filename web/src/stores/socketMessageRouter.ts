@@ -10,10 +10,12 @@ import type {
 } from '@/types/api'
 import type { useUiStore } from '@/stores/ui'
 import type { useWorldStore } from '@/stores/world'
+import type { useScenarioStore } from '@/stores/scenario'
 
 interface SocketRouterDeps {
   worldStore: ReturnType<typeof useWorldStore>
   uiStore: ReturnType<typeof useUiStore>
+  scenarioStore?: ReturnType<typeof useScenarioStore>
 }
 
 const translate = i18n.global.t
@@ -62,8 +64,10 @@ export function routeSocketMessage(data: SocketMessageDTO, deps: SocketRouterDep
     case 'game_reinitialized':
       handleGameReinitialized(data, deps)
       break
+    case 'scenario_event':
+      void deps.scenarioStore?.refreshStatus()
+      break
     default:
       break
   }
 }
-
