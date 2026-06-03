@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from src.server.services.public_api_contract import ok_response
+from src.server.services.scenario_templates import load_template, list_templates
 
 
 class ScenarioTimelineEventTriggerDTO(BaseModel):
@@ -196,6 +197,14 @@ def create_public_query_router(
     )
     def get_installed_scenarios_v1():
         return ok_response(build_installed_scenarios())
+
+    @router.get("/api/v1/query/scenario/templates")
+    def get_scenario_templates_v1():
+        return ok_response({"templates": [template.model_dump() for template in list_templates()]})
+
+    @router.get("/api/v1/query/scenario/templates/{category}")
+    def get_scenario_template_v1(category: str):
+        return ok_response(load_template(category))
 
     @router.get("/api/v1/query/avatars/overview")
     def get_avatar_overview_v1():

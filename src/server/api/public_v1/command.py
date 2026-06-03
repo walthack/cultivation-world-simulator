@@ -16,7 +16,9 @@ from src.server.services.scenario_import import (
     import_scenario_zip,
     remove_installed_scenario,
 )
+from src.server.services.scenario_generate import generate_scenario_from_description
 from src.server.services.scenario_registry import list_installed_scenarios
+from src.server.services.scenario_templates import save_draft
 
 
 class GameStartRequest(RunConfig):
@@ -141,6 +143,16 @@ class ScenarioRemoveRequest(BaseModel):
 class ScenarioSetEnabledRequest(BaseModel):
     scenario_id: str
     enabled: bool
+
+
+class ScenarioGenerateRequest(BaseModel):
+    description: str
+    hints: dict = Field(default_factory=dict)
+
+
+class ScenarioSaveDraftRequest(BaseModel):
+    scenario: dict
+    timeline: dict = Field(default_factory=dict)
 
 
 async def _read_capped_body(request: Request, max_size: int) -> bytes:
@@ -380,6 +392,23 @@ def create_public_command_router(
                 details=exc.details,
             )
         return ok_response(result.model_dump())
+
+    @router.post("/api/v1/command/scenario/generate")
+    async def generate_scenario_v1(req: ScenarioGenerateRequest):
+        result = await generate_scenario_from_description(req.description, req.hints, retry=1)
+        return ok_response(result.model_dump())
+
+    @router.post("/api/v1/command/scenario/save-draft")
+    def save_scenario_draft_v1(req: ScenarioSaveDraftRequest):
+        try:
+            return ok_response(save_draft({"scenario": req.scenario, "timeline": req.timeline}))
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
 
     @router.post("/api/v1/command/scenario/remove")
     def remove_scenario_v1(req: ScenarioRemoveRequest):

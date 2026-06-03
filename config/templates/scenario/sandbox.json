@@ -1,0 +1,79 @@
+{
+  "category": "sandbox",
+  "summary": "A tiny default-preset scaffold with two editable avatars and placeholder events.",
+  "scenario": {
+    "schema_version": "0.1",
+    "scenario_id": "sandbox_starter",
+    "title": "Blank Valley Starter",
+    "version": "1.0",
+    "author": "CWS Creator Toolkit",
+    "description": "A minimal scenario draft meant to be overwritten by the creator.",
+    "tags": ["sandbox", "starter"],
+    "world_preset": {
+      "preset_id": "default"
+    },
+    "world_background": "A quiet valley waits for the creator to define its conflict.",
+    "initial_state": {
+      "year": 1,
+      "month": 1,
+      "avatars": [
+        {
+          "id": "creator-avatar-one",
+          "surname": "Creator",
+          "given_name": "One",
+          "gender": "男",
+          "age": 20,
+          "sect_id": null,
+          "realm": "QI_REFINEMENT",
+          "stage": "EARLY_STAGE",
+          "level": 1,
+          "persona_traits": ["RATIONAL"],
+          "goldfinger_id": "CHILD_OF_FORTUNE",
+          "long_term_objective": "Define this character's goal."
+        },
+        {
+          "id": "creator-avatar-two",
+          "surname": "Creator",
+          "given_name": "Two",
+          "gender": "女",
+          "age": 21,
+          "sect_id": null,
+          "realm": "QI_REFINEMENT",
+          "stage": "EARLY_STAGE",
+          "level": 1,
+          "persona_traits": ["FRIENDLY"],
+          "goldfinger_id": "BLESSED_WITH_GOOD_FORTUNE",
+          "long_term_objective": "Define this character's relationship to the first avatar."
+        }
+      ],
+      "sects": [],
+      "relationships": [
+        {"a": "creator-avatar-one", "b": "creator-avatar-two", "value": 0, "tag": "editable"}
+      ],
+      "world_flags": {
+        "sandbox_starter_loaded": true
+      }
+    }
+  },
+  "timeline": {
+    "schema_version": "0.1",
+    "events": [
+      {
+        "id": "sandbox-opening",
+        "type": "main",
+        "trigger": {"year": 1, "month": 1},
+        "name": "Opening Placeholder",
+        "description": "Replace this with the first meaningful beat of the scenario.",
+        "effects": [{"type": "set_flag", "flag": "sandbox_opening_seen"}]
+      },
+      {
+        "id": "sandbox-turning-point",
+        "type": "side_event",
+        "trigger": {"year": 1, "month": 6},
+        "name": "Turning Point Placeholder",
+        "description": "Replace this with a midpoint discovery, conflict, or choice.",
+        "effects": [{"type": "set_flag", "flag": "sandbox_turning_point_seen"}]
+      }
+    ]
+  }
+}

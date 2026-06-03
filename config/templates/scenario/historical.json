@@ -1,0 +1,148 @@
+{
+  "category": "historical",
+  "summary": "Three rival courts and one wandering strategist using the bundled liuchao preset.",
+  "scenario": {
+    "schema_version": "0.1",
+    "scenario_id": "historical_starter",
+    "title": "Three Courts Starter",
+    "version": "1.0",
+    "author": "CWS Creator Toolkit",
+    "description": "A historical-style starter with court rivalry, border pressure, and a strategist caught between oaths.",
+    "tags": ["historical", "court", "starter"],
+    "world_preset": {
+      "preset_id": "liuchao"
+    },
+    "world_background": "Three courts divide the riverlands while old rites and new war banners compete for legitimacy.",
+    "initial_state": {
+      "year": 12,
+      "month": 1,
+      "avatars": [
+        {
+          "id": "xiao-yan",
+          "surname": "Xiao",
+          "given_name": "Yan",
+          "gender": "男",
+          "age": 42,
+          "sect_id": 1,
+          "realm": "YUAN_YING",
+          "stage": "EARLY_STAGE",
+          "level": 76,
+          "persona_traits": ["谋略", "野心"],
+          "goldfinger_id": "SHENGSI-GEN",
+          "long_term_objective": "Unify the river courts under a restored mandate."
+        },
+        {
+          "id": "chen-qing",
+          "surname": "Chen",
+          "given_name": "Qing",
+          "gender": "女",
+          "age": 34,
+          "sect_id": 1,
+          "realm": "JIE_DAN",
+          "stage": "LATE_STAGE",
+          "level": 61,
+          "persona_traits": ["忠义", "神秘"],
+          "goldfinger_id": "TAIYI-JIUYANG",
+          "long_term_objective": "Protect the southern court without letting its ministers sell the border."
+        },
+        {
+          "id": "yu-wen",
+          "surname": "Yu",
+          "given_name": "Wen",
+          "gender": "男",
+          "age": 38,
+          "sect_id": 1,
+          "realm": "JIE_DAN",
+          "stage": "MIDDLE_STAGE",
+          "level": 55,
+          "persona_traits": ["灰色道德", "谋略"],
+          "goldfinger_id": "ZI-MYSTERY",
+          "long_term_objective": "Use border armies and secret ledgers to become indispensable."
+        },
+        {
+          "id": "lu-zhi",
+          "surname": "Lu",
+          "given_name": "Zhi",
+          "gender": "男",
+          "age": 29,
+          "sect_id": null,
+          "realm": "LIAN_QI",
+          "stage": "LATE_STAGE",
+          "level": 18,
+          "persona_traits": ["现代知识", "忠义"],
+          "goldfinger_id": "SHENGSI-GEN",
+          "long_term_objective": "Record the truth of the age and survive court suspicion."
+        }
+      ],
+      "sects": [
+        {
+          "id": 1,
+          "leader_avatar_id": "xiao-yan",
+          "member_avatar_ids": ["xiao-yan", "chen-qing", "yu-wen"]
+        }
+      ],
+      "relationships": [
+        {"a": "xiao-yan", "b": "chen-qing", "value": 20, "tag": "uneasy alliance"},
+        {"a": "xiao-yan", "b": "yu-wen", "value": -35, "tag": "rival ministers"},
+        {"a": "chen-qing", "b": "lu-zhi", "value": 30, "tag": "protected witness"},
+        {"a": "yu-wen", "b": "lu-zhi", "value": -20, "tag": "ledger threat"}
+      ],
+      "world_flags": {
+        "historical_starter_loaded": true
+      }
+    }
+  },
+  "timeline": {
+    "schema_version": "0.1",
+    "events": [
+      {
+        "id": "court-opening",
+        "type": "main",
+        "trigger": {"year": 12, "month": 1},
+        "name": "Court Banners Raised",
+        "description": "The three courts announce rival calendars on the same morning.",
+        "effects": [{"type": "set_flag", "flag": "court_banners_raised"}]
+      },
+      {
+        "id": "river-tax-dispute",
+        "type": "world_event",
+        "trigger": {"year": 12, "month": 2},
+        "name": "River Tax Dispute",
+        "description": "Grain boats halt at the river gate while tax seals are checked twice.",
+        "effects": [{"type": "set_flag", "flag": "river_tax_disputed"}]
+      },
+      {
+        "id": "border-scouts-return",
+        "type": "side_event",
+        "trigger": {"year": 12, "month": 4},
+        "name": "Border Scouts Return",
+        "description": "Scouts bring ash-stained maps from the northern passes.",
+        "effects": [{"type": "set_flag", "flag": "border_scouts_returned"}]
+      },
+      {
+        "id": "secret-ledger-found",
+        "type": "main",
+        "trigger": {"year": 12, "month": 6},
+        "name": "Secret Ledger Found",
+        "description": "Lu Zhi discovers names that link army pay to court bribes.",
+        "effects": [{"type": "set_flag", "flag": "secret_ledger_found"}]
+      },
+      {
+        "id": "southern-envoy-arrives",
+        "type": "character_introduction",
+        "trigger": {"year": 12, "month": 8},
+        "name": "Southern Envoy Arrives",
+        "description": "Chen Qing receives an envoy carrying silk, salt, and a veiled threat.",
+        "effects": [{"type": "set_flag", "flag": "southern_envoy_arrived"}]
+      },
+      {
+        "id": "winter-armistice",
+        "type": "ending",
+        "trigger": {"year": 12, "month": 12},
+        "name": "Winter Armistice",
+        "description": "Snow closes the roads and forces each court to count its true allies.",
+        "effects": [{"type": "set_flag", "flag": "winter_armistice_signed"}]
+      }
+    ]
+  }
+}
