@@ -112,6 +112,34 @@ def fixed_random_seed():
     yield
 
 @pytest.fixture(autouse=True)
+def reset_active_scenario_runtime_state():
+    """
+    Reset runtime.active_scenario + active_scenario_explicit between tests.
+
+    Production code in src/server/services/game_lifecycle.py mutates these on
+    game start (sets active_scenario_explicit=True). Since runtime is a
+    module-level singleton, the mutation leaks across tests and breaks tests
+    that rely on the get_active_scenario() module-level fallback path
+    (e.g. tests using `monkeypatch.setattr(server_main, "ACTIVE_SCENARIO", ...)`).
+
+    monkeypatch can't catch the production mutation, so we reset explicitly.
+    """
+    try:
+        from src.server.main import runtime
+    except Exception:
+        yield
+        return
+
+    saved_active = getattr(runtime, "active_scenario", None)
+    saved_explicit = getattr(runtime, "active_scenario_explicit", False)
+
+    yield
+
+    runtime.active_scenario = saved_active
+    runtime.active_scenario_explicit = saved_explicit
+
+
+@pytest.fixture(autouse=True)
 def force_chinese_language():
     """
     Reset language around each test so global i18n state does not leak across tests.

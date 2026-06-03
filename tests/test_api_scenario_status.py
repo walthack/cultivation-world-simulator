@@ -78,6 +78,7 @@ def _client_for_status(builder):
             build_dynasty_overview=noop,
             build_dynasty_detail=noop,
             build_scenario_status=builder,
+            build_installed_scenarios=lambda: {"scenarios": []},
             build_avatar_overview=noop,
             build_saves=noop,
             build_detail=lambda **_kwargs: {},
