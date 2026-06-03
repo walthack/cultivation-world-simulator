@@ -1,12 +1,22 @@
 from __future__ import annotations
 
+from email import policy
+from email.parser import BytesParser
 from typing import Callable, Literal, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from src.config import RunConfig
-from src.server.services.public_api_contract import ok_response
+from src.server.services import scenario_state
+from src.server.services.public_api_contract import ok_response, raise_public_error
+from src.server.services.scenario_import import (
+    MAX_UPLOAD_BYTES,
+    ScenarioImportError,
+    import_scenario_zip,
+    remove_installed_scenario,
+)
+from src.server.services.scenario_registry import list_installed_scenarios
 
 
 class GameStartRequest(RunConfig):
@@ -122,6 +132,62 @@ class RoleplayConversationSendRequest(BaseModel):
 class RoleplayConversationEndRequest(BaseModel):
     avatar_id: str
     request_id: str
+
+
+class ScenarioRemoveRequest(BaseModel):
+    scenario_id: str
+
+
+class ScenarioSetEnabledRequest(BaseModel):
+    scenario_id: str
+    enabled: bool
+
+
+async def _read_capped_body(request: Request, max_size: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in request.stream():
+        total += len(chunk)
+        if total > max_size:
+            raise_public_error(
+                status_code=413,
+                code="scenario_import_upload_too_large",
+                message=f"Scenario upload exceeds {max_size} bytes",
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _extract_single_file_from_multipart(content_type: str, body: bytes) -> bytes:
+    if "multipart/form-data" not in content_type.lower():
+        raise_public_error(
+            status_code=400,
+            code="scenario_import_expected_multipart",
+            message="Scenario import expects multipart/form-data",
+        )
+    raw_message = (
+        f"Content-Type: {content_type}\r\n"
+        "MIME-Version: 1.0\r\n\r\n"
+    ).encode("utf-8") + body
+    message = BytesParser(policy=policy.default).parsebytes(raw_message)
+    files: list[bytes] = []
+    for part in message.iter_parts():
+        disposition = part.get_content_disposition()
+        if disposition != "form-data":
+            continue
+        params = dict(part.get_params(header="content-disposition", failobj=[]))
+        if params.get("name") != "file":
+            continue
+        payload = part.get_payload(decode=True)
+        if payload is not None:
+            files.append(payload)
+    if len(files) != 1:
+        raise_public_error(
+            status_code=400,
+            code="scenario_import_file_field_required",
+            message="Scenario import requires exactly one file field",
+        )
+    return files[0]
 
 
 def create_public_command_router(
@@ -291,5 +357,52 @@ def create_public_command_router(
                 request_id=req.request_id,
             )
         )
+
+    @router.post("/api/v1/command/scenario/import")
+    async def import_scenario_v1(request: Request, force: bool = False, rename_to: str | None = None):
+        body = await _read_capped_body(request, MAX_UPLOAD_BYTES)
+        zip_bytes = _extract_single_file_from_multipart(
+            request.headers.get("content-type", ""),
+            body,
+        )
+        try:
+            result = import_scenario_zip(
+                zip_bytes,
+                max_size=MAX_UPLOAD_BYTES,
+                force=force,
+                rename_to=rename_to,
+            )
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
+        return ok_response(result.model_dump())
+
+    @router.post("/api/v1/command/scenario/remove")
+    def remove_scenario_v1(req: ScenarioRemoveRequest):
+        try:
+            return ok_response(remove_installed_scenario(req.scenario_id))
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
+
+    @router.post("/api/v1/command/scenario/set-enabled")
+    def set_scenario_enabled_v1(req: ScenarioSetEnabledRequest):
+        scenario_ids = {scenario.id for scenario in list_installed_scenarios()}
+        if req.scenario_id not in scenario_ids:
+            raise_public_error(
+                status_code=404,
+                code="scenario_state_not_found",
+                message=f"Scenario {req.scenario_id!r} was not found",
+                details={"scenario_id": req.scenario_id},
+            )
+        return ok_response(scenario_state.set_enabled(req.scenario_id, req.enabled))
 
     return router
