@@ -17,6 +17,7 @@ from src.classes.environment.map import Map
 from src.classes.environment.tile import TileType
 from src.classes.root import Root
 from src.scenario.injector import inject_scenario_into_world
+from src.scenario.event_dispatcher import EventDispatcher
 from src.scenario.scenario_loader import load
 from src.scenario.state import ScriptedScenarioState
 from src.server.runtime import GameSessionRuntime, create_default_game_state
@@ -95,6 +96,39 @@ async def test_liuchao_opening_fires_on_year_1_month_1(mock_llm_managers):
 
     assert "liuchao-opening" in [event.id for event in events]
     assert "liuchao-opening" in world.scripted_scenario.triggered_events
+
+
+@pytest.mark.asyncio
+async def test_server_scenario_world_uses_initial_state_start_time_without_manual_pin(
+    mock_llm_managers,
+    monkeypatch,
+    tmp_path,
+):
+    from src.server import main as server_main
+
+    game_map = Map(width=4, height=4)
+    for x in range(4):
+        for y in range(4):
+            game_map.create_tile(x, y, TileType.PLAIN)
+
+    monkeypatch.setattr(server_main, "ACTIVE_SCENARIO", load("liuchao"))
+    world = server_main.ScenarioInjectedWorld.create_with_db(
+        map=game_map,
+        month_stamp=create_month_stamp(Year(100), Month.JANUARY),
+        events_db_path=tmp_path / "events.db",
+        start_year=100,
+    )
+
+    month_stamp = world.month_stamp
+    dispatched = await EventDispatcher(world.scripted_scenario.timeline).dispatch_month(
+        {"world": world, "scenario_runtime": {"triggered_event_ids": []}},
+        year=int(month_stamp.get_year()),
+        month=int(month_stamp.get_month().value),
+    )
+
+    assert int(world.month_stamp.get_year()) == 1
+    assert int(world.month_stamp.get_month().value) == 1
+    assert "liuchao-opening" in [event["id"] for event in dispatched]
 
 
 @pytest.mark.asyncio
