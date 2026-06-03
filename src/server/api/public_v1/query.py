@@ -1,10 +1,54 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 
 from src.server.services.public_api_contract import ok_response
+
+
+class ScenarioTimelineEventTriggerDTO(BaseModel):
+    year: int | None = None
+    month: int | None = None
+
+
+class ScenarioTimelineEventDTO(BaseModel):
+    id: str
+    name: str
+    type: str
+    trigger: ScenarioTimelineEventTriggerDTO
+    dynasty_id: str | None = None
+    at_region_id: str | None = None
+    triggered: bool
+    triggered_month_stamp: str | None = None
+
+
+class ScenarioTimelineDTO(BaseModel):
+    total_events: int
+    triggered_count: int
+    events: list[ScenarioTimelineEventDTO]
+
+
+class InactiveScenarioStatusDTO(BaseModel):
+    active: bool
+
+
+class ActiveScenarioStatusDTO(BaseModel):
+    active: bool
+    scenario_id: str
+    title: str
+    version: str
+    world_background: str
+    preset_id: str
+    controlled_avatar: str | None = None
+    timeline: ScenarioTimelineDTO
+    world_flags: dict[str, Any]
+
+
+class ScenarioStatusResponseDTO(BaseModel):
+    ok: bool
+    data: ActiveScenarioStatusDTO | InactiveScenarioStatusDTO
 
 
 def create_public_query_router(
@@ -25,6 +69,7 @@ def create_public_query_router(
     build_mortal_overview: Callable[[], dict],
     build_dynasty_overview: Callable[[], dict],
     build_dynasty_detail: Callable[[], dict],
+    build_scenario_status: Callable[[], dict],
     build_avatar_overview: Callable[[], dict],
     build_saves: Callable[[], dict],
     build_detail: Callable[..., dict],
@@ -114,6 +159,14 @@ def create_public_query_router(
     @router.get("/api/v1/query/dynasty/detail")
     def get_dynasty_detail_v1():
         return ok_response(build_dynasty_detail())
+
+    @router.get(
+        "/api/v1/query/scenario/status",
+        response_model=ScenarioStatusResponseDTO,
+        response_model_exclude_none=True,
+    )
+    def get_scenario_status_v1():
+        return ok_response(build_scenario_status())
 
     @router.get("/api/v1/query/avatars/overview")
     def get_avatar_overview_v1():

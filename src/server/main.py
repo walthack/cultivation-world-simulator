@@ -20,6 +20,7 @@ from src.server.assemblers.sect_detail import build_sect_detail
 from src.server.assemblers.mortal_overview import build_mortal_overview
 from src.server.assemblers.dynasty_detail import build_dynasty_detail
 from src.server.assemblers.dynasty_overview import build_dynasty_overview
+from src.server.assemblers.scenario_status import build_scenario_status
 from src.server.services.avatar_adjustment import apply_avatar_adjustment, build_avatar_adjust_options
 from src.server.services.avatar_control import (
     clear_long_term_objective_for_avatar,
@@ -201,6 +202,10 @@ ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
 ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
 
 
+def get_active_scenario():
+    return ACTIVE_SCENARIO
+
+
 class ScenarioInjectedWorld:
     @staticmethod
     def _apply_scenario_start_time(kwargs):
@@ -332,6 +337,8 @@ public_query_builders = create_public_query_builders(
     build_dynasty_overview=build_dynasty_overview,
     get_dynasty_detail_query=get_dynasty_detail_query,
     build_dynasty_detail=build_dynasty_detail,
+    build_scenario_status=build_scenario_status,
+    get_active_scenario=get_active_scenario,
     get_avatar_overview_query=get_avatar_overview_query,
     get_deceased_list_query=get_deceased_list,
     get_roleplay_session_query=get_roleplay_session_query,
@@ -355,6 +362,7 @@ build_public_sect_relations = public_query_builders.build_public_sect_relations
 build_public_mortal_overview = public_query_builders.build_public_mortal_overview
 build_public_dynasty_overview = public_query_builders.build_public_dynasty_overview
 build_public_dynasty_detail = public_query_builders.build_public_dynasty_detail
+build_public_scenario_status = public_query_builders.build_public_scenario_status
 build_public_avatar_overview = public_query_builders.build_public_avatar_overview
 build_public_deceased_list = public_query_builders.build_public_deceased_list
 build_public_roleplay_session = public_query_builders.build_public_roleplay_session
@@ -686,6 +694,7 @@ configure_routes_and_mounts(
     build_mortal_overview=build_public_mortal_overview,
     build_dynasty_overview=build_public_dynasty_overview,
     build_dynasty_detail=build_public_dynasty_detail,
+    build_scenario_status=build_public_scenario_status,
     build_avatar_overview=build_public_avatar_overview,
     build_saves=build_public_saves,
     build_detail=build_public_detail,
