@@ -202,8 +202,30 @@ ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID
 
 
 class ScenarioInjectedWorld:
+    @staticmethod
+    def _apply_scenario_start_time(kwargs):
+        if ACTIVE_SCENARIO is None:
+            return kwargs
+
+        initial_state = ACTIVE_SCENARIO.scenario.get("initial_state", {}) or {}
+        year = initial_state.get("year")
+        month = initial_state.get("month")
+        if year is None or month is None:
+            return kwargs
+
+        try:
+            scenario_year = int(year)
+            scenario_month = Month(int(month))
+        except (TypeError, ValueError):
+            return kwargs
+
+        kwargs["month_stamp"] = create_month_stamp(Year(scenario_year), scenario_month)
+        kwargs["start_year"] = scenario_year
+        return kwargs
+
     @classmethod
     def create_with_db(cls, *args, **kwargs):
+        kwargs = cls._apply_scenario_start_time(dict(kwargs))
         world = World.create_with_db(*args, **kwargs)
         if ACTIVE_SCENARIO is not None:
             inject_scenario_into_world(world, ACTIVE_SCENARIO)
