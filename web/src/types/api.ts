@@ -563,6 +563,50 @@ export interface DynastyDetailResponseDTO {
   officials: DynastyOfficialDTO[];
 }
 
+// --- Scenario ---
+
+export interface ScenarioTimelineEventTriggerDTO {
+  year: number | null;
+  month: number | null;
+}
+
+export interface ScenarioTimelineEventDTO {
+  id: string;
+  name: string;
+  type: string;
+  trigger: ScenarioTimelineEventTriggerDTO;
+  dynasty_id: string | null;
+  at_region_id: string | null;
+  triggered: boolean;
+  triggered_month_stamp?: string;
+}
+
+export interface ScenarioTimelineDTO {
+  total_events: number;
+  triggered_count: number;
+  events: ScenarioTimelineEventDTO[];
+}
+
+export interface InactiveScenarioStatusResponseDTO {
+  active: false;
+}
+
+export interface ActiveScenarioStatusResponseDTO {
+  active: true;
+  scenario_id: string;
+  title: string;
+  version: string;
+  world_background: string;
+  preset_id: string;
+  controlled_avatar: string | null;
+  timeline: ScenarioTimelineDTO;
+  world_flags: Record<string, unknown>;
+}
+
+export type ScenarioStatusResponseDTO =
+  | InactiveScenarioStatusResponseDTO
+  | ActiveScenarioStatusResponseDTO;
+
 // --- Deceased Characters ---
 
 export interface DeceasedRecordDTO {
@@ -623,6 +667,11 @@ export interface GameReinitializedSocketMessage {
   message?: string;
 }
 
+export interface ScenarioEventSocketMessage {
+  type: 'scenario_event';
+  event_id?: string;
+}
+
 export interface PongSocketMessage {
   type: 'pong';
 }
@@ -631,6 +680,7 @@ export type SocketMessageDTO =
   | TickPayloadDTO
   | ToastSocketMessage
   | LLMConfigRequiredSocketMessage
-  | GameReinitializedSocketMessage;
+  | GameReinitializedSocketMessage
+  | ScenarioEventSocketMessage;
 
 export type SocketServerMessageDTO = SocketMessageDTO | PongSocketMessage;

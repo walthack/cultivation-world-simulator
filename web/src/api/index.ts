@@ -4,6 +4,7 @@ export { avatarApi, type HoverParams } from './modules/avatar';
 export { systemApi } from './modules/system';
 export { llmApi } from './modules/llm';
 export { eventApi } from './modules/event';
+export { scenarioApi } from './modules/scenario';
 
 export type { 
   AppSettingsDTO,
@@ -23,5 +24,6 @@ export type {
   EventDTO,
   EventsResponseDTO,
   SectTerritoriesResponseDTO,
-  DynastyOverviewResponseDTO
+  DynastyOverviewResponseDTO,
+  ScenarioStatusResponseDTO
 } from '../types/api';
