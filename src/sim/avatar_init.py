@@ -1,4 +1,5 @@
 import random
+import zlib
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Tuple, Union
 
@@ -23,9 +24,19 @@ from src.classes.persona import Persona, personas_by_id, personas_by_name
 from src.classes.items.magic_stone import MagicStone
 from src.classes.death_reason import DeathReason, DeathType
 from src.classes.official_rank import OFFICIAL_NONE, resolve_rank_changes
+from src.classes.long_term_objective import LongTermObjective
 from src.classes.relation.relations import set_friendliness
 from src.utils.born_region import get_born_region_id
 from src.classes.race import Race, get_race, roll_avatar_race
+from src.config.presets import (
+    get_active_preset_id,
+    get_preset_goldfinger_keys,
+    get_preset_persona_keys,
+    get_preset_realm_order,
+    get_preset_sect_ids,
+    get_preset_stage_order,
+)
+from src.classes.rarity import get_rarity_from_str
 
 
 # —— 参数常量（便于调参）——
@@ -1460,3 +1471,211 @@ def create_avatar_from_request(
                 _apply_structural_initial_friendliness(avatar, target, rel_enum)
 
     return avatar
+
+
+def _scenario_synthetic_id(namespace: str, preset_id: str, key: str) -> int:
+    seed = f"{namespace}:{preset_id}:{key}".encode("utf-8")
+    return -int(zlib.crc32(seed))
+
+
+def _resolve_scenario_persona(raw_value: object, *, preset_id: str, avatar_id: str) -> Persona:
+    key = str(raw_value or "").strip()
+    if not key:
+        raise ValueError(f"Scenario avatar {avatar_id} has empty persona_traits entry")
+    if key.upper() not in get_preset_persona_keys(preset_id):
+        raise ValueError(
+            f"Scenario avatar {avatar_id} persona_traits references unknown persona: {key}"
+        )
+
+    for persona in personas_by_id.values():
+        if str(getattr(persona, "key", "")).upper() == key.upper() or persona.name == key:
+            return persona
+    if key in personas_by_name:
+        return personas_by_name[key]
+
+    persona_id = _scenario_synthetic_id("scenario-persona", preset_id, key)
+    persona = Persona(
+        id=persona_id,
+        key=key.upper(),
+        name=key,
+        desc="",
+        exclusion_keys=[],
+        rarity=get_rarity_from_str("N"),
+        condition="",
+        effects={},
+        effect_desc="",
+    )
+    personas_by_id[persona.id] = persona
+    personas_by_name[persona.name] = persona
+    return persona
+
+
+def _resolve_scenario_goldfinger(raw_value: object, *, preset_id: str, avatar_id: str) -> Goldfinger:
+    key = str(raw_value or "").strip()
+    if not key:
+        raise ValueError(f"Scenario avatar {avatar_id} has empty goldfinger_id")
+    if key.upper() not in get_preset_goldfinger_keys(preset_id):
+        raise ValueError(
+            f"Scenario avatar {avatar_id} goldfinger_id references unknown goldfinger: {key}"
+        )
+
+    from src.classes.goldfinger import goldfingers_by_id, goldfingers_by_name
+
+    for goldfinger in goldfingers_by_id.values():
+        if str(getattr(goldfinger, "key", "")).upper() == key.upper() or goldfinger.name == key:
+            return goldfinger
+    if key in goldfingers_by_name:
+        return goldfingers_by_name[key]
+
+    goldfinger_id = _scenario_synthetic_id("scenario-goldfinger", preset_id, key)
+    goldfinger = Goldfinger(
+        id=goldfinger_id,
+        key=key.upper(),
+        name=key,
+        desc="",
+        exclusion_keys=[],
+        rarity=get_rarity_from_str("N"),
+        condition="",
+        effects={},
+        mechanism_type="effect_only",
+        story_prompt="",
+        mechanism_config={},
+        effect_desc="",
+    )
+    goldfingers_by_id[goldfinger.id] = goldfinger
+    goldfingers_by_name[goldfinger.name] = goldfinger
+    return goldfinger
+
+
+def _validate_scenario_realm(raw_value: object, *, preset_id: str, avatar_id: str) -> None:
+    realm_id = str(raw_value or "").strip()
+    if not realm_id:
+        raise ValueError(f"Scenario avatar {avatar_id} has empty realm")
+    known_realms = {str(item).upper() for item in get_preset_realm_order(preset_id)}
+    if realm_id.upper() not in known_realms:
+        raise ValueError(f"Scenario avatar {avatar_id} realm references unknown realm: {realm_id}")
+
+
+def _validate_scenario_stage(raw_value: object, *, preset_id: str, avatar_id: str) -> None:
+    stage_id = str(raw_value or "").strip()
+    if not stage_id:
+        raise ValueError(f"Scenario avatar {avatar_id} has empty stage")
+    known_stages = {str(item).upper() for item in get_preset_stage_order(preset_id)}
+    if stage_id.upper() not in known_stages:
+        raise ValueError(f"Scenario avatar {avatar_id} stage references unknown stage: {stage_id}")
+
+
+def _resolve_scenario_sect(raw_value: object, *, preset_id: str, avatar_id: str) -> Sect | None:
+    if raw_value is None:
+        return None
+    try:
+        sect_id = int(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Scenario avatar {avatar_id} sect_id is invalid: {raw_value}") from exc
+    if sect_id not in get_preset_sect_ids(preset_id):
+        raise ValueError(f"Scenario avatar {avatar_id} sect_id references unknown sect: {sect_id}")
+    if sect_id == 0:
+        return None
+    sect = sects_by_id.get(sect_id)
+    if sect is None:
+        raise ValueError(f"Scenario avatar {avatar_id} sect_id is not loaded: {sect_id}")
+    return sect
+
+
+def create_scenario_avatar(
+    world: World,
+    scenario_avatar: dict,
+    current_month_stamp: MonthStamp,
+    *,
+    preset_id: str | None = None,
+) -> Avatar:
+    avatar_id = str(scenario_avatar.get("id") or "").strip()
+    if not avatar_id:
+        raise ValueError(f"Scenario avatar missing id: {scenario_avatar}")
+
+    preset_id = preset_id or get_active_preset_id()
+    _validate_scenario_realm(scenario_avatar.get("realm"), preset_id=preset_id, avatar_id=avatar_id)
+    _validate_scenario_stage(scenario_avatar.get("stage"), preset_id=preset_id, avatar_id=avatar_id)
+
+    sect = _resolve_scenario_sect(
+        scenario_avatar.get("sect_id"),
+        preset_id=preset_id,
+        avatar_id=avatar_id,
+    )
+    personas = [
+        _resolve_scenario_persona(item, preset_id=preset_id, avatar_id=avatar_id)
+        for item in list(scenario_avatar.get("persona_traits", []) or [])
+    ]
+    goldfinger = _resolve_scenario_goldfinger(
+        scenario_avatar.get("goldfinger_id"),
+        preset_id=preset_id,
+        avatar_id=avatar_id,
+    )
+
+    gender = _parse_gender(scenario_avatar.get("gender"))
+    if gender is None:
+        raise ValueError(
+            f"Scenario avatar {avatar_id} gender is invalid: {scenario_avatar.get('gender')}"
+        )
+
+    level = int(scenario_avatar.get("level", LEVEL_MIN) or LEVEL_MIN)
+    level = max(LEVEL_MIN, min(LEVEL_MAX, level))
+    cultivation_progress = CultivationProgress(level)
+    age = Age(
+        max(AGE_MIN, int(scenario_avatar.get("age", AGE_MIN) or AGE_MIN)),
+        cultivation_progress.realm,
+        innate_max_lifespan=_create_random_innate_lifespan(),
+    )
+    name = str(scenario_avatar.get("name") or "").strip()
+    if not name:
+        name = f"{scenario_avatar.get('surname', '')}{scenario_avatar.get('given_name', '')}"
+    if not name:
+        raise ValueError(f"Scenario avatar {avatar_id} missing name fields")
+
+    avatar = Avatar(
+        world=world,
+        name=name,
+        id=avatar_id,
+        birth_month_stamp=current_month_stamp,
+        age=age,
+        gender=gender,
+        cultivation_progress=cultivation_progress,
+        root=Root.GOLD,
+        personas=personas,
+        goldfinger=goldfinger,
+        sect=sect,
+    )
+    avatar.goldfinger_state = {}
+    avatar.backstory = str(scenario_avatar.get("backstory") or "")
+    objective = str(scenario_avatar.get("long_term_objective") or "").strip()
+    if objective:
+        avatar.long_term_objective = LongTermObjective(
+            content=objective,
+            origin="user",
+            set_year=int(current_month_stamp.get_year()),
+        )
+    avatar.base_appearance = get_appearance_by_level(5)
+    avatar.recalc_effects()
+    return avatar
+
+
+def prepare_scenario_avatar_references(resolved_scenario: object) -> None:
+    preset_id = str(getattr(resolved_scenario, "preset_id", "") or get_active_preset_id())
+    scenario = getattr(resolved_scenario, "scenario", {}) or {}
+    initial = scenario.get("initial_state", {}) or {}
+    for scenario_avatar in list(initial.get("avatars", []) or []):
+        avatar_id = str(scenario_avatar.get("id") or "").strip() or "<missing>"
+        _validate_scenario_realm(scenario_avatar.get("realm"), preset_id=preset_id, avatar_id=avatar_id)
+        _validate_scenario_stage(scenario_avatar.get("stage"), preset_id=preset_id, avatar_id=avatar_id)
+        _resolve_scenario_sect(
+            scenario_avatar.get("sect_id"),
+            preset_id=preset_id,
+            avatar_id=avatar_id,
+        )
+        for item in list(scenario_avatar.get("persona_traits", []) or []):
+            _resolve_scenario_persona(item, preset_id=preset_id, avatar_id=avatar_id)
+        _resolve_scenario_goldfinger(
+            scenario_avatar.get("goldfinger_id"),
+            preset_id=preset_id,
+            avatar_id=avatar_id,
+        )
