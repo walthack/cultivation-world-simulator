@@ -40,6 +40,7 @@ export const useSettingStore = defineStore('setting', () => {
     sect_num: 3,
     npc_awakening_rate_per_month: 0.01,
     world_lore: '',
+    scenario_id: null,
   });
 
   const isReady = computed(() => hydrated.value && !loading.value);
@@ -50,7 +51,10 @@ export const useSettingStore = defineStore('setting', () => {
     sfxVolume.value = settings.ui.audio.sfx_volume;
     isAutoSave.value = settings.simulation.auto_save_enabled;
     maxAutoSaves.value = settings.simulation.max_auto_saves;
-    newGameDraft.value = { ...settings.new_game_defaults };
+    newGameDraft.value = {
+      ...settings.new_game_defaults,
+      scenario_id: newGameDraft.value.scenario_id ?? null,
+    };
     applyUiLocale(locale.value);
   }
 
@@ -170,11 +174,17 @@ export const useSettingStore = defineStore('setting', () => {
   async function saveNewGameDefaults() {
     const payload = { ...newGameDraft.value };
     newGameDraft.value = payload;
+    const { scenario_id, ...newGameDefaults } = payload;
+    void scenario_id;
     try {
       const settings = await systemApi.patchSettings({
-        new_game_defaults: payload,
+        new_game_defaults: newGameDefaults,
       });
       applySettings(settings);
+      newGameDraft.value = {
+        ...newGameDraft.value,
+        scenario_id: payload.scenario_id ?? null,
+      };
       return true;
     } catch (e) {
       logWarn('SettingStore save new game defaults', e);
@@ -183,11 +193,12 @@ export const useSettingStore = defineStore('setting', () => {
   }
 
   async function startGameWithDraft() {
+    const scenarioId = newGameDraft.value.scenario_id ?? null;
     const saved = await saveNewGameDefaults();
     if (!saved) {
       throw new Error(i18n.global.t('ui.new_game_defaults_save_failed'));
     }
-    return systemApi.startGame({ ...newGameDraft.value });
+    return systemApi.startGame({ ...newGameDraft.value, scenario_id: scenarioId });
   }
 
   return {

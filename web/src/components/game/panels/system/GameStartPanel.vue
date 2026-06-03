@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { NForm, NFormItem, NInputNumber, NButton, NInput, useMessage } from 'naive-ui'
+import { computed, onMounted, ref } from 'vue'
+import { NForm, NFormItem, NInputNumber, NButton, NInput, NSelect, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 
+import ScenarioBrowserModal from './ScenarioBrowserModal.vue'
+import { useScenarioBrowserModal } from '@/composables/useScenarioBrowserModal'
+import { useScenarioStore } from '@/stores/scenario'
 import { useSettingStore } from '@/stores/setting'
 import { logError } from '@/utils/appError'
 
 const { t } = useI18n()
 const settingStore = useSettingStore()
+const scenarioStore = useScenarioStore()
+const {
+  showScenarioBrowser,
+  openScenarioBrowser,
+  selectScenario,
+} = useScenarioBrowserModal()
 
 defineProps<{
   readonly: boolean
@@ -15,6 +24,29 @@ defineProps<{
 
 const message = useMessage()
 const loading = ref(false)
+
+const scenarioOptions = computed(() => [
+  { label: '默认游戏（无 scenario）', value: 'default' },
+  ...scenarioStore.installedScenarios.map((scenario) => ({
+    label: `${scenario.name} v${scenario.version}`,
+    value: scenario.id,
+  })),
+])
+
+const selectedScenarioValue = computed(() => settingStore.newGameDraft.scenario_id ?? 'default')
+
+function updateScenarioId(value: string | null) {
+  settingStore.updateNewGameDraft({ scenario_id: value ?? 'default' })
+}
+
+function selectScenarioFromBrowser(scenarioId: string) {
+  selectScenario(scenarioId)
+  settingStore.updateNewGameDraft({ scenario_id: scenarioId })
+}
+
+function updateScenarioBrowserShow(value: boolean) {
+  showScenarioBrowser.value = value
+}
 
 async function startGame() {
   try {
@@ -27,6 +59,10 @@ async function startGame() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  void scenarioStore.fetchInstalledScenarios()
+})
 </script>
 
 <template>
@@ -63,6 +99,24 @@ async function startGame() {
         {{ t('game_start.tips.sect_num') }}
       </div>
 
+      <n-form-item label="Scenario" path="scenario_id">
+        <div class="scenario-picker">
+          <n-select
+            :value="selectedScenarioValue"
+            :options="scenarioOptions"
+            @update:value="updateScenarioId"
+          />
+          <n-button
+            text
+            type="primary"
+            size="small"
+            @click="openScenarioBrowser"
+          >
+            Browse
+          </n-button>
+        </div>
+      </n-form-item>
+
       <n-form-item :label="t('game_start.labels.new_npc_rate')" path="npc_awakening_rate_per_month">
         <n-input-number
           :value="settingStore.newGameDraft.npc_awakening_rate_per_month"
@@ -93,6 +147,12 @@ async function startGame() {
         </n-button>
       </div>
     </n-form>
+
+    <ScenarioBrowserModal
+      :show="showScenarioBrowser"
+      @update:show="updateScenarioBrowserShow"
+      @select="selectScenarioFromBrowser"
+    />
   </div>
 </template>
 
@@ -119,6 +179,14 @@ async function startGame() {
   color: #aaa;
   font-size: 0.85em;
   line-height: 1.5;
+}
+
+.scenario-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
 }
 
 .actions {
