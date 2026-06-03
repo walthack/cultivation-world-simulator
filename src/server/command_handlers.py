@@ -17,6 +17,7 @@ def create_command_handlers(
     get_init_game_async,
     get_apply_runtime_content_locale,
     scan_avatar_assets,
+    resolve_scenario_for_start,
     start_game_lifecycle,
     reinit_game_lifecycle,
     cleanup_events_command,
@@ -65,10 +66,14 @@ def create_command_handlers(
     end_roleplay_conversation,
 ):
     async def run_start_game(req) -> dict:
-        run_config = RunConfig(**model_to_dict(req))
+        payload = model_to_dict(req)
+        payload.pop("scenario_id", None)
+        run_config = RunConfig(**payload)
+        active_scenario = resolve_scenario_for_start(req)
         return await start_game_lifecycle(
             runtime,
             run_config=run_config,
+            active_scenario=active_scenario,
             apply_runtime_content_locale=get_apply_runtime_content_locale(),
             init_game_async=get_init_game_async(),
         )
