@@ -401,6 +401,7 @@ async def init_game_async():
         sects_by_id=sects_by_id,
         make_random_avatars=_new_make_random,
         check_llm_connectivity=check_llm_connectivity,
+        get_active_scenario=get_active_scenario,
     )
 
 
@@ -513,7 +514,9 @@ command_handlers = create_command_handlers(
     get_config=get_current_config,
     get_fallback_saves_dirs=get_fallback_saves_dirs,
     get_load_game_into_runtime=lambda: load_game_into_runtime,
-    get_load_game=lambda: load_game,
+    get_load_game=lambda: (
+        lambda save_path=None: load_game(save_path, active_scenario_id=ACTIVE_SCENARIO_ID)
+    ),
     get_events_db_path=get_events_db_path,
     get_roleplay_session=get_roleplay_session_query,
     clear_roleplay_session=clear_roleplay_session_service,
