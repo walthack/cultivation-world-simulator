@@ -574,10 +574,31 @@ export interface InstalledScenarioMeta {
   description: string;
   tags: string[];
   cover_image?: string | null;
+  source: 'bundled' | 'installed';
+  enabled: boolean;
 }
 
 export interface InstalledScenariosResponseDTO {
   scenarios: InstalledScenarioMeta[];
+}
+
+export interface ImportResult {
+  status: string;
+  scenario_id: string | null;
+  name: string | null;
+  version: string | null;
+  source: 'installed';
+  enabled: boolean;
+  warnings: string[];
+  conflict?: {
+    scenario_id?: string;
+    actions?: string[];
+  } | null;
+}
+
+export interface ScenarioStateUpdate {
+  scenario_id: string;
+  enabled: boolean;
 }
 
 export interface ScenarioTimelineEventTriggerDTO {

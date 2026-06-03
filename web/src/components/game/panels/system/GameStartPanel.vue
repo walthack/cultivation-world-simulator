@@ -27,10 +27,12 @@ const loading = ref(false)
 
 const scenarioOptions = computed(() => [
   { label: '默认游戏（无 scenario）', value: 'default' },
-  ...scenarioStore.installedScenarios.map((scenario) => ({
-    label: `${scenario.name} v${scenario.version}`,
-    value: scenario.id,
-  })),
+  ...scenarioStore.installedScenarios
+    .filter((scenario) => scenario.enabled)
+    .map((scenario) => ({
+      label: `${scenario.name} v${scenario.version}`,
+      value: scenario.id,
+    })),
 ])
 
 const selectedScenarioValue = computed(() => settingStore.newGameDraft.scenario_id ?? 'default')
