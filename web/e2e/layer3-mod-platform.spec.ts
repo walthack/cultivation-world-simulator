@@ -4,17 +4,16 @@
  * 御主 2026-06-04 09:35 SGT mandate: 80-90% automated test of mod platform's
  * Python gate.
  *
- * STATUS — first live-run pass (2026-06-04):
- *   - 2/6 PASS: API-level assertions (Python predicate NOT registered when
- *     toggle OFF; toggle OFF returns badge to disabled). These are the CORE
- *     safety invariants and they hold.
- *   - 4/6 FAIL: UI-level assertions need DOM iteration. Selectors based on
+ * STATUS — first live-run pass (2026-06-04, revised):
+ *   - API-level assertions PASS: gate state is observable via
+ *     /api/v1/query/mods/extensions-active, whose payload is
+ *     { extensions: Array<{kind, name, active, inert, ...}> }.
+ *   - UI-level assertions need DOM iteration. Selectors based on
  *     blind Vue source read; live DOM differs.
- *   - DISCOVERED v1.0 LIMITATION: toggling allow_trusted_python_mods=true
- *     does NOT hot-reload mod Python hooks. The setting is persisted but
- *     mod_loader.load_enabled_mods() only runs at server boot. To activate
- *     Python hooks after toggle ON, user must restart the server. This is
- *     captured in docs/release-verification-report.md as a v1.1 backlog.
+ *   - PRIOR "hot-reload limitation" claim retracted: the gate toggle DOES
+ *     hot-reload via sync_advanced_runtime_control → load_enabled_mods. The
+ *     earlier API assertions read a non-existent `data.predicates` shape and
+ *     therefore showed nothing changing.
  *
  * Prerequisites (UPDATED — must install via API, not just copy folder):
  *   - Dev server running on http://localhost:5173 (vite) with backend at :8002
@@ -128,17 +127,20 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
     expect(active.ok).toBe(true)
   })
 
-  test('default OFF — API confirms Python predicate not registered to engine', async ({}) => {
+  test('default OFF — API reports sample_predicate as inert (gate blocking)', async ({}) => {
     // Custom predicate `sample_predicate` from sample-overhaul/rules/predicates.py
-    // must NOT be in the active extensions list when toggle is OFF.
-    const active = await api<{ ok: boolean; data: { predicates?: string[]; rules?: any } }>(
+    // is declared so it appears in the extensions list, but with active=false
+    // and inert=true when the gate is OFF.
+    type ExtensionDTO = { kind: string; name: string; active: boolean; inert: boolean }
+    const active = await api<{ ok: boolean; data: { extensions: ExtensionDTO[] } }>(
       '/api/v1/query/mods/extensions-active',
     )
-    const predicateNames: string[] =
-      active.data?.predicates ||
-      active.data?.rules?.predicates ||
-      []
-    expect(predicateNames).not.toContain('sample_predicate')
+    const samplePred = active.data.extensions.find(
+      (e) => e.kind === 'predicate' && e.name === 'sample_predicate',
+    )
+    expect(samplePred, 'sample_predicate extension must be declared').toBeDefined()
+    expect(samplePred!.active).toBe(false)
+    expect(samplePred!.inert).toBe(true)
   })
 
   test('toggle ON shows trust warning modal then enables Python hooks badge', async ({ page }) => {
@@ -187,19 +189,22 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
     await expect(page.getByText(/Python hooks: enabled/i).first()).toBeVisible({ timeout: 10000 })
   })
 
-  test('toggle ON — API confirms sample_predicate registered to engine', async ({}) => {
+  test('toggle ON — API reports sample_predicate as active (gate released)', async ({}) => {
     await setAdvancedPythonMods(true)
-    // Need a brief moment for mod_loader to register (server-side mod reload)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // PATCH path runs sync_advanced_runtime_control which re-runs load_enabled_mods
+    // synchronously; small wait is defensive for HTTP round-trip ordering only.
+    await new Promise((resolve) => setTimeout(resolve, 200))
 
-    const active = await api<{ ok: boolean; data: { predicates?: string[]; rules?: any } }>(
+    type ExtensionDTO = { kind: string; name: string; active: boolean; inert: boolean }
+    const active = await api<{ ok: boolean; data: { extensions: ExtensionDTO[] } }>(
       '/api/v1/query/mods/extensions-active',
     )
-    const predicateNames: string[] =
-      active.data?.predicates ||
-      active.data?.rules?.predicates ||
-      []
-    expect(predicateNames).toContain('sample_predicate')
+    const samplePred = active.data.extensions.find(
+      (e) => e.kind === 'predicate' && e.name === 'sample_predicate',
+    )
+    expect(samplePred, 'sample_predicate extension must be declared').toBeDefined()
+    expect(samplePred!.active).toBe(true)
+    expect(samplePred!.inert).toBe(false)
   })
 
   test('toggle OFF after enabling — Python hooks badge returns to disabled', async ({ page }) => {
@@ -229,14 +234,16 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
       .click()
     await expect(page.getByText(/Python hooks: disabled/i).first()).toBeVisible({ timeout: 10000 })
 
-    // API confirms predicate de-registered
-    const active = await api<{ ok: boolean; data: { predicates?: string[]; rules?: any } }>(
+    // API confirms predicate de-registered (back to inert state)
+    type ExtensionDTO = { kind: string; name: string; active: boolean; inert: boolean }
+    const active = await api<{ ok: boolean; data: { extensions: ExtensionDTO[] } }>(
       '/api/v1/query/mods/extensions-active',
     )
-    const predicateNames: string[] =
-      active.data?.predicates ||
-      active.data?.rules?.predicates ||
-      []
-    expect(predicateNames).not.toContain('sample_predicate')
+    const samplePred = active.data.extensions.find(
+      (e) => e.kind === 'predicate' && e.name === 'sample_predicate',
+    )
+    expect(samplePred, 'sample_predicate extension must be declared').toBeDefined()
+    expect(samplePred!.active).toBe(false)
+    expect(samplePred!.inert).toBe(true)
   })
 })

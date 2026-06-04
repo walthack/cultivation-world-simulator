@@ -10,15 +10,15 @@
 |---|---|---|---|
 | **Layer 1** | Per-version RC | ✅ **PASS** | 1693 backend / 571 frontend vitest / 3 boot smoke green |
 | **Layer 2** | Stack integration | ✅ **PASS** | Dry-run merge clean; merged-state pytest identical |
-| **Layer 3** | Python gate Playwright | ⚠️ **PARTIAL** | 2/6 PASS (API-level safety invariants) / 4/6 UI selector iteration needed |
+| **Layer 3** | Python gate Playwright | ✅ **PASS (API)** / ⚠️ UI selector iteration | API shape assertions verify gate state via `data.extensions: [{kind,name,active,inert}]`; UI selectors still need live-DOM iteration |
 | **Layer 4A** | Scenario engine E2E | 🟡 **NOT RUN** | Awaits Layer 3 UI selector convergence |
 | **Layer 4 LLM** | LLM authoring opt | 🟡 **AUTO-SKIP** | No LLM key configured in test env (per design) |
 | **Layer 4B** | Manual visual | 🟡 **READY** | Checklist drafted; awaiting御主 mac time |
 | **Layer 5** | Milestone A negative | ✅ **PASS** | 2 negative tests added → PR #10 |
 
-**Key finding**: All safety-critical invariants verified at the API level. UI E2E selectors written from Vue source need a second iteration against live DOM. **The Python hooks safety gate works correctly** — Layer 3 API tests confirm predicates are NOT registered to the engine when toggle is OFF.
+**Key finding**: All safety-critical invariants verified at the API level. UI E2E selectors written from Vue source need a second iteration against live DOM. **The Python hooks safety gate works correctly and hot-reloads on toggle** — API tests confirm `data.extensions[*].active/inert` flip as the gate is toggled, without server restart.
 
-**1 v1.1 backlog item discovered**: Python hooks hot-reload limitation (see §"Discovered limitations" below).
+**Remaining work**: UI selector iteration on live DOM (mac session). No outstanding backlog items from this verification cycle.
 
 ---
 
@@ -59,34 +59,43 @@ Result: clean merge, no conflict. Post-merge:
 
 ---
 
-## Layer 3 — v1.0 Python Gate Playwright ⚠️ PARTIAL
+## Layer 3 — v1.0 Python Gate Playwright ✅ API / ⚠️ UI
 
 ### API-level tests (PASS — the safety-critical part)
 
+Verified via the `/api/v1/query/mods/extensions-active` endpoint, payload shape
+`{ extensions: Array<{kind, name, active, inert, python_required, ...}> }`:
+
 | Test | Result | Meaning |
 |---|---|---|
-| Default OFF → API confirms predicate NOT registered to engine | ✅ PASS | **Core safety invariant holds**: with toggle OFF, mod Python predicates are NOT loaded into condition_evaluator. Scenario using mod predicate would error "predicate not found". |
-| Toggle OFF → badge returns to disabled (API path) | ✅ PASS | State persistence works. |
+| Default OFF → sample_predicate present with `active=false, inert=true` | ✅ PASS | Core safety invariant: with toggle OFF, predicate extension is declared but inert; condition_evaluator cannot resolve it. |
+| Toggle ON → same predicate flips to `active=true, inert=false` | ✅ PASS | Gate hot-reloads via `sync_advanced_runtime_control` → `load_enabled_mods`; no server restart needed. |
+| Toggle OFF → flips back to `active=false, inert=true` | ✅ PASS | Reverse hot-reload also works; state persistence intact. |
 
-### UI-level tests (need DOM-iteration — 4 fail)
+Backend `tests/test_mod_platform.py` mirrors the same assertion at the
+function level via `get_active_extensions()` (12/12 pytest green incl.
+`test_python_gate_state_reflected_in_extensions_shape`).
+
+### UI-level tests (need DOM-iteration)
 
 | Test | Failure root cause | Fix path |
 |---|---|---|
 | "Python hooks: disabled" badge visible | selector `.menu-toggle` → mod tab needs deeper iteration | Live screenshot inspection |
 | Data-only extensions listed | same — depends on Mod Manager rendering | same |
 | Toggle ON shows trust warning modal | depends on Mod Manager open + Settings panel selector | Live screenshot inspection |
-| Toggle ON → predicate registered | **also discovered hot-reload limitation** — see below | needs server restart hook |
+| Toggle ON → badge flips to enabled in UI | UI re-read after API state change | Live DOM iteration |
 
-### Discovered limitations
+### Earlier "hot-reload limitation" retraction
 
-#### v1.1 BACKLOG: Python hooks hot-reload
-
-Toggling `allow_trusted_python_mods` from `false → true` via PATCH `/api/settings` updates the setting and runtime flag, but **does NOT re-load mod Python hooks**. The mod_loader.load_enabled_mods() function only runs at server boot. Result: user toggles ON, but mod's Python predicates / lifecycle hooks are still inert until next server restart.
-
-**Workaround for v1.0**: document the restart requirement in the toggle's help text. Sample help-text addition:
-> "Changing this setting requires a server restart to take effect."
-
-**Proper fix (v1.1 ADR proposal)**: add a `reload_mods()` call in the settings PATCH handler when `allow_trusted_python_mods` flips to true. Considerations: thread safety, partial-load failure rollback.
+A prior pass of this report listed a v1.1 backlog item claiming
+`allow_trusted_python_mods=true` did NOT hot-reload mod Python hooks. That
+diagnosis was wrong. Root cause: the Layer 3 Playwright spec was reading a
+non-existent `data.predicates` / `data.rules.predicates` shape from the
+`extensions-active` endpoint. The endpoint actually returns
+`data.extensions: Array<{kind,name,active,inert,...}>`. Once the assertion
+reads the real shape, toggling the gate is observed to flip extensions
+between `active/inert` in-process without restart. No v1.1 backlog item
+remains from this thread.
 
 ---
 
@@ -177,10 +186,9 @@ Selectors written from Vue source code are partially mismatched. Live DOM iterat
 ## Recommended deliverable ordering for御主
 
 1. **Now**: Review Layer 1+2 results — engineering merge can proceed (御主 has been holding back merge per his earlier directive)
-2. **Soon**: Read v1.1 backlog item on Python hot-reload — decide if it blocks merge or ships as known limitation
-3. **Mac time**: Run `npx playwright test --headed layer3-` and iterate selectors with Inspector
-4. **Mac time**: Walk manual visual checklist; capture screenshots
-5. **After UI iteration**: Sign off this report; merge PR #1-#10 in order; tag `v1.0.0-final`
+2. **Mac time**: Run `npx playwright test --headed layer3-` and iterate selectors with Inspector
+3. **Mac time**: Walk manual visual checklist; capture screenshots
+4. **After UI iteration**: Sign off this report; merge PR #1-#10 in order; tag `v1.0.0-final`
 
 ---
 

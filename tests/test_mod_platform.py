@@ -15,7 +15,7 @@ from src.mod_platform.asset_overlay import resolve_asset
 from src.mod_platform.locale_overlay import translate
 from src.mod_platform.mod_conflict import ModConflictError
 from src.mod_platform.mod_import import compute_mod_fingerprint, install_mod_folder, install_mod_zip, uninstall_mod
-from src.mod_platform.mod_loader import load_enabled_mods
+from src.mod_platform.mod_loader import get_active_extensions, load_enabled_mods
 from src.mod_platform.mod_registry import list_installed_mods, set_enabled
 from src.mod_platform.python_hooks import dispatch_lifecycle_hook
 from src.scenario.condition_evaluator import ConditionEvaluationError, evaluate_condition
@@ -149,6 +149,37 @@ def test_lifecycle_hook_fires_on_world_init_when_gate_on(mod_data_root, tmp_path
     world = SimpleNamespace()
     dispatch_lifecycle_hook("on_world_init", world)
     assert world.hook_fired is True
+
+
+def test_python_gate_state_reflected_in_extensions_shape(mod_data_root, tmp_path):
+    """
+    Assert the safety gate's effect is observable via the same runtime data
+    structure the API endpoint /api/v1/query/mods/extensions-active exposes,
+    namely get_active_extensions() returning items of shape
+    {kind, name, active, inert, python_required, ...}.
+
+    OFF  → predicate extension present with active=False, inert=True
+    ON   → same extension with active=True, inert=False
+    """
+    source = _write_mod(tmp_path, "shape-mod", predicate="shape_check_predicate")
+    install_mod_folder(source)
+
+    load_enabled_mods(settings_view=SimpleNamespace(allow_trusted_python_mods=False))
+    off_entry = next(
+        ext for ext in get_active_extensions()
+        if ext["kind"] == "predicate" and ext["name"] == "shape_check_predicate"
+    )
+    assert off_entry["active"] is False
+    assert off_entry["inert"] is True
+    assert off_entry["python_required"] is True
+
+    load_enabled_mods(settings_view=SimpleNamespace(allow_trusted_python_mods=True))
+    on_entry = next(
+        ext for ext in get_active_extensions()
+        if ext["kind"] == "predicate" and ext["name"] == "shape_check_predicate"
+    )
+    assert on_entry["active"] is True
+    assert on_entry["inert"] is False
 
 
 def test_lifecycle_hook_does_not_fire_when_gate_off(mod_data_root, tmp_path):
