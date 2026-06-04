@@ -10,15 +10,15 @@
 |---|---|---|---|
 | **Layer 1** | Per-version RC | ✅ **PASS** | 1693 backend / 571 frontend vitest / 3 boot smoke green |
 | **Layer 2** | Stack integration | ✅ **PASS** | Dry-run merge clean; merged-state pytest identical |
-| **Layer 3** | Python gate Playwright | ✅ **PASS (API)** / ⚠️ UI selector iteration | API shape assertions verify gate state via `data.extensions: [{kind,name,active,inert}]`; UI selectors still need live-DOM iteration |
+| **Layer 3** | Python gate Playwright | ✅ **PASS** | 6/6 (3 API + 3 UI) — gate state observable via `data.extensions: [{kind,name,active,inert}]`; UI flow goes Splash → Settings → SystemMenu (Settings tab + Mod Manager tab); 2 consecutive clean runs at 8.7s / 5.9s |
 | **Layer 4A** | Scenario engine E2E | 🟡 **NOT RUN** | Awaits Layer 3 UI selector convergence |
 | **Layer 4 LLM** | LLM authoring opt | 🟡 **AUTO-SKIP** | No LLM key configured in test env (per design) |
 | **Layer 4B** | Manual visual | 🟡 **READY** | Checklist drafted; awaiting御主 mac time |
 | **Layer 5** | Milestone A negative | ✅ **PASS** | 2 negative tests added → PR #10 |
 
-**Key finding**: All safety-critical invariants verified at the API level. UI E2E selectors written from Vue source need a second iteration against live DOM. **The Python hooks safety gate works correctly and hot-reloads on toggle** — API tests confirm `data.extensions[*].active/inert` flip as the gate is toggled, without server restart.
+**Key finding**: All safety-critical invariants verified at both API and UI level. **The Python hooks safety gate works correctly and hot-reloads on toggle** — API tests confirm `data.extensions[*].active/inert` flip as the gate is toggled, without server restart; UI tests confirm the badge + trust-modal flow match.
 
-**Remaining work**: UI selector iteration on live DOM (mac session). No outstanding backlog items from this verification cycle.
+**Remaining work**: none from this verification cycle. Manual visual checklist (`docs/manual-visual-checklist.md`) is the only outstanding item before final sign-off.
 
 ---
 
@@ -59,12 +59,16 @@ Result: clean merge, no conflict. Post-merge:
 
 ---
 
-## Layer 3 — v1.0 Python Gate Playwright ✅ API / ⚠️ UI
+## Layer 3 — v1.0 Python Gate Playwright ✅ PASS (6/6)
 
-### API-level tests (PASS — the safety-critical part)
+All assertions go through the real runtime: API tests hit
+`/api/v1/query/mods/extensions-active` (shape
+`{ extensions: Array<{kind, name, active, inert, python_required, ...}> }`),
+UI tests drive Chromium through the splash → SystemMenu flow. Tests run
+serially (`test.describe.serial`) because they share a single backend
+process. Two consecutive clean runs at 8.7s and 5.9s.
 
-Verified via the `/api/v1/query/mods/extensions-active` endpoint, payload shape
-`{ extensions: Array<{kind, name, active, inert, python_required, ...}> }`:
+### API-level tests (3/3)
 
 | Test | Result | Meaning |
 |---|---|---|
@@ -76,14 +80,19 @@ Backend `tests/test_mod_platform.py` mirrors the same assertion at the
 function level via `get_active_extensions()` (12/12 pytest green incl.
 `test_python_gate_state_reflected_in_extensions_shape`).
 
-### UI-level tests (need DOM-iteration)
+### UI-level tests (3/3)
 
-| Test | Failure root cause | Fix path |
+Entry flow (verified by screenshot iteration on 2026-06-04): splash screen
+exposes a Settings button; clicking it opens `SystemMenu` with the settings
+tab active. From the SystemMenu the `Mod 管理` / `Mod Manager` tab button
+switches to `ModManagerModal` without leaving the menu, so the whole flow
+works pre-game.
+
+| Test | Result | Selector path |
 |---|---|---|
-| "Python hooks: disabled" badge visible | selector `.menu-toggle` → mod tab needs deeper iteration | Live screenshot inspection |
-| Data-only extensions listed | same — depends on Mod Manager rendering | same |
-| Toggle ON shows trust warning modal | depends on Mod Manager open + Settings panel selector | Live screenshot inspection |
-| Toggle ON → badge flips to enabled in UI | UI re-read after API state change | Live DOM iteration |
+| "Python hooks: disabled" badge visible on sample-overhaul | ✅ PASS | `.python-badge` filtered by text |
+| Data-only extensions (asset/llm/locale) listed as chips | ✅ PASS | text match on `asset:portraits/...`, `llm:sample_npc_action`, `locale:en-US` |
+| Toggle ON shows trust modal, then Mod Manager badge reads "enabled" | ✅ PASS | `data-testid="python-mod-switch"` + `.trust-modal` text + `.python-badge.enabled` |
 
 ### Earlier "hot-reload limitation" retraction
 
@@ -91,11 +100,11 @@ A prior pass of this report listed a v1.1 backlog item claiming
 `allow_trusted_python_mods=true` did NOT hot-reload mod Python hooks. That
 diagnosis was wrong. Root cause: the Layer 3 Playwright spec was reading a
 non-existent `data.predicates` / `data.rules.predicates` shape from the
-`extensions-active` endpoint. The endpoint actually returns
-`data.extensions: Array<{kind,name,active,inert,...}>`. Once the assertion
-reads the real shape, toggling the gate is observed to flip extensions
-between `active/inert` in-process without restart. No v1.1 backlog item
-remains from this thread.
+`extensions-active` endpoint, and the UI test was looking for `.menu-toggle`
+which only exists inside a started game. Once the assertions read the real
+shape and the UI flow is rewritten to enter through the splash Settings
+button, the gate is observed to flip extensions between `active/inert`
+in-process without restart. No v1.1 backlog item remains from this thread.
 
 ---
 
@@ -103,7 +112,7 @@ remains from this thread.
 
 ### 4A non-LLM happy path
 
-NOT RUN. Inherits Layer 3's UI selector blocker. Once Layer 3 UI selectors converge, Layer 4A should follow with similar techniques. **Backend logic verified by 188 pytest tests**:
+NOT RUN. Layer 3 UI selectors have now converged (Splash → SystemMenu via the Settings button); Layer 4A can follow the same pattern when prioritized. **Backend logic verified by 188 pytest tests**:
 - v0.5 picker → scenario_id in GameStartRequest works
 - v0.6 import / export round-trip works
 - v0.7 wizard data path works (LLM-less mode)
@@ -163,19 +172,20 @@ All safety-critical contracts hold:
 - Mod conflict detection
 - 9-PR stack merges cleanly
 
-### UI layer: ⚠️ NEEDS ITERATION
+### UI layer: ✅ GO
 
-Selectors written from Vue source code are partially mismatched. Live DOM iteration required for:
-- System menu navigation (`.menu-toggle` discovered, deeper iteration pending)
-- Mod Manager card rendering
-- Trust warning modal selector
-- Hot-swap activate modal flow
+Layer 3 selectors converged via screenshot-driven iteration on 2026-06-04
+(headless Playwright + `CWS_E2E_ARTIFACTS=full` traces). Stable entry path
+is splash Settings button → `SystemMenu` modal → tab switch to `mods`.
+Selectors used are limited to `data-testid="python-mod-switch"`,
+`.python-badge`, `.trust-modal`, and accessible-name role buttons — no
+brittle CSS chains.
 
-**Recommended path forward**:
-1. Run web/e2e/layer3-mod-platform.spec.ts in `--headed` mode locally
-2. Iterate selectors using Playwright Inspector (`PWDEBUG=1`)
-3. Commit selector fixes; re-run; converge
-4. Then Layer 4A inherits the converged selectors
+**Recommended path forward for Layer 4A**:
+1. Reuse the same Splash → SystemMenu entry pattern
+2. Drive new-game flow through the `Start Game` / `开始游戏` button + the
+   downstream scenario picker selectors (to be added)
+3. Keep `test.describe.serial` since all e2e specs share one backend
 
 ### Manual layer: 🟡 READY FOR御主
 
@@ -204,6 +214,14 @@ Selectors written from Vue source code are partially mismatched. Live DOM iterat
 
 ## Hassan disclosed limitations
 
-I wrote Playwright selectors based on Vue source reading without live DOM access. Iteration was higher cost than expected. API-level tests cover the safety-critical invariants; UI-level tests are about UX wiring which is more efficient for御主 to iterate visually on mac than for Hassan to iterate blind.
+Initial Layer 3 selectors were written blind from Vue source and failed
+across the board. 御主 enabled screenshot-driven iteration via headless
+Playwright + `CWS_E2E_ARTIFACTS=full` (no Playwright MCP / Chrome DevTools
+MCP available in this session); two rounds were enough to converge 6/6
+PASS. The misdiagnosed "hot-reload limitation" was traced to the original
+spec reading `data.predicates` (non-existent) and looking for `.menu-toggle`
+(only exists post-game-start).
 
-御主 has the final sign-off authority. Engineering layer is release-ready. UI verification + manual visual checklist must precede actual production release.
+御主 has the final sign-off authority. Engineering + UI layers are
+release-ready for the Python gate. Manual visual checklist remains for
+御主's mac session before final tag.
