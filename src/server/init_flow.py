@@ -301,6 +301,12 @@ async def perform_game_initialization(
         world.existed_sects = existed_sects
         world.sect_context.from_existed_sects(existed_sects)
         runtime.update({"world": world, "sim": sim})
+        try:
+            from src.mod_platform.python_hooks import dispatch_lifecycle_hook
+            dispatch_lifecycle_hook("on_world_init", world)
+        except Exception as exc:
+            runtime.fail_initialization(str(exc))
+            raise
 
         update_init_progress(5, "preparing_character_profiles")
         await _prepare_initial_character_profiles(world=world)

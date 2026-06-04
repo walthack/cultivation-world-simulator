@@ -126,6 +126,7 @@ from src.i18n.locale_registry import uses_space_separated_names
 from src.utils.llm.config import LLMConfig
 from src.scenario.injector import inject_scenario_into_world
 from src.scenario import scenario_loader
+from src.mod_platform.mod_loader import load_enabled_mods
 from src.server.runtime import GameSessionRuntime, create_default_game_state
 from src.server.host_runtime import (
     ConnectionManager,
@@ -217,6 +218,13 @@ def sync_advanced_runtime_control(settings_view=None) -> None:
     enabled = bool(getattr(settings_view, "advanced_runtime_control", False))
     runtime.advanced_runtime_control = enabled
     game_instance["advanced_runtime_control"] = enabled
+    allow_python_mods = bool(getattr(settings_view, "allow_trusted_python_mods", False))
+    runtime.allow_trusted_python_mods = allow_python_mods
+    game_instance["allow_trusted_python_mods"] = allow_python_mods
+    try:
+        load_enabled_mods(settings_view=settings_view, bundled_assets_root=ASSETS_PATH if "ASSETS_PATH" in globals() else None)
+    except Exception as exc:
+        game_instance["mod_conflict_error"] = str(exc)
 
 
 def get_active_scenario():
@@ -519,6 +527,7 @@ WEB_DIST_PATH, ASSETS_PATH = resolve_runtime_paths(
 print(f"Runtime mode: {'Frozen/Packaged' if getattr(sys, 'frozen', False) else 'Development'}")
 print(f"Assets path: {ASSETS_PATH}")
 print(f"Web dist path: {WEB_DIST_PATH}")
+sync_advanced_runtime_control()
 
 command_handlers = create_command_handlers(
     runtime=runtime,

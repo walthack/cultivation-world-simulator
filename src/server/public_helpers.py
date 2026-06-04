@@ -44,21 +44,28 @@ def apply_runtime_content_locale(*, game_instance: dict, language_manager, lang_
 
 def scan_avatar_assets(*, assets_path: str) -> dict[str, dict[str, list[int]]]:
     def get_ids(base_dir: str, gender: str) -> list[int]:
-        directory = os.path.join(base_dir, gender)
-        if not os.path.exists(directory):
-            return []
         ids: list[int] = []
-        for name in os.listdir(directory):
-            index_dir = os.path.join(directory, name)
-            if not os.path.isdir(index_dir):
+        directories = [os.path.join(base_dir, gender)]
+        try:
+            from src.mod_platform.asset_overlay import get_overlay_dirs
+            relative_base = os.path.relpath(base_dir, assets_path)
+            directories.extend(str(overlay / relative_base / gender) for overlay in get_overlay_dirs())
+        except Exception:
+            pass
+        for directory in directories:
+            if not os.path.exists(directory):
                 continue
-            try:
-                avatar_id = int(name)
-            except ValueError:
-                continue
-            if os.path.exists(os.path.join(index_dir, "qi_refining.png")):
-                ids.append(avatar_id)
-        return sorted(ids)
+            for name in os.listdir(directory):
+                index_dir = os.path.join(directory, name)
+                if not os.path.isdir(index_dir):
+                    continue
+                try:
+                    avatar_id = int(name)
+                except ValueError:
+                    continue
+                if os.path.exists(os.path.join(index_dir, "qi_refining.png")):
+                    ids.append(avatar_id)
+        return sorted(set(ids))
 
     avatar_assets: dict[str, dict[str, list[int]]] = {}
     human_base = os.path.join(assets_path, "avatars")
