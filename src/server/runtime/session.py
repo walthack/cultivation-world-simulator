@@ -20,6 +20,7 @@ DEFAULT_GAME_STATE: dict[str, Any] = {
     "init_generation": 0,
     "run_config": None,
     "active_scenario": None,
+    "advanced_runtime_control": False,
     "current_save_path": None,
     "llm_check_failed": False,
     "llm_error_message": "",
@@ -67,6 +68,7 @@ class GameSessionRuntime:
         self._mutation_lock = asyncio.Lock()
         self.active_scenario = None
         self.active_scenario_explicit = False
+        self.advanced_runtime_control = bool(state.get("advanced_runtime_control", False))
         self._ensure_owned_roleplay_session()
 
     @property
@@ -95,6 +97,7 @@ class GameSessionRuntime:
                 "current_save_path": None,
                 "run_config": run_config,
                 "active_scenario": None,
+                "advanced_runtime_control": self.advanced_runtime_control,
                 "is_paused": True,
                 "roleplay_auto_paused": False,
                 "init_status": "idle",

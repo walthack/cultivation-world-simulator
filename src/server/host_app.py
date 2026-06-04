@@ -118,6 +118,7 @@ def configure_routes_and_mounts(
     build_dynasty_overview,
     build_dynasty_detail,
     build_scenario_status,
+    build_scenario_debug_snapshot,
     build_installed_scenarios,
     build_avatar_overview,
     build_saves,
@@ -151,6 +152,9 @@ def configure_routes_and_mounts(
     run_submit_roleplay_choice,
     run_send_roleplay_conversation,
     run_end_roleplay_conversation,
+    run_activate_scenario,
+    run_deactivate_scenario,
+    run_reload_scenario,
     assets_path: str,
     web_dist_path: str,
     is_dev_mode: bool,
@@ -201,6 +205,7 @@ def configure_routes_and_mounts(
             build_dynasty_overview=build_dynasty_overview,
             build_dynasty_detail=build_dynasty_detail,
             build_scenario_status=build_scenario_status,
+            build_scenario_debug_snapshot=build_scenario_debug_snapshot,
             build_installed_scenarios=build_installed_scenarios,
             build_avatar_overview=build_avatar_overview,
             build_saves=build_saves,
@@ -238,6 +243,9 @@ def configure_routes_and_mounts(
             run_submit_roleplay_choice=run_submit_roleplay_choice,
             run_send_roleplay_conversation=run_send_roleplay_conversation,
             run_end_roleplay_conversation=run_end_roleplay_conversation,
+            run_activate_scenario=run_activate_scenario,
+            run_deactivate_scenario=run_deactivate_scenario,
+            run_reload_scenario=run_reload_scenario,
         )
     )
 

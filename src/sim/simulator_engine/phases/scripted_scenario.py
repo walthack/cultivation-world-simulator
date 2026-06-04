@@ -57,6 +57,7 @@ def _build_dispatch_state(world: Any, sc: Any) -> dict[str, Any]:
         "triggered_event_ids": sorted(sc.triggered_events),
         "blocked_event_ids": list(scenario_state.get("blocked_event_ids", []) or []),
         "event_outcomes": dict(scenario_state.get("event_outcomes", {}) or {}),
+        "dispatch_log": list(getattr(sc, "dispatch_log", []) or []),
     }
     state = {
         **scenario_state,
@@ -64,6 +65,7 @@ def _build_dispatch_state(world: Any, sc: Any) -> dict[str, Any]:
         "world": world,
         "roleplay_session": getattr(getattr(world, "runtime", None), "get_roleplay_session", lambda: {})(),
         "scenario_runtime": runtime,
+        "scripted_scenario_state": scenario_state,
     }
     return state
 
@@ -73,6 +75,7 @@ def _sync_dispatch_state(sc: Any, dispatch_state: dict[str, Any]) -> None:
     sc.triggered_events = set(str(item) for item in runtime.get("triggered_event_ids", []) or [])
     sc.state["blocked_event_ids"] = list(runtime.get("blocked_event_ids", []) or [])
     sc.state["event_outcomes"] = dict(runtime.get("event_outcomes", {}) or {})
+    sc.dispatch_log = list(runtime.get("dispatch_log", []) or [])[-50:]
 
 
 def _to_event(world: Any, scenario_event: dict[str, Any]) -> Event:
