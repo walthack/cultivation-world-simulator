@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NSelect, NSlider, NSwitch } from 'naive-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { localeRegistry } from '@/locales/registry'
 import { useSettingStore } from '@/stores/setting'
@@ -10,6 +10,9 @@ import saveIcon from '@/assets/icons/ui/lucide/save.svg'
 
 const { t } = useI18n()
 const settingStore = useSettingStore()
+const showPythonTrustWarning = ref(false)
+const pendingPythonValue = ref(false)
+const TRUST_WARNING = 'You are about to enable Python mod execution. Untrusted mods can do anything the game can do. Continue?'
 
 const languageOptions = computed(() =>
   localeRegistry
@@ -19,6 +22,21 @@ const languageOptions = computed(() =>
       value: locale.code,
     })),
 )
+
+function requestPythonToggle(enabled: boolean) {
+  if (enabled) {
+    pendingPythonValue.value = true
+    showPythonTrustWarning.value = true
+    settingStore.allowTrustedPythonMods = false
+    return
+  }
+  void settingStore.setAllowTrustedPythonMods(false)
+}
+
+function confirmPythonToggle() {
+  showPythonTrustWarning.value = false
+  void settingStore.setAllowTrustedPythonMods(pendingPythonValue.value)
+}
 </script>
 
 <template>
@@ -106,6 +124,31 @@ const languageOptions = computed(() =>
           v-model:value="settingStore.advancedRuntimeControl"
           @update:value="settingStore.setAdvancedRuntimeControl"
         />
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-label-group">
+          <span class="setting-icon" :style="{ '--icon-url': `url(${saveIcon})` }" aria-hidden="true"></span>
+          <div class="setting-description">
+            <span class="setting-label">Allow trusted Python mods</span>
+            <span class="setting-subtitle">Python hooks stay inert unless this safety gate is enabled.</span>
+          </div>
+        </div>
+        <n-switch
+          data-testid="python-mod-switch"
+          v-model:value="settingStore.allowTrustedPythonMods"
+          @update:value="requestPythonToggle"
+        />
+      </div>
+    </div>
+
+    <div v-if="showPythonTrustWarning" class="trust-modal-backdrop">
+      <div class="trust-modal" role="dialog" aria-modal="true">
+        <p>{{ TRUST_WARNING }}</p>
+        <div class="trust-actions">
+          <button type="button" @click="showPythonTrustWarning = false; settingStore.allowTrustedPythonMods = false">Cancel</button>
+          <button type="button" class="danger" @click="confirmPythonToggle">Continue</button>
+        </div>
       </div>
     </div>
   </div>
@@ -219,5 +262,44 @@ const languageOptions = computed(() =>
   width: 40px;
   color: #888;
   font-size: 0.8em;
+}
+
+.trust-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.trust-modal {
+  width: min(520px, 92vw);
+  padding: 24px;
+  border: 1px solid rgba(255, 120, 120, 0.45);
+  border-radius: 8px;
+  background: #181818;
+  color: #eee;
+}
+
+.trust-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.trust-actions button {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: #222;
+  color: #eee;
+}
+
+.trust-actions .danger {
+  border-color: rgba(255, 120, 120, 0.6);
+  color: #ffd6d6;
 }
 </style>

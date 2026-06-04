@@ -261,6 +261,7 @@ export interface RunConfigDTO {
 export interface AppSettingsDTO {
   schema_version: number;
   advanced_runtime_control: boolean;
+  allow_trusted_python_mods: boolean;
   ui: UISettingsDTO;
   simulation: SimulationSettingsDTO;
   llm: {
@@ -271,12 +272,45 @@ export interface AppSettingsDTO {
 
 export interface AppSettingsPatchDTO {
   advanced_runtime_control?: boolean;
+  allow_trusted_python_mods?: boolean;
   ui?: {
     locale?: UISettingsDTO['locale'];
     audio?: Partial<AudioSettingsDTO>;
   };
   simulation?: Partial<SimulationSettingsDTO>;
   new_game_defaults?: Partial<RunConfigDTO>;
+}
+
+export interface ModExtensionDTO {
+  kind: string;
+  name: string;
+  mod_id: string;
+  path?: string | null;
+  python_required: boolean;
+  category: 'data-only' | 'python' | string;
+  active?: boolean;
+  inert?: boolean;
+}
+
+export interface InstalledModDTO {
+  mod_id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  fingerprint: string;
+  dependencies: Array<Record<string, unknown>>;
+  extensions: Record<string, unknown>;
+  path: string;
+  enabled: boolean;
+  python_hooks_enabled: boolean;
+  python_hooks_declared: boolean;
+}
+
+export interface ModConflictDTO {
+  kind: string;
+  name: string;
+  mod_ids: string[];
 }
 
 // --- Events ---

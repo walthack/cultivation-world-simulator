@@ -35,6 +35,7 @@ export const useSettingStore = defineStore('setting', () => {
   const isAutoSave = ref(false);
   const maxAutoSaves = ref(5);
   const advancedRuntimeControl = ref(false);
+  const allowTrustedPythonMods = ref(false);
   const newGameDraft = ref<RunConfigDTO>({
     content_locale: defaultLocale,
     init_npc_num: 9,
@@ -53,6 +54,7 @@ export const useSettingStore = defineStore('setting', () => {
     isAutoSave.value = settings.simulation.auto_save_enabled;
     maxAutoSaves.value = settings.simulation.max_auto_saves;
     advancedRuntimeControl.value = Boolean(settings.advanced_runtime_control);
+    allowTrustedPythonMods.value = Boolean(settings.allow_trusted_python_mods);
     newGameDraft.value = {
       ...settings.new_game_defaults,
       scenario_id: newGameDraft.value.scenario_id ?? null,
@@ -179,6 +181,19 @@ export const useSettingStore = defineStore('setting', () => {
     }
   }
 
+  async function setAllowTrustedPythonMods(enabled: boolean) {
+    const previous = allowTrustedPythonMods.value;
+    allowTrustedPythonMods.value = enabled;
+
+    try {
+      const settings = await systemApi.patchSettings({ allow_trusted_python_mods: enabled });
+      applySettings(settings);
+    } catch (e) {
+      allowTrustedPythonMods.value = previous;
+      logWarn('SettingStore set allow trusted Python mods', e);
+    }
+  }
+
   function updateNewGameDraft(patch: Partial<RunConfigDTO>) {
     newGameDraft.value = {
       ...newGameDraft.value,
@@ -226,6 +241,7 @@ export const useSettingStore = defineStore('setting', () => {
     isAutoSave,
     maxAutoSaves,
     advancedRuntimeControl,
+    allowTrustedPythonMods,
     newGameDraft,
     hydrate,
     setLocale,
@@ -233,6 +249,7 @@ export const useSettingStore = defineStore('setting', () => {
     setBgmVolume,
     setAutoSave,
     setAdvancedRuntimeControl,
+    setAllowTrustedPythonMods,
     updateNewGameDraft,
     saveNewGameDefaults,
     startGameWithDraft,

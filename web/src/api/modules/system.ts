@@ -4,7 +4,10 @@ import type {
   InitStatusDTO,
   RunConfigDTO,
   AppSettingsDTO,
-  AppSettingsPatchDTO
+  AppSettingsPatchDTO,
+  InstalledModDTO,
+  ModConflictDTO,
+  ModExtensionDTO
 } from '../../types/api';
 
 export const systemApi = {
@@ -74,5 +77,35 @@ export const systemApi = {
 
   resetGame() {
     return httpClient.post<{ status: string; message: string }>('/api/v1/command/game/reset', {});
+  },
+
+  fetchInstalledMods() {
+    return httpClient.get<{ mods: InstalledModDTO[]; conflicts: ModConflictDTO[] }>('/api/v1/query/mods/installed');
+  },
+
+  fetchModLoadOrder() {
+    return httpClient.get<{ load_order: string[] }>('/api/v1/query/mods/load-order');
+  },
+
+  fetchActiveModExtensions() {
+    return httpClient.get<{ extensions: ModExtensionDTO[] }>('/api/v1/query/mods/extensions-active');
+  },
+
+  installMod(file: File) {
+    const form = new FormData();
+    form.append('file', file);
+    return httpClient.postForm<InstalledModDTO>('/api/v1/command/mod/install', form);
+  },
+
+  uninstallMod(modId: string) {
+    return httpClient.post<{ mod_id: string }>('/api/v1/command/mod/uninstall', { mod_id: modId });
+  },
+
+  setModEnabled(modId: string, enabled: boolean) {
+    return httpClient.post<InstalledModDTO>('/api/v1/command/mod/set-enabled', { mod_id: modId, enabled });
+  },
+
+  reorderMods(modIds: string[]) {
+    return httpClient.post<{ load_order: string[] }>('/api/v1/command/mod/reorder', { mod_ids: modIds });
   }
 };

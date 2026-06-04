@@ -10,6 +10,7 @@ const SystemMenuCreateTab = defineAsyncComponent(() => import('@/components/syst
 const SystemMenuDeleteTab = defineAsyncComponent(() => import('@/components/system-menu/tabs/SystemMenuDeleteTab.vue'))
 const SystemMenuLlmTab = defineAsyncComponent(() => import('@/components/system-menu/tabs/SystemMenuLlmTab.vue'))
 const SystemMenuSettingsTab = defineAsyncComponent(() => import('@/components/system-menu/tabs/SystemMenuSettingsTab.vue'))
+const ModManagerModal = defineAsyncComponent(() => import('@/components/game/panels/system/ModManagerModal.vue'))
 const SystemMenuAboutTab = defineAsyncComponent(() => import('@/components/system-menu/tabs/SystemMenuAboutTab.vue'))
 const SystemMenuOtherTab = defineAsyncComponent(() => import('@/components/system-menu/tabs/SystemMenuOtherTab.vue'))
 
@@ -75,6 +76,7 @@ watch(() => props.visible, (val) => {
     />
 
     <SystemMenuSettingsTab v-else-if="activeTab === 'settings'" />
+    <ModManagerModal v-else-if="activeTab === 'mods'" />
     <SystemMenuAboutTab v-else-if="activeTab === 'about'" />
 
     <SystemMenuOtherTab
