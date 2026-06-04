@@ -92,8 +92,8 @@ test.describe('Layer 4A — Scenario engine E2E happy path', () => {
     await startGameWithScenario('liuchao')
 
     // Enable advanced_runtime_control via API
-    await api('/api/v1/command/system/settings', {
-      method: 'POST',
+    await api('/api/settings', {
+      method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ advanced_runtime_control: true }),
     })
@@ -117,8 +117,8 @@ test.describe('Layer 4A — Scenario engine E2E happy path', () => {
     ).toBeVisible({ timeout: 10000 })
 
     // Disable advanced for next tests
-    await api('/api/v1/command/system/settings', {
-      method: 'POST',
+    await api('/api/settings', {
+      method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ advanced_runtime_control: false }),
     })
@@ -203,8 +203,8 @@ test.describe('Layer 4A — Scenario engine E2E happy path', () => {
       return
     }
     // Setting allow_trusted_python_mods should be false by default
-    await api('/api/v1/command/system/settings', {
-      method: 'POST',
+    await api('/api/settings', {
+      method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ allow_trusted_python_mods: false }),
     })

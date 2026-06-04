@@ -2,33 +2,49 @@
  * Layer 3 — v1.0 Python hooks safety gate double-state Playwright test.
  *
  * 御主 2026-06-04 09:35 SGT mandate: 80-90% automated test of mod platform's
- * Python gate. Flow:
- *   install sample-overhaul mod
- *   open Mod Manager → assert "Python hooks: disabled" badge
- *   assert data-only mod parts visible/active
- *   turn on "Allow trusted Python mods" toggle → expect trust warning modal
- *   confirm → assert "Python hooks: enabled" badge
- *   assert custom predicate works (via API mod_extensions_active)
- *   turn off → assert disabled badge again
+ * Python gate.
  *
- * Prerequisites:
+ * STATUS — first live-run pass (2026-06-04):
+ *   - 2/6 PASS: API-level assertions (Python predicate NOT registered when
+ *     toggle OFF; toggle OFF returns badge to disabled). These are the CORE
+ *     safety invariants and they hold.
+ *   - 4/6 FAIL: UI-level assertions need DOM iteration. Selectors based on
+ *     blind Vue source read; live DOM differs.
+ *   - DISCOVERED v1.0 LIMITATION: toggling allow_trusted_python_mods=true
+ *     does NOT hot-reload mod Python hooks. The setting is persisted but
+ *     mod_loader.load_enabled_mods() only runs at server boot. To activate
+ *     Python hooks after toggle ON, user must restart the server. This is
+ *     captured in docs/release-verification-report.md as a v1.1 backlog.
+ *
+ * Prerequisites (UPDATED — must install via API, not just copy folder):
  *   - Dev server running on http://localhost:5173 (vite) with backend at :8002
  *   - CWS_DATA_DIR set to an isolated tmp dir
- *   - Sample mod copied to $CWS_DATA_DIR/mods/sample-overhaul/ (the dispatch
- *     before tests does this if CWS_E2E_SETUP_MOD=1 is set)
+ *   - Sample mod registered via POST /api/v1/command/mod/install with the
+ *     bundled examples/mods/sample-overhaul/ packaged as .mod zip — copying
+ *     the folder to $CWS_DATA_DIR/mods/<id>/ alone is NOT enough; the
+ *     registry is keyed by mods_registry.json which only the install API
+ *     populates.
  *
  * Run:
  *   # Terminal 1
  *   CWS_DATA_DIR=/tmp/cws-e2e-data CWS_NO_BROWSER=1 \
  *     .venv/bin/python src/server/main.py --dev
  *
- *   # Terminal 2 (copy sample mod first)
- *   mkdir -p /tmp/cws-e2e-data/mods/
- *   cp -r examples/mods/sample-overhaul /tmp/cws-e2e-data/mods/
+ *   # Terminal 2 — install sample mod via API
+ *   (cd examples/mods/sample-overhaul && zip -r /tmp/sample-overhaul.mod .)
+ *   curl -X POST -F "file=@/tmp/sample-overhaul.mod" \
+ *     http://127.0.0.1:8002/api/v1/command/mod/install
  *
  *   # Terminal 3
  *   cd web && CWS_SMOKE_BASE_URL=http://localhost:5173 CWS_SMOKE_SKIP_WEBSERVER=1 \
- *     npx playwright test layer3-mod-platform.spec.ts
+ *     CWS_E2E_ARTIFACTS=full npx playwright test layer3-mod-platform.spec.ts
+ *
+ * UI selectors known to need fixing (TODO):
+ *   - System menu trigger: page.locator('.menu-toggle') opens the menu
+ *   - Mod Manager tab inside menu: tab key='mods', label=t('ui.mod_manager')
+ *   - The current test searches for "Mod Manager" / "Mod 管理" as a top-level
+ *     button — incorrect. Must first click .menu-toggle, then click the mods
+ *     tab inside SystemMenuShell.
  */
 
 import { expect, test } from '@playwright/test'
@@ -44,8 +60,8 @@ async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
 }
 
 async function setAdvancedPythonMods(enabled: boolean) {
-  await api('/api/v1/command/system/settings', {
-    method: 'POST',
+  await api('/api/settings', {
+    method: 'PATCH',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ allow_trusted_python_mods: enabled }),
   })
@@ -76,12 +92,13 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
     page,
   }) => {
     await page.goto('/')
-    // Open System Menu → Mod Manager
-    // SystemMenuShell shows a Mod Manager button; locate by text (zh-CN "Mod 管理" or en "Mod Manager")
-    const modManagerButton = page
+    // Open System Menu via the .menu-toggle control button on App.vue, then
+    // click the "mods" tab inside SystemMenuShell.
+    await page.locator('.menu-toggle').first().click()
+    await page
       .getByRole('button', { name: /Mod 管理|Mod Manager/ })
       .first()
-    await modManagerButton.click()
+      .click()
 
     // Wait for ModManagerModal to render with the sample mod card
     await expect(page.getByText('sample-overhaul')).toBeVisible({ timeout: 10000 })
@@ -95,10 +112,11 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
     page,
   }) => {
     await page.goto('/')
-    const modManagerButton = page
+    await page.locator('.menu-toggle').first().click()
+    await page
       .getByRole('button', { name: /Mod 管理|Mod Manager/ })
       .first()
-    await modManagerButton.click()
+      .click()
 
     // Mod card shows extension list including asset/llm/locale entries
     await expect(page.getByText(/asset:.*sample-male.png/i)).toBeVisible({ timeout: 10000 })
@@ -160,10 +178,11 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
 
     // Open Mod Manager and assert badge flipped to enabled
     await page.keyboard.press('Escape')
-    const modManagerButton = page
+    await page.locator('.menu-toggle').first().click()
+    await page
       .getByRole('button', { name: /Mod 管理|Mod Manager/ })
       .first()
-    await modManagerButton.click()
+      .click()
 
     await expect(page.getByText(/Python hooks: enabled/i).first()).toBeVisible({ timeout: 10000 })
   })
@@ -203,10 +222,11 @@ test.describe('Layer 3 — Python hooks safety gate', () => {
 
     // Open Mod Manager and assert badge is back to disabled
     await page.keyboard.press('Escape')
-    const modManagerButton = page
+    await page.locator('.menu-toggle').first().click()
+    await page
       .getByRole('button', { name: /Mod 管理|Mod Manager/ })
       .first()
-    await modManagerButton.click()
+      .click()
     await expect(page.getByText(/Python hooks: disabled/i).first()).toBeVisible({ timeout: 10000 })
 
     // API confirms predicate de-registered
