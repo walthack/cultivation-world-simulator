@@ -124,4 +124,10 @@ class Simulator:
         await annual.run_annual_maintenance(self, ctx)
 
         # 20. 最终收尾并返回本回合事件列表
-        return finalize_step(ctx)
+        events = finalize_step(ctx)
+        try:
+            from src.mod_platform.python_hooks import dispatch_lifecycle_hook
+            dispatch_lifecycle_hook("on_step", self.world, ctx)
+        except Exception:
+            raise
+        return events
