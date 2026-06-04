@@ -81,3 +81,17 @@ def set_relation(state: Any, a: Any, b: Any, value: int) -> None:
 
 def get_scenario_runtime(state: Any) -> dict[str, Any]:
     return ensure_dict(state, "scenario_runtime")
+
+
+def get_scenario_vars(state: Any) -> dict[str, Any]:
+    explicit_state = get_value(state, "scripted_scenario_state")
+    if isinstance(explicit_state, dict):
+        return explicit_state
+
+    world = get_world(state)
+    scripted_scenario = get_value(world, "scripted_scenario")
+    scripted_state = get_value(scripted_scenario, "state") if scripted_scenario is not None else None
+    if isinstance(scripted_state, dict):
+        return scripted_state
+
+    return get_scenario_runtime(state)

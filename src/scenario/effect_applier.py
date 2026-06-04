@@ -16,6 +16,7 @@ from .state_access import (
     get_player,
     get_relation,
     get_scenario_runtime,
+    get_scenario_vars,
     get_value,
     get_world_flags,
     set_relation,
@@ -146,6 +147,9 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
         return
     if effect_type == "economy_event":
         logger.info("Scenario economy_event no-op: %s", effect)
+        return
+    if effect_type == "set_var":
+        get_scenario_vars(state)[str(_require(effect, "name"))] = _require(effect, "value")
         return
 
     if effect_type not in CANONICAL_EFFECT_TYPES:

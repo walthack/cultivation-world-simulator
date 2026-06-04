@@ -19,6 +19,7 @@ class ScenarioPredicate(StrEnum):
     RANDOM_CHANCE = "random_chance"
     ALWAYS = "always"
     EVENT_TRIGGERED = "event_triggered"
+    VAR_EQUALS = "var_equals"
 
 
 class ScenarioEffectType(StrEnum):
@@ -39,6 +40,7 @@ class ScenarioEffectType(StrEnum):
     RELATION_CHANGE = "relation_change"
     WORLD_EVENT_TRIGGER = "world_event_trigger"
     ECONOMY_EVENT = "economy_event"
+    SET_VAR = "set_var"
 
 
 CANONICAL_PREDICATES = frozenset(item.value for item in ScenarioPredicate)

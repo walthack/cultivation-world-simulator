@@ -10,6 +10,7 @@ from .state_access import (
     get_player,
     get_relation,
     get_scenario_runtime,
+    get_scenario_vars,
     get_value,
     get_world,
     get_world_flags,
@@ -125,6 +126,9 @@ def _eval_atomic(state: Any, predicate: str, params: Any, expression: Any, *, rn
     if predicate == "event_triggered":
         event_id = as_id(_require(params, "event_id", expression))
         return event_id in set(get_scenario_runtime(state).get("triggered_event_ids", []) or [])
+    if predicate == "var_equals":
+        name = str(_require(params, "name", expression))
+        return get_scenario_vars(state).get(name) == _require(params, "value", expression)
 
     if predicate not in CANONICAL_PREDICATES:
         raise ConditionEvaluationError(expression, f"unknown predicate: {predicate}")
