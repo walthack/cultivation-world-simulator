@@ -2,11 +2,13 @@ import { httpClient } from '../http'
 import type {
   ImportResult,
   InstalledScenariosResponseDTO,
+  RepositoryDTO,
   ScenarioDraftDTO,
   ScenarioActivateMode,
   ScenarioActivateResponse,
   ScenarioDebugSnapshotDTO,
   ScenarioGenerateResultDTO,
+  ScenarioRepositoryCommandResult,
   ScenarioRuntimeResponse,
   ScenarioSaveDraftResultDTO,
   ScenarioStateUpdate,
@@ -21,6 +23,10 @@ export const scenarioApi = {
 
   fetchInstalledScenarios() {
     return httpClient.get<InstalledScenariosResponseDTO>('/api/v1/query/scenarios')
+  },
+
+  fetchRepository() {
+    return httpClient.get<RepositoryDTO>('/api/v1/query/scenario/repository')
   },
 
   fetchTemplates() {
@@ -50,6 +56,25 @@ export const scenarioApi = {
     if (renameTo) params.set('rename_to', renameTo)
     const suffix = params.toString() ? `?${params.toString()}` : ''
     return httpClient.postForm<ImportResult>(`/api/v1/command/scenario/import${suffix}`, body)
+  },
+
+  async exportScenario(scenarioId: string) {
+    const blob = await httpClient.postBlob('/api/v1/command/scenario/export', { scenario_id: scenarioId })
+    return { blob, filename: `${scenarioId}.zip` }
+  },
+
+  installFromDownload(downloadId: string, confirmWarnings = false) {
+    return httpClient.post<ScenarioRepositoryCommandResult>(
+      '/api/v1/command/scenario/install-from-download',
+      { download_id: downloadId, confirm_warnings: confirmWarnings },
+    )
+  },
+
+  updateFromDownload(installedScenarioId: string, downloadId: string, confirmWarnings = false) {
+    return httpClient.post<ScenarioRepositoryCommandResult>(
+      '/api/v1/command/scenario/update',
+      { installed_scenario_id: installedScenarioId, download_id: downloadId, confirm_warnings: confirmWarnings },
+    )
   },
 
   removeScenario(scenarioId: string) {

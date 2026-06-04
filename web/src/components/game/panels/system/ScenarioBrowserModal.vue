@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { NButton, NEmpty, NModal, NSpin, NTag, useMessage } from 'naive-ui'
+import { NButton, NModal, NSpin, useMessage } from 'naive-ui'
 
 import { ApiError } from '@/api/http'
 import { useScenarioStore } from '@/stores/scenario'
-import type { InstalledScenarioMeta } from '@/types/api'
+import type { RepositoryScenarioDTO } from '@/types/api'
+import ScenarioRepositoryTabs from './ScenarioRepositoryTabs.vue'
 import ScenarioWizardModal from './ScenarioWizardModal.vue'
 
 const props = defineProps<{
@@ -24,13 +25,19 @@ const conflictScenarioId = ref('')
 const isDragActive = ref(false)
 const isImporting = ref(false)
 const showCreatorWizard = ref(false)
+const activeTab = ref<'installed' | 'downloaded' | 'updates'>('installed')
+const repositoryTabs = [
+  { key: 'installed', label: 'Installed' },
+  { key: 'downloaded', label: 'Downloaded' },
+  { key: 'updates', label: 'Updates' },
+] as const
 const showConflictModal = computed(() => pendingConflictFile.value !== null)
 
 function close() {
   emit('update:show', false)
 }
 
-function selectScenario(scenario: InstalledScenarioMeta) {
+function selectScenario(scenario: RepositoryScenarioDTO) {
   if (!scenario.enabled) return
   emit('select', scenario.id)
   close()
@@ -105,15 +112,6 @@ function onDrop(event: DragEvent) {
   }
 }
 
-async function toggleScenario(scenario: InstalledScenarioMeta) {
-  await scenarioStore.setScenarioEnabled(scenario.id, !scenario.enabled)
-}
-
-async function removeScenario(scenario: InstalledScenarioMeta) {
-  await scenarioStore.removeScenario(scenario.id)
-  message.success('Scenario removed')
-}
-
 function cancelConflict() {
   pendingConflictFile.value = null
   conflictScenarioId.value = ''
@@ -136,14 +134,14 @@ function renameConflict() {
 }
 
 async function onScenarioSaved() {
-  await scenarioStore.fetchInstalledScenarios()
+  await scenarioStore.fetchRepository()
 }
 
 watch(
   () => props.show,
   (isShown) => {
     if (isShown) {
-      void scenarioStore.fetchInstalledScenarios()
+      void scenarioStore.fetchRepository()
     }
   },
   { immediate: true },
@@ -167,6 +165,20 @@ watch(
       @drop="onDrop"
     >
       <div class="scenario-browser-toolbar">
+        <div class="scenario-browser-tabs" role="tablist" aria-label="Scenario repository tabs">
+          <button
+            v-for="tab in repositoryTabs"
+            :key="tab.key"
+            class="scenario-tab"
+            :class="{ 'is-active': activeTab === tab.key }"
+            type="button"
+            role="tab"
+            :aria-selected="activeTab === tab.key"
+            @click="activeTab = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
         <n-button size="small" @click="openCreatorWizard">
           Create Scenario
         </n-button>
@@ -182,61 +194,8 @@ watch(
         >
       </div>
       <div v-if="isDragActive" class="scenario-drop-overlay">Drop .zip to import</div>
-    <n-spin :show="scenarioStore.isInstalledLoading">
-      <div v-if="scenarioStore.installedScenarios.length" class="scenario-grid">
-        <button
-          v-for="scenario in scenarioStore.installedScenarios"
-          :key="scenario.id"
-          class="scenario-card"
-          :class="{ 'is-disabled': !scenario.enabled }"
-          type="button"
-          @click="selectScenario(scenario)"
-        >
-          <img
-            v-if="scenario.cover_image"
-            class="scenario-cover"
-            :src="scenario.cover_image"
-            :alt="scenario.name"
-          >
-          <div class="scenario-card-body">
-            <div class="scenario-card-header">
-              <h4>{{ scenario.name }}</h4>
-              <div class="scenario-card-meta">
-                <n-tag size="small" :bordered="false">
-                  {{ scenario.source === 'installed' ? 'Installed' : 'Bundled' }}
-                </n-tag>
-                <span class="scenario-version">v{{ scenario.version }}</span>
-              </div>
-            </div>
-            <div v-if="scenario.author" class="scenario-author">{{ scenario.author }}</div>
-            <p>{{ scenario.description }}</p>
-            <div v-if="scenario.tags.length" class="scenario-tags">
-              <n-tag
-                v-for="tag in scenario.tags"
-                :key="tag"
-                size="small"
-                :bordered="false"
-              >
-                {{ tag }}
-              </n-tag>
-            </div>
-            <div class="scenario-actions" @click.stop>
-              <n-button size="small" @click="toggleScenario(scenario)">
-                {{ scenario.enabled ? 'Disable' : 'Enable' }}
-              </n-button>
-              <n-button
-                v-if="scenario.source === 'installed'"
-                size="small"
-                type="error"
-                @click="removeScenario(scenario)"
-              >
-                Remove
-              </n-button>
-            </div>
-          </div>
-        </button>
-      </div>
-      <n-empty v-else description="未发现可用 scenario" />
+    <n-spin :show="scenarioStore.isRepositoryLoading">
+      <scenario-repository-tabs :active-tab="activeTab" @select="selectScenario" />
     </n-spin>
     </div>
 
@@ -277,8 +236,29 @@ watch(
 
 .scenario-browser-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.scenario-browser-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.scenario-tab {
+  padding: 6px 10px;
+  color: #d9d0c0;
+  background: rgba(20, 22, 26, 0.9);
+  border: 1px solid rgba(202, 164, 93, 0.22);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.scenario-tab.is-active {
+  color: #111;
+  background: #f0cf86;
+  border-color: #f0cf86;
 }
 
 .scenario-file-input {

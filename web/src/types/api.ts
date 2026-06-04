@@ -580,6 +580,51 @@ export interface InstalledScenarioMeta {
   enabled: boolean;
 }
 
+export type VerificationStatus = 'verified' | 'modified' | 'unsigned';
+
+export interface ScenarioVerificationDTO {
+  status: VerificationStatus;
+  computed: string;
+  claimed?: string | null;
+}
+
+export interface CompatResult {
+  status: 'pass' | 'warn' | 'fail';
+  warnings: string[];
+  errors: string[];
+}
+
+export interface RepositoryScenarioDTO extends InstalledScenarioMeta {
+  download_id?: string | null;
+  fingerprint?: string | null;
+  verification: ScenarioVerificationDTO;
+  compatibility?: CompatResult | null;
+}
+
+export interface RepositoryUpdateDTO {
+  installed: RepositoryScenarioDTO;
+  downloaded: RepositoryScenarioDTO;
+}
+
+export interface RepositoryDTO {
+  installed: RepositoryScenarioDTO[];
+  downloaded: RepositoryScenarioDTO[];
+  updates: RepositoryUpdateDTO[];
+}
+
+export interface ExportResult {
+  blob: Blob;
+  filename: string;
+}
+
+export interface ScenarioRepositoryCommandResult {
+  status: 'installed' | 'updated' | 'warning';
+  moved: boolean;
+  scenario_id: string;
+  archived_to?: string;
+  compatibility: CompatResult;
+}
+
 export interface InstalledScenariosResponseDTO {
   scenarios: InstalledScenarioMeta[];
 }
@@ -596,6 +641,7 @@ export interface ImportResult {
     scenario_id?: string;
     actions?: string[];
   } | null;
+  verification?: ScenarioVerificationDTO | null;
 }
 
 export interface ScenarioStateUpdate {
