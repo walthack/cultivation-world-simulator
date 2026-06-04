@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from src.server.services.public_api_contract import ok_response
+from src.server.services.scenario_repository import list_repository
 from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import load_template, list_templates
 
@@ -215,6 +216,10 @@ def create_public_query_router(
     @router.get("/api/v1/query/scenario/templates/{category}")
     def get_scenario_template_v1(category: str):
         return ok_response(load_template(category))
+
+    @router.get("/api/v1/query/scenario/repository")
+    def get_scenario_repository_v1():
+        return ok_response(list_repository().model_dump())
 
     @router.get("/api/v1/query/avatars/overview")
     def get_avatar_overview_v1():

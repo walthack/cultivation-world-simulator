@@ -4,7 +4,7 @@ from email import policy
 from email.parser import BytesParser
 from typing import Callable, Literal, Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field
 
 from src.config import RunConfig
@@ -17,6 +17,8 @@ from src.server.services.scenario_import import (
     remove_installed_scenario,
 )
 from src.server.services.scenario_generate import generate_scenario_from_description
+from src.server.services.scenario_export import export_scenario
+from src.server.services.scenario_repository import install_from_download, update_from_download
 from src.server.services.scenario_registry import list_installed_scenarios
 from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import save_draft
@@ -159,6 +161,21 @@ class ScenarioSaveDraftRequest(BaseModel):
 class ScenarioActivateRequest(BaseModel):
     scenario_id: str
     mode: Literal["reset", "hot-swap"] = "reset"
+
+
+class ScenarioExportRequest(BaseModel):
+    scenario_id: str
+
+
+class ScenarioInstallFromDownloadRequest(BaseModel):
+    download_id: str
+    confirm_warnings: bool = False
+
+
+class ScenarioUpdateRequest(BaseModel):
+    installed_scenario_id: str
+    download_id: str
+    confirm_warnings: bool = False
 
 
 async def _read_capped_body(request: Request, max_size: int) -> bytes:
@@ -401,6 +418,59 @@ def create_public_command_router(
                 details=exc.details,
             )
         return ok_response(result.model_dump())
+
+    @router.post("/api/v1/command/scenario/export")
+    def export_scenario_v1(req: ScenarioExportRequest):
+        try:
+            zip_bytes = export_scenario(req.scenario_id)
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
+        filename = f"{req.scenario_id}.zip"
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @router.post("/api/v1/command/scenario/install-from-download")
+    def install_scenario_from_download_v1(req: ScenarioInstallFromDownloadRequest):
+        try:
+            return ok_response(
+                install_from_download(
+                    req.download_id,
+                    confirm_warnings=req.confirm_warnings,
+                )
+            )
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
+
+    @router.post("/api/v1/command/scenario/update")
+    def update_scenario_from_download_v1(req: ScenarioUpdateRequest):
+        try:
+            return ok_response(
+                update_from_download(
+                    req.installed_scenario_id,
+                    req.download_id,
+                    confirm_warnings=req.confirm_warnings,
+                )
+            )
+        except ScenarioImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
 
     @router.post("/api/v1/command/scenario/generate")
     async def generate_scenario_v1(req: ScenarioGenerateRequest):

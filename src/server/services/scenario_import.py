@@ -15,9 +15,11 @@ from src.config.data_paths import get_data_paths
 from src.scenario.scenario_loader import (
     SCENARIO_ID_RE,
     ScenarioValidationError,
+    _load_json,
     get_project_root,
     validate_scenario_dir,
 )
+from src.scenario.scenario_fingerprint import compute_scenario_fingerprint
 from src.server.services import scenario_state
 
 
@@ -50,6 +52,7 @@ class ImportResult:
     enabled: bool = True
     warnings: list[str] = field(default_factory=list)
     conflict: dict[str, Any] | None = None
+    verification: dict[str, Any] | None = None
 
     def model_dump(self) -> dict[str, Any]:
         return {
@@ -61,6 +64,7 @@ class ImportResult:
             "enabled": self.enabled,
             "warnings": list(self.warnings),
             "conflict": self.conflict,
+            "verification": self.verification,
         }
 
 
@@ -270,6 +274,15 @@ def import_scenario_zip(
             except ScenarioValidationError as exc:
                 raise ScenarioImportError(str(exc), details={"path": exc.path}) from exc
 
+        scenario_data = _load_json(scenario_dir / "scenario.json", required=True)
+        timeline_data = _load_json(scenario_dir / "timeline.json", required=True)
+        claimed = scenario_data.get("fingerprint")
+        computed = compute_scenario_fingerprint(scenario_data, timeline_data)
+        verification = {
+            "status": "verified" if claimed == computed else "modified" if isinstance(claimed, str) and claimed else "unsigned",
+            "computed": computed,
+            "claimed": claimed if isinstance(claimed, str) and claimed else None,
+        }
         installed_dir = _install_validated_dir(scenario_dir, validation.scenario_id, force=force)
         scenario_state.set_enabled(validation.scenario_id, True)
         return ImportResult(
@@ -280,6 +293,7 @@ def import_scenario_zip(
             source="installed",
             enabled=True,
             warnings=validation.warnings,
+            verification=verification,
         )
 
 
