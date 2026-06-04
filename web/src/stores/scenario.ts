@@ -1,19 +1,35 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { scenarioApi } from '@/api/modules/scenario'
-import type { ImportResult, InstalledScenarioMeta, ScenarioStatusResponseDTO } from '@/types/api'
+import type {
+  ImportResult,
+  InstalledScenarioMeta,
+  ScenarioActivateMode,
+  ScenarioDebugSnapshotDTO,
+  ScenarioStatusResponseDTO,
+} from '@/types/api'
 import { logWarn } from '@/utils/appError'
 
 function createEmptyStatus(): ScenarioStatusResponseDTO {
   return { active: false }
 }
 
+function createEmptyDebugSnapshot(): ScenarioDebugSnapshotDTO {
+  return { state: {}, triggered_events: [], dispatch_log: [] }
+}
+
+function isDebugErrorPayload(value: unknown): value is { ok: false; error: string } {
+  return Boolean(value && typeof value === 'object' && 'ok' in value && (value as { ok?: unknown }).ok === false)
+}
+
 export const useScenarioStore = defineStore('scenario', () => {
   const status = shallowRef<ScenarioStatusResponseDTO>(createEmptyStatus())
   const installedScenarios = ref<InstalledScenarioMeta[]>([])
+  const debugSnapshot = shallowRef<ScenarioDebugSnapshotDTO>(createEmptyDebugSnapshot())
   const isLoading = ref(false)
   const isLoaded = ref(false)
   const isInstalledLoading = ref(false)
+  const isDebugLoading = ref(false)
 
   let refreshRequestId = 0
 
@@ -54,6 +70,44 @@ export const useScenarioStore = defineStore('scenario', () => {
     }
   }
 
+  async function refreshDebugSnapshot() {
+    isDebugLoading.value = true
+    try {
+      const data = await scenarioApi.fetchDebugSnapshot()
+      if (isDebugErrorPayload(data)) {
+        debugSnapshot.value = createEmptyDebugSnapshot()
+        return
+      }
+      debugSnapshot.value = data
+    } catch (error) {
+      logWarn('ScenarioStore refresh debug snapshot', error)
+      debugSnapshot.value = createEmptyDebugSnapshot()
+    } finally {
+      isDebugLoading.value = false
+    }
+  }
+
+  async function activateScenario(scenarioId: string, mode: ScenarioActivateMode) {
+    const result = await scenarioApi.activateScenario(scenarioId, mode)
+    await refreshStatus()
+    await refreshDebugSnapshot()
+    return result
+  }
+
+  async function deactivateScenario() {
+    const result = await scenarioApi.deactivateScenario()
+    await refreshStatus()
+    await refreshDebugSnapshot()
+    return result
+  }
+
+  async function reloadScenario() {
+    const result = await scenarioApi.reloadScenario()
+    await refreshStatus()
+    await refreshDebugSnapshot()
+    return result
+  }
+
   async function importScenarioFile(
     file: File,
     options: { force?: boolean; renameTo?: string } = {},
@@ -77,22 +131,30 @@ export const useScenarioStore = defineStore('scenario', () => {
 
   function reset() {
     status.value = createEmptyStatus()
+    debugSnapshot.value = createEmptyDebugSnapshot()
     installedScenarios.value = []
     isLoading.value = false
     isInstalledLoading.value = false
+    isDebugLoading.value = false
     isLoaded.value = false
   }
 
   return {
     status,
     installedScenarios,
+    debugSnapshot,
     isActive,
     activeStatus,
     isLoading,
     isInstalledLoading,
+    isDebugLoading,
     isLoaded,
     refreshStatus,
     fetchInstalledScenarios,
+    refreshDebugSnapshot,
+    activateScenario,
+    deactivateScenario,
+    reloadScenario,
     importScenarioFile,
     removeScenario,
     setScenarioEnabled,

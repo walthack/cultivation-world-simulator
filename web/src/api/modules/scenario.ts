@@ -3,7 +3,11 @@ import type {
   ImportResult,
   InstalledScenariosResponseDTO,
   ScenarioDraftDTO,
+  ScenarioActivateMode,
+  ScenarioActivateResponse,
+  ScenarioDebugSnapshotDTO,
   ScenarioGenerateResultDTO,
+  ScenarioRuntimeResponse,
   ScenarioSaveDraftResultDTO,
   ScenarioStateUpdate,
   ScenarioStatusResponseDTO,
@@ -60,5 +64,24 @@ export const scenarioApi = {
       '/api/v1/command/scenario/set-enabled',
       { scenario_id: scenarioId, enabled },
     )
+  },
+
+  activateScenario(scenarioId: string, mode: ScenarioActivateMode) {
+    return httpClient.post<ScenarioActivateResponse>(
+      '/api/v1/command/scenario/activate',
+      { scenario_id: scenarioId, mode },
+    )
+  },
+
+  deactivateScenario() {
+    return httpClient.post<ScenarioRuntimeResponse>('/api/v1/command/scenario/deactivate', {})
+  },
+
+  reloadScenario() {
+    return httpClient.post<ScenarioRuntimeResponse>('/api/v1/command/scenario/reload', {})
+  },
+
+  fetchDebugSnapshot() {
+    return httpClient.get<ScenarioDebugSnapshotDTO | { ok: false; error: string }>('/api/v1/query/scenario/debug')
   },
 }
