@@ -43,6 +43,7 @@ from src.server.services.custom_goldfinger_service import (
     generate_custom_goldfinger_draft,
 )
 from src.server.services.game_lifecycle import reinit_game_lifecycle, start_game_lifecycle
+from src.server.services.scenario_registry import list_installed_scenarios
 from src.server.services.game_queries import (
     get_detail as get_detail_query,
     get_deceased_list,
@@ -200,19 +201,47 @@ def _read_cli_option(name: str, default: str | None = None) -> str | None:
 ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
 ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
 ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
+runtime.active_scenario = ACTIVE_SCENARIO
 
 
 def get_active_scenario():
+    active_scenario = getattr(runtime, "active_scenario", None)
+    if active_scenario is not None:
+        return active_scenario
+    if getattr(runtime, "active_scenario_explicit", False):
+        return None
     return ACTIVE_SCENARIO
+
+
+def _request_includes_scenario_id(req) -> bool:
+    fields_set = getattr(req, "model_fields_set", None)
+    if fields_set is None:
+        fields_set = getattr(req, "__fields_set__", set())
+    return "scenario_id" in fields_set
+
+
+def resolve_scenario_for_start(req):
+    if not _request_includes_scenario_id(req):
+        return ACTIVE_SCENARIO
+
+    scenario_id = getattr(req, "scenario_id", None)
+    if scenario_id is None:
+        return None
+
+    normalized = str(scenario_id).strip()
+    if normalized == "" or normalized == "default":
+        return None
+    return scenario_loader.load(normalized)
 
 
 class ScenarioInjectedWorld:
     @staticmethod
     def _apply_scenario_start_time(kwargs):
-        if ACTIVE_SCENARIO is None:
+        active_scenario = get_active_scenario()
+        if active_scenario is None:
             return kwargs
 
-        initial_state = ACTIVE_SCENARIO.scenario.get("initial_state", {}) or {}
+        initial_state = active_scenario.scenario.get("initial_state", {}) or {}
         year = initial_state.get("year")
         month = initial_state.get("month")
         if year is None or month is None:
@@ -232,8 +261,9 @@ class ScenarioInjectedWorld:
     def create_with_db(cls, *args, **kwargs):
         kwargs = cls._apply_scenario_start_time(dict(kwargs))
         world = World.create_with_db(*args, **kwargs)
-        if ACTIVE_SCENARIO is not None:
-            inject_scenario_into_world(world, ACTIVE_SCENARIO)
+        active_scenario = get_active_scenario()
+        if active_scenario is not None:
+            inject_scenario_into_world(world, active_scenario)
         return world
 
 
@@ -338,6 +368,7 @@ public_query_builders = create_public_query_builders(
     get_dynasty_detail_query=get_dynasty_detail_query,
     build_dynasty_detail=build_dynasty_detail,
     build_scenario_status=build_scenario_status,
+    list_installed_scenarios=list_installed_scenarios,
     get_active_scenario=get_active_scenario,
     get_avatar_overview_query=get_avatar_overview_query,
     get_deceased_list_query=get_deceased_list,
@@ -363,6 +394,7 @@ build_public_mortal_overview = public_query_builders.build_public_mortal_overvie
 build_public_dynasty_overview = public_query_builders.build_public_dynasty_overview
 build_public_dynasty_detail = public_query_builders.build_public_dynasty_detail
 build_public_scenario_status = public_query_builders.build_public_scenario_status
+build_public_installed_scenarios = public_query_builders.build_public_installed_scenarios
 build_public_avatar_overview = public_query_builders.build_public_avatar_overview
 build_public_deceased_list = public_query_builders.build_public_deceased_list
 build_public_roleplay_session = public_query_builders.build_public_roleplay_session
@@ -478,6 +510,7 @@ command_handlers = create_command_handlers(
     get_init_game_async=lambda: init_game_async,
     get_apply_runtime_content_locale=lambda: apply_runtime_content_locale,
     scan_avatar_assets=scan_avatar_assets,
+    resolve_scenario_for_start=resolve_scenario_for_start,
     start_game_lifecycle=start_game_lifecycle,
     reinit_game_lifecycle=reinit_game_lifecycle,
     cleanup_events_command=cleanup_events_command,
@@ -515,7 +548,12 @@ command_handlers = create_command_handlers(
     get_fallback_saves_dirs=get_fallback_saves_dirs,
     get_load_game_into_runtime=lambda: load_game_into_runtime,
     get_load_game=lambda: (
-        lambda save_path=None: load_game(save_path, active_scenario_id=ACTIVE_SCENARIO_ID)
+        lambda save_path=None: load_game(
+            save_path,
+            active_scenario_id=(
+                getattr(get_active_scenario(), "scenario_id", None)
+            ),
+        )
     ),
     get_events_db_path=get_events_db_path,
     get_roleplay_session=get_roleplay_session_query,
@@ -698,6 +736,7 @@ configure_routes_and_mounts(
     build_dynasty_overview=build_public_dynasty_overview,
     build_dynasty_detail=build_public_dynasty_detail,
     build_scenario_status=build_public_scenario_status,
+    build_installed_scenarios=build_public_installed_scenarios,
     build_avatar_overview=build_public_avatar_overview,
     build_saves=build_public_saves,
     build_detail=build_public_detail,

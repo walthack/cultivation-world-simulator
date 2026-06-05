@@ -255,6 +255,7 @@ export interface RunConfigDTO {
   sect_num: number;
   npc_awakening_rate_per_month: number;
   world_lore?: string;
+  scenario_id?: string | null;
 }
 
 export interface AppSettingsDTO {
@@ -564,6 +565,20 @@ export interface DynastyDetailResponseDTO {
 }
 
 // --- Scenario ---
+
+export interface InstalledScenarioMeta {
+  id: string;
+  name: string;
+  version: string;
+  author?: string | null;
+  description: string;
+  tags: string[];
+  cover_image?: string | null;
+}
+
+export interface InstalledScenariosResponseDTO {
+  scenarios: InstalledScenarioMeta[];
+}
 
 export interface ScenarioTimelineEventTriggerDTO {
   year: number | null;

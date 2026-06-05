@@ -10,7 +10,7 @@ from src.server.services.public_api_contract import ok_response
 
 
 class GameStartRequest(RunConfig):
-    pass
+    scenario_id: Optional[str] = None
 
 
 class SetObjectiveRequest(BaseModel):

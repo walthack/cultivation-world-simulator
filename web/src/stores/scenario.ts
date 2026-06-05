@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { scenarioApi } from '@/api/modules/scenario'
-import type { ScenarioStatusResponseDTO } from '@/types/api'
+import type { InstalledScenarioMeta, ScenarioStatusResponseDTO } from '@/types/api'
 import { logWarn } from '@/utils/appError'
 
 function createEmptyStatus(): ScenarioStatusResponseDTO {
@@ -10,8 +10,10 @@ function createEmptyStatus(): ScenarioStatusResponseDTO {
 
 export const useScenarioStore = defineStore('scenario', () => {
   const status = shallowRef<ScenarioStatusResponseDTO>(createEmptyStatus())
+  const installedScenarios = ref<InstalledScenarioMeta[]>([])
   const isLoading = ref(false)
   const isLoaded = ref(false)
+  const isInstalledLoading = ref(false)
 
   let refreshRequestId = 0
 
@@ -39,19 +41,37 @@ export const useScenarioStore = defineStore('scenario', () => {
     }
   }
 
+  async function fetchInstalledScenarios() {
+    isInstalledLoading.value = true
+    try {
+      const data = await scenarioApi.fetchInstalledScenarios()
+      installedScenarios.value = data.scenarios ?? []
+    } catch (error) {
+      logWarn('ScenarioStore fetch installed scenarios', error)
+      installedScenarios.value = []
+    } finally {
+      isInstalledLoading.value = false
+    }
+  }
+
   function reset() {
     status.value = createEmptyStatus()
+    installedScenarios.value = []
     isLoading.value = false
+    isInstalledLoading.value = false
     isLoaded.value = false
   }
 
   return {
     status,
+    installedScenarios,
     isActive,
     activeStatus,
     isLoading,
+    isInstalledLoading,
     isLoaded,
     refreshStatus,
+    fetchInstalledScenarios,
     reset,
   }
 })

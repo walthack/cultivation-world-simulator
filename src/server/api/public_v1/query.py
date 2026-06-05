@@ -51,6 +51,25 @@ class ScenarioStatusResponseDTO(BaseModel):
     data: ActiveScenarioStatusDTO | InactiveScenarioStatusDTO
 
 
+class InstalledScenarioMetaDTO(BaseModel):
+    id: str
+    name: str
+    version: str
+    author: str | None = None
+    description: str
+    tags: list[str]
+    cover_image: str | None = None
+
+
+class InstalledScenariosDataDTO(BaseModel):
+    scenarios: list[InstalledScenarioMetaDTO]
+
+
+class InstalledScenariosResponseDTO(BaseModel):
+    ok: bool
+    data: InstalledScenariosDataDTO
+
+
 def create_public_query_router(
     *,
     build_runtime_status: Callable[[], dict],
@@ -70,6 +89,7 @@ def create_public_query_router(
     build_dynasty_overview: Callable[[], dict],
     build_dynasty_detail: Callable[[], dict],
     build_scenario_status: Callable[[], dict],
+    build_installed_scenarios: Callable[[], dict],
     build_avatar_overview: Callable[[], dict],
     build_saves: Callable[[], dict],
     build_detail: Callable[..., dict],
@@ -167,6 +187,13 @@ def create_public_query_router(
     )
     def get_scenario_status_v1():
         return ok_response(build_scenario_status())
+
+    @router.get(
+        "/api/v1/query/scenarios",
+        response_model=InstalledScenariosResponseDTO,
+    )
+    def get_installed_scenarios_v1():
+        return ok_response(build_installed_scenarios())
 
     @router.get("/api/v1/query/avatars/overview")
     def get_avatar_overview_v1():

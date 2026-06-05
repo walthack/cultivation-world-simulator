@@ -10,6 +10,7 @@ async def start_game_lifecycle(
     runtime,
     *,
     run_config: Any,
+    active_scenario: Any,
     apply_runtime_content_locale: Callable[[str], None],
     init_game_async: Callable[[], Any],
 ) -> dict[str, str]:
@@ -20,6 +21,8 @@ async def start_game_lifecycle(
     apply_runtime_content_locale(run_config.content_locale)
 
     def _prepare_start() -> None:
+        runtime.active_scenario = active_scenario
+        runtime.active_scenario_explicit = True
         runtime.update({"run_config": run_config.model_dump()})
         runtime.mark_pending_initialization(clear_world=current_status == "ready")
 

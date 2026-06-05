@@ -19,6 +19,7 @@ DEFAULT_GAME_STATE: dict[str, Any] = {
     "init_start_time": None,
     "init_generation": 0,
     "run_config": None,
+    "active_scenario": None,
     "current_save_path": None,
     "llm_check_failed": False,
     "llm_error_message": "",
@@ -64,6 +65,8 @@ class GameSessionRuntime:
     def __init__(self, state: dict[str, Any]):
         self._state = state
         self._mutation_lock = asyncio.Lock()
+        self.active_scenario = None
+        self.active_scenario_explicit = False
         self._ensure_owned_roleplay_session()
 
     @property
@@ -82,6 +85,8 @@ class GameSessionRuntime:
 
     def reset_to_idle(self, *, clear_run_config: bool = True) -> None:
         run_config = None if clear_run_config else self._state.get("run_config")
+        self.active_scenario = None
+        self.active_scenario_explicit = False
         self._state["init_generation"] = int(self._state.get("init_generation", 0) or 0) + 1
         self._state.update(
             {
@@ -89,6 +94,7 @@ class GameSessionRuntime:
                 "sim": None,
                 "current_save_path": None,
                 "run_config": run_config,
+                "active_scenario": None,
                 "is_paused": True,
                 "roleplay_auto_paused": False,
                 "init_status": "idle",

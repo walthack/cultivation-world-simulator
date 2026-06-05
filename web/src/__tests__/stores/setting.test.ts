@@ -240,6 +240,31 @@ describe('useSettingStore', () => {
       sect_num: 3,
       npc_awakening_rate_per_month: 0.01,
       world_lore: '',
+      scenario_id: null,
+    })
+  })
+
+  it('includes scenario_id in start payload without persisting it to defaults', async () => {
+    store.updateNewGameDraft({ scenario_id: 'sanguo' })
+
+    await store.startGameWithDraft()
+
+    expect(mockPatchSettings).toHaveBeenCalledWith({
+      new_game_defaults: {
+        content_locale: testDefaultLocale,
+        init_npc_num: 9,
+        sect_num: 3,
+        npc_awakening_rate_per_month: 0.01,
+        world_lore: '',
+      },
+    })
+    expect(mockStartGame).toHaveBeenCalledWith({
+      content_locale: testDefaultLocale,
+      init_npc_num: 9,
+      sect_num: 3,
+      npc_awakening_rate_per_month: 0.01,
+      world_lore: '',
+      scenario_id: 'sanguo',
     })
   })
 
@@ -274,4 +299,3 @@ describe('useSettingStore', () => {
     consoleSpy.mockRestore()
   })
 })
-
