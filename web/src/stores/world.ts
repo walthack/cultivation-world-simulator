@@ -11,6 +11,7 @@ import { useEventStore } from './event';
 import { useSectStore } from './sect';
 import { useMortalStore } from './mortal';
 import { useDynastyStore } from './dynasty';
+import { useScenarioStore } from './scenario';
 import { useAvatarOverviewStore } from './avatarOverview';
 
 const PHENOMENON_RARITY_ORDER: Record<string, number> = {
@@ -41,6 +42,7 @@ export const useWorldStore = defineStore('world', () => {
   const sectStore = useSectStore();
   const mortalStore = useMortalStore();
   const dynastyStore = useDynastyStore();
+  const scenarioStore = useScenarioStore();
   const avatarOverviewStore = useAvatarOverviewStore();
 
   const year = ref(0);
@@ -83,6 +85,7 @@ export const useWorldStore = defineStore('world', () => {
     }
 
     void sectStore.refreshTerritories();
+    void scenarioStore.refreshStatus();
   }
 
   function applyStateSnapshot(stateRes: WorldStateSnapshot) {
@@ -134,6 +137,7 @@ export const useWorldStore = defineStore('world', () => {
       // Load initial events
       await eventStore.resetEvents({});
       await sectStore.refreshTerritories();
+      await scenarioStore.refreshStatus();
 
     } catch (e) {
       logError('WorldStore initialize', e);
@@ -148,6 +152,7 @@ export const useWorldStore = defineStore('world', () => {
       if (currentRequestId !== fetchStateRequestId) return;
       applyStateSnapshot(stateRes);
       await sectStore.refreshTerritories();
+      await scenarioStore.refreshStatus();
     } catch (e) {
       if (currentRequestId !== fetchStateRequestId) return;
       logError('WorldStore fetch state', e);
@@ -168,6 +173,7 @@ export const useWorldStore = defineStore('world', () => {
     sectStore.reset();
     mortalStore.reset();
     dynastyStore.reset();
+    scenarioStore.reset();
     avatarOverviewStore.reset();
     mapStore.reset();
   }

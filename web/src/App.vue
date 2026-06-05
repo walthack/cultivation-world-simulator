@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { NConfigProvider, darkTheme, NMessageProvider, NDialogProvider } from 'naive-ui'
 import { systemApi } from './api/modules/system'
 import { useI18n } from 'vue-i18n'
@@ -13,6 +13,8 @@ import RoleplayDock from './components/game/RoleplayDock.vue'
 import InfoPanelContainer from './components/game/panels/info/InfoPanelContainer.vue'
 import StatusBar from './components/layout/StatusBar.vue'
 import EventPanel from './components/game/panels/EventPanel.vue'
+import ScenarioBadge from './components/game/panels/ScenarioBadge.vue'
+import ScenarioOverviewModal from './components/game/panels/ScenarioOverviewModal.vue'
 import SystemMenu from './components/SystemMenu.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import menuIcon from '@/assets/icons/ui/lucide/menu.svg'
@@ -39,6 +41,7 @@ const uiStore = useUiStore()
 const settingStore = useSettingStore()
 const systemStore = useSystemStore()
 const roleplayStore = useRoleplayStore()
+const showScenarioOverviewModal = ref(false)
 
 // Sidebar resizer 状态
 const { sidebarWidth, isResizing, onResizerMouseDown } = useSidebarResize()
@@ -196,6 +199,8 @@ watch(sidebarWidth, width => {
               <div class="map-stage">
                 <!-- 顶部控制栏 -->
                 <div class="top-controls">
+                  <ScenarioBadge @open="showScenarioOverviewModal = true" />
+
                   <!-- 暂停/播放按钮 -->
                   <button class="control-btn pause-toggle" @click="toggleManualPause" :title="isManualPaused ? t('game.controls.resume') : t('game.controls.pause')">
                     <span
@@ -258,6 +263,11 @@ watch(sidebarWidth, width => {
           @llm-ready="handleLLMReady"
           @return-to-main="handleReturnToMain"
           @exit-game="() => handleSplashAction('exit')"
+        />
+
+        <ScenarioOverviewModal
+          v-if="showScenarioOverviewModal"
+          v-model:show="showScenarioOverviewModal"
         />
 
         <LoadingOverlay 

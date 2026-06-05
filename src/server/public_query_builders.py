@@ -48,6 +48,8 @@ def create_public_query_builders(
     build_dynasty_overview,
     get_dynasty_detail_query,
     build_dynasty_detail,
+    build_scenario_status,
+    get_active_scenario,
     get_avatar_overview_query,
     get_deceased_list_query,
     get_roleplay_session_query,
@@ -162,6 +164,9 @@ def create_public_query_builders(
     def build_public_dynasty_detail() -> dict:
         return get_dynasty_detail_query(runtime, build_dynasty_detail=build_dynasty_detail)
 
+    def build_public_scenario_status() -> dict:
+        return build_scenario_status(runtime.get("world"), get_active_scenario())
+
     def build_public_avatar_overview() -> dict:
         return get_avatar_overview_query(runtime)
 
@@ -190,6 +195,7 @@ def create_public_query_builders(
         build_public_mortal_overview=build_public_mortal_overview,
         build_public_dynasty_overview=build_public_dynasty_overview,
         build_public_dynasty_detail=build_public_dynasty_detail,
+        build_public_scenario_status=build_public_scenario_status,
         build_public_avatar_overview=build_public_avatar_overview,
         build_public_deceased_list=build_public_deceased_list,
         build_public_roleplay_session=build_public_roleplay_session,
