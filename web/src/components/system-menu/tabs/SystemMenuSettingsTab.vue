@@ -3,5 +3,7 @@ import SettingsPanel from '@/components/settings/SettingsPanel.vue'
 </script>
 
 <template>
-  <SettingsPanel />
+  <div class="system-menu-settings-tab">
+    <SettingsPanel />
+  </div>
 </template>

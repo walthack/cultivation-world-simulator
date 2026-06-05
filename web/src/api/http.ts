@@ -78,6 +78,33 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+async function requestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
+  const url = `${API_BASE}${path}`;
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    let errorData: unknown = null;
+    let errorMessage = `Request failed: ${response.statusText}`;
+    try {
+      errorData = await response.json();
+      if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
+        const detail = (errorData as { detail?: unknown }).detail;
+        if (
+          detail &&
+          typeof detail === 'object' &&
+          'message' in detail &&
+          typeof (detail as { message?: unknown }).message === 'string'
+        ) {
+          errorMessage = (detail as { message: string }).message;
+        }
+      }
+    } catch {
+      // Binary endpoints may not return JSON errors.
+    }
+    throw new ApiError(response.status, errorMessage, errorData);
+  }
+  return response.blob();
+}
+
 export const httpClient = {
   get<T>(path: string) {
     return request<T>(path, { method: 'GET' });
@@ -85,6 +112,16 @@ export const httpClient = {
 
   post<T>(path: string, body: unknown) {
     return request<T>(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+  },
+
+  postBlob(path: string, body: unknown) {
+    return requestBlob(path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

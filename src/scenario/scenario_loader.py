@@ -26,6 +26,7 @@ from src.config.presets import (
 SCHEMA_VERSION = "0.1"
 SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2"}
 SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
 EVENT_TYPES = {
     "main",
     "world_event",
@@ -74,6 +75,32 @@ class ScenarioDirectoryValidationResult:
     version: str
     preset_id: str
     warnings: list[str] = field(default_factory=list)
+
+
+def parse_lenient_semver(version: str | None) -> tuple[int, int, int, str | None] | None:
+    match = SEMVER_RE.match(str(version or "").strip())
+    if match is None:
+        return None
+    major, minor, patch, prerelease = match.groups()
+    return int(major), int(minor or 0), int(patch or 0), prerelease
+
+
+def compare_lenient_semver(left: str | None, right: str | None) -> int | None:
+    parsed_left = parse_lenient_semver(left)
+    parsed_right = parse_lenient_semver(right)
+    if parsed_left is None or parsed_right is None:
+        return None
+    if parsed_left[:3] != parsed_right[:3]:
+        return 1 if parsed_left[:3] > parsed_right[:3] else -1
+    left_pre = parsed_left[3]
+    right_pre = parsed_right[3]
+    if left_pre == right_pre:
+        return 0
+    if left_pre is None:
+        return 1
+    if right_pre is None:
+        return -1
+    return 1 if left_pre > right_pre else -1
 
 
 def _load_json(path: Path, *, required: bool) -> dict[str, Any]:
@@ -126,7 +153,42 @@ def _validate_scenario_top_level(data: dict[str, Any]) -> str:
         raise ScenarioValidationError("scenario.world_preset.preset_id", "relative preset id", preset_id)
     if not (get_presets_root() / preset_id).is_dir():
         raise MissingReferenceError("scenario.world_preset.preset_id", preset_id, "config/presets/<preset_id>")
+    _validate_optional_metadata(data)
     return preset_id
+
+
+def _validate_optional_metadata(data: dict[str, Any]) -> None:
+    fingerprint = data.get("fingerprint")
+    if fingerprint is not None and (not isinstance(fingerprint, str) or not fingerprint.startswith("sha256:")):
+        raise ScenarioValidationError("scenario.fingerprint", "sha256 fingerprint string", fingerprint)
+
+    engine = data.get("engine")
+    if engine is not None:
+        if not isinstance(engine, dict):
+            raise ScenarioValidationError("scenario.engine", "object", engine)
+        for key in ("schema_version_min", "cws_version_min"):
+            value = engine.get(key)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ScenarioValidationError(f"scenario.engine.{key}", "non-empty string", value)
+
+    dependencies = data.get("dependencies", [])
+    if dependencies is None:
+        return
+    if not isinstance(dependencies, list):
+        raise ScenarioValidationError("scenario.dependencies", "list", dependencies)
+    for idx, dependency in enumerate(dependencies):
+        path = f"scenario.dependencies[{idx}]"
+        if not isinstance(dependency, dict):
+            raise ScenarioValidationError(path, "object", dependency)
+        dep_type = dependency.get("type")
+        if dep_type != "preset":
+            raise ScenarioValidationError(f"{path}.type", "preset", dep_type)
+        dep_id = dependency.get("id")
+        if not isinstance(dep_id, str) or not dep_id.strip():
+            raise ScenarioValidationError(f"{path}.id", "non-empty string", dep_id)
+        version_req = dependency.get("version_req")
+        if version_req is not None and not isinstance(version_req, str):
+            raise ScenarioValidationError(f"{path}.version_req", "string", version_req)
 
 
 def _is_v02(data: dict[str, Any]) -> bool:
@@ -504,6 +566,9 @@ def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResu
         "author",
         "tags",
         "cover_image",
+        "dependencies",
+        "engine",
+        "fingerprint",
         "world_preset",
         "initial_state",
     }

@@ -9,6 +9,11 @@
     "author": "CWS Creator Toolkit",
     "description": "A historical-style starter with court rivalry, border pressure, and a strategist caught between oaths.",
     "tags": ["historical", "court", "starter"],
+    "engine": {
+      "schema_version_min": "0.1",
+      "cws_version_min": "3.4.0"
+    },
+    "dependencies": [],
     "world_preset": {
       "preset_id": "liuchao"
     },
