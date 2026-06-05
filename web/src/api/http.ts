@@ -93,6 +93,13 @@ export const httpClient = {
     });
   },
 
+  postForm<T>(path: string, body: FormData) {
+    return request<T>(path, {
+      method: 'POST',
+      body,
+    });
+  },
+
   patch<T>(path: string, body: unknown) {
     return request<T>(path, {
       method: 'PATCH',
@@ -117,4 +124,3 @@ export const httpClient = {
     return request<T>(path, { method: 'DELETE' });
   }
 };
-

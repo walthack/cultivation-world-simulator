@@ -4,10 +4,21 @@ import ScenarioBrowserModal from '@/components/game/panels/system/ScenarioBrowse
 
 const scenarioState = vi.hoisted(() => ({
   fetchInstalledScenariosMock: vi.fn(),
+  importScenarioFileMock: vi.fn(),
+  removeScenarioMock: vi.fn(),
+  setScenarioEnabledMock: vi.fn(),
+  successMock: vi.fn(),
+  errorMock: vi.fn(),
+  infoMock: vi.fn(),
   installedScenarios: [] as any[],
 }))
 
 vi.mock('naive-ui', () => ({
+  useMessage: () => ({
+    success: scenarioState.successMock,
+    error: scenarioState.errorMock,
+    info: scenarioState.infoMock,
+  }),
   NModal: {
     name: 'NModal',
     template: '<div v-if="show" class="n-modal"><slot /><slot name="footer" /></div>',
@@ -32,6 +43,7 @@ vi.mock('naive-ui', () => ({
   NButton: {
     name: 'NButton',
     template: '<button class="n-button" @click="$emit(\'click\', $event)"><slot /></button>',
+    props: ['size', 'type', 'loading'],
     emits: ['click'],
   },
 }))
@@ -43,6 +55,9 @@ vi.mock('@/stores/scenario', () => ({
     },
     isInstalledLoading: false,
     fetchInstalledScenarios: scenarioState.fetchInstalledScenariosMock,
+    importScenarioFile: scenarioState.importScenarioFileMock,
+    removeScenario: scenarioState.removeScenarioMock,
+    setScenarioEnabled: scenarioState.setScenarioEnabledMock,
   }),
 }))
 
@@ -58,6 +73,8 @@ describe('ScenarioBrowserModal', () => {
         description: 'Stage 1 minimal 六朝 scenario demo.',
         tags: ['历史', '六朝'],
         cover_image: null,
+        source: 'bundled',
+        enabled: true,
       },
       {
         id: 'sanguo',
@@ -67,6 +84,8 @@ describe('ScenarioBrowserModal', () => {
         description: 'Stage 2d minimal 三国 scenario demo.',
         tags: [],
         cover_image: null,
+        source: 'installed',
+        enabled: false,
       },
     ]
   })
@@ -83,14 +102,59 @@ describe('ScenarioBrowserModal', () => {
     expect(wrapper.text()).toContain('历史')
   })
 
+  it('renders import button and drag-drop surface', () => {
+    const wrapper = mount(ScenarioBrowserModal, {
+      props: { show: true },
+    })
+
+    expect(wrapper.text()).toContain('Import...')
+    expect(wrapper.find('.scenario-drop-surface').exists()).toBe(true)
+    expect(wrapper.find('input[type="file"]').attributes('accept')).toBe('.zip')
+  })
+
+  it('shows source badges and manage controls per row', () => {
+    const wrapper = mount(ScenarioBrowserModal, {
+      props: { show: true },
+    })
+
+    expect(wrapper.text()).toContain('Bundled')
+    expect(wrapper.text()).toContain('Installed')
+    expect(wrapper.text()).toContain('Disable')
+    expect(wrapper.text()).toContain('Enable')
+    expect(wrapper.text()).toContain('Remove')
+  })
+
+  it('hides remove action for bundled scenarios', () => {
+    const wrapper = mount(ScenarioBrowserModal, {
+      props: { show: true },
+    })
+
+    const firstCard = wrapper.findAll('.scenario-card')[0]
+    const secondCard = wrapper.findAll('.scenario-card')[1]
+    expect(firstCard.text()).not.toContain('Remove')
+    expect(secondCard.text()).toContain('Remove')
+  })
+
+  it('toggles disabled scenario without selecting it', async () => {
+    const wrapper = mount(ScenarioBrowserModal, {
+      props: { show: true },
+    })
+
+    const secondCard = wrapper.findAll('.scenario-card')[1]
+    await secondCard.findAll('.n-button')[0].trigger('click')
+
+    expect(scenarioState.setScenarioEnabledMock).toHaveBeenCalledWith('sanguo', true)
+    expect(wrapper.emitted('select')).toBeUndefined()
+  })
+
   it('emits selection event', async () => {
     const wrapper = mount(ScenarioBrowserModal, {
       props: { show: true },
     })
 
-    await wrapper.findAll('.scenario-card')[1].trigger('click')
+    await wrapper.findAll('.scenario-card')[0].trigger('click')
 
-    expect(wrapper.emitted('select')?.[0]).toEqual(['sanguo'])
+    expect(wrapper.emitted('select')?.[0]).toEqual(['liuchao'])
     expect(wrapper.emitted('update:show')?.[0]).toEqual([false])
   })
 })

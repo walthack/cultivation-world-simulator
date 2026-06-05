@@ -59,6 +59,8 @@ class InstalledScenarioMetaDTO(BaseModel):
     description: str
     tags: list[str]
     cover_image: str | None = None
+    source: str
+    enabled: bool
 
 
 class InstalledScenariosDataDTO(BaseModel):

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { scenarioApi } from '@/api/modules/scenario'
-import type { InstalledScenarioMeta, ScenarioStatusResponseDTO } from '@/types/api'
+import type { ImportResult, InstalledScenarioMeta, ScenarioStatusResponseDTO } from '@/types/api'
 import { logWarn } from '@/utils/appError'
 
 function createEmptyStatus(): ScenarioStatusResponseDTO {
@@ -54,6 +54,27 @@ export const useScenarioStore = defineStore('scenario', () => {
     }
   }
 
+  async function importScenarioFile(
+    file: File,
+    options: { force?: boolean; renameTo?: string } = {},
+  ): Promise<ImportResult> {
+    const result = await scenarioApi.importScenario(file, options.force === true, options.renameTo)
+    await fetchInstalledScenarios()
+    return result
+  }
+
+  async function removeScenario(scenarioId: string) {
+    const result = await scenarioApi.removeScenario(scenarioId)
+    await fetchInstalledScenarios()
+    return result
+  }
+
+  async function setScenarioEnabled(scenarioId: string, enabled: boolean) {
+    const result = await scenarioApi.setScenarioEnabled(scenarioId, enabled)
+    await fetchInstalledScenarios()
+    return result
+  }
+
   function reset() {
     status.value = createEmptyStatus()
     installedScenarios.value = []
@@ -72,6 +93,9 @@ export const useScenarioStore = defineStore('scenario', () => {
     isLoaded,
     refreshStatus,
     fetchInstalledScenarios,
+    importScenarioFile,
+    removeScenario,
+    setScenarioEnabled,
     reset,
   }
 })

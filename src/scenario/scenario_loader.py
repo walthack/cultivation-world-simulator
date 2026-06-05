@@ -67,6 +67,15 @@ class ResolvedScenario:
     scenario_dir: Path | None = None
 
 
+@dataclass(slots=True)
+class ScenarioDirectoryValidationResult:
+    scenario_id: str
+    title: str
+    version: str
+    preset_id: str
+    warnings: list[str] = field(default_factory=list)
+
+
 def _load_json(path: Path, *, required: bool) -> dict[str, Any]:
     if not path.exists():
         if required:
@@ -461,4 +470,54 @@ def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedSce
         scenario=scenario,
         timeline=timeline,
         scenario_dir=scenario_dir,
+    )
+
+
+def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResult:
+    scenario_path = scenario_dir / "scenario.json"
+    timeline_path = scenario_dir / "timeline.json"
+    scenario = _load_json(scenario_path, required=True)
+    timeline_data = _load_json(timeline_path, required=True)
+
+    preset_id = _validate_scenario_top_level(scenario)
+    if str(scenario["scenario_id"]) != scenario_dir.name:
+        raise ScenarioValidationError(
+            "scenario.scenario_id",
+            f"matching package directory name {scenario_dir.name!r}",
+            scenario["scenario_id"],
+        )
+
+    _validate_initial_state(scenario, preset_id)
+    _validate_timeline(
+        timeline_data,
+        preset_id=preset_id,
+        scenario_schema_version=str(scenario["schema_version"]),
+    )
+
+    warnings: list[str] = []
+    known_keys = {
+        "schema_version",
+        "scenario_id",
+        "title",
+        "version",
+        "description",
+        "author",
+        "tags",
+        "cover_image",
+        "world_preset",
+        "initial_state",
+    }
+    unknown_keys = sorted(str(key) for key in scenario if key not in known_keys)
+    if unknown_keys:
+        warnings.append(f"Unknown scenario.json fields ignored: {', '.join(unknown_keys)}")
+    for key in ("tags", "cover_image", "author"):
+        if key not in scenario:
+            warnings.append(f"Optional metadata missing: {key}")
+
+    return ScenarioDirectoryValidationResult(
+        scenario_id=str(scenario["scenario_id"]),
+        title=str(scenario["title"]),
+        version=str(scenario["version"]),
+        preset_id=preset_id,
+        warnings=warnings,
     )

@@ -6,9 +6,11 @@ const {
   startDrafts,
   fetchInstalledScenariosMock,
   newGameDraft,
+  installedScenarios,
 } = vi.hoisted(() => ({
   startDrafts: [] as any[],
   fetchInstalledScenariosMock: vi.fn(),
+  installedScenarios: [] as any[],
   newGameDraft: {
     content_locale: 'zh-CN',
     init_npc_num: 9,
@@ -114,26 +116,7 @@ vi.mock('@/stores/setting', () => ({
 
 vi.mock('@/stores/scenario', () => ({
   useScenarioStore: () => ({
-    installedScenarios: [
-      {
-        id: 'liuchao',
-        name: '六朝纪事',
-        version: '1.0',
-        author: 'Chaldeas',
-        description: 'liuchao',
-        tags: [],
-        cover_image: null,
-      },
-      {
-        id: 'sanguo',
-        name: '三国仙纪',
-        version: '1.0',
-        author: 'Chaldeas',
-        description: 'sanguo',
-        tags: [],
-        cover_image: null,
-      },
-    ],
+    installedScenarios,
     isInstalledLoading: false,
     fetchInstalledScenarios: fetchInstalledScenariosMock,
   }),
@@ -144,6 +127,31 @@ describe('GameStartPanel scenario picker', () => {
     vi.clearAllMocks()
     startDrafts.length = 0
     newGameDraft.scenario_id = null
+    installedScenarios.length = 0
+    installedScenarios.push(
+      {
+        id: 'liuchao',
+        name: '六朝纪事',
+        version: '1.0',
+        author: 'Chaldeas',
+        description: 'liuchao',
+        tags: [],
+        cover_image: null,
+        source: 'bundled',
+        enabled: true,
+      },
+      {
+        id: 'sanguo',
+        name: '三国仙纪',
+        version: '1.0',
+        author: 'Chaldeas',
+        description: 'sanguo',
+        tags: [],
+        cover_image: null,
+        source: 'installed',
+        enabled: true,
+      },
+    )
   })
 
   it('scenario picker option list includes default and installed scenarios', () => {
@@ -155,6 +163,18 @@ describe('GameStartPanel scenario picker', () => {
     expect(wrapper.text()).toContain('默认游戏（无 scenario）')
     expect(wrapper.text()).toContain('六朝纪事 v1.0')
     expect(wrapper.text()).toContain('三国仙纪 v1.0')
+  })
+
+  it('hides disabled scenarios from picker', () => {
+    installedScenarios[1].enabled = false
+
+    const wrapper = mount(GameStartPanel, {
+      props: { readonly: false },
+    })
+
+    expect(wrapper.text()).toContain('默认游戏（无 scenario）')
+    expect(wrapper.text()).toContain('六朝纪事 v1.0')
+    expect(wrapper.text()).not.toContain('三国仙纪 v1.0')
   })
 
   it('start payload includes scenario_id', async () => {
