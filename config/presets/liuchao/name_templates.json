@@ -1,0 +1,9 @@
+{
+  "preset_id": "liuchao",
+  "mode": "inline",
+  "common_last_names": ["程", "王", "紫", "萧", "秦"],
+  "common_given_names": {
+    "male": ["宗扬", "哲", "羽", "玄", "昭"],
+    "female": ["小紫", "清漪", "瑶", "霜", "绾"]
+  }
+}

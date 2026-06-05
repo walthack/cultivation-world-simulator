@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from src.utils.df import game_configs, get_str, get_int
 from src.classes.core.avatar import Gender
 from src.i18n.locale_registry import uses_space_separated_names
+from src.config.presets import get_active_preset_id, get_preset_name_templates
 
 
 @dataclass
@@ -82,6 +83,27 @@ class NameManager:
                     self.sect_given_names[sect_id][gender].append(name)
                 else:
                     self.common_given_names[gender].append(name)
+
+        self._apply_preset_name_templates()
+
+    def _apply_preset_name_templates(self):
+        templates = get_preset_name_templates(get_active_preset_id())
+        if templates.get("mode") != "inline":
+            return
+
+        last_names = templates.get("common_last_names", [])
+        if isinstance(last_names, list) and last_names:
+            self.common_last_names = [str(item) for item in last_names if str(item)]
+
+        given_names = templates.get("common_given_names", {})
+        if not isinstance(given_names, dict):
+            return
+        male_names = given_names.get("male", [])
+        female_names = given_names.get("female", [])
+        if isinstance(male_names, list) and male_names:
+            self.common_given_names[Gender.MALE] = [str(item) for item in male_names if str(item)]
+        if isinstance(female_names, list) and female_names:
+            self.common_given_names[Gender.FEMALE] = [str(item) for item in female_names if str(item)]
     
     def get_random_last_name(self, sect_id: Optional[int] = None) -> str:
         """

@@ -1,0 +1,277 @@
+{
+  "schema_version": "0.2",
+  "events": [
+    {
+      "id": "sanguo-opening",
+      "type": "side_event",
+      "trigger": {
+        "year": 208,
+        "month": 1,
+        "condition": {
+          "always": {}
+        }
+      },
+      "name": "三国开局",
+      "description": "汉末龙气分裂，三方诸侯各自按住鼎脉。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "sanguo_opening_seen"
+        }
+      ]
+    },
+    {
+      "id": "shu-hanzhong-supply",
+      "type": "main",
+      "dynasty_id": "shu",
+      "trigger": {
+        "year": 208,
+        "month": 1,
+        "at_region_id": "sg-hanzhong",
+        "condition": {
+          "world_flag": {
+            "flag": "sanguo_started"
+          }
+        }
+      },
+      "name": "蜀道汉中筹粮",
+      "description": "汉中栈道上粮车连行，刘备势力为入蜀与抗魏预先稳住山口。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "shu_hanzhong_supply_ready"
+        }
+      ]
+    },
+    {
+      "id": "wei-xuchang-court-order",
+      "type": "main",
+      "dynasty_id": "wei",
+      "trigger": {
+        "year": 208,
+        "month": 3,
+        "at_region_id": "sg-xuchang",
+        "condition": {
+          "world_flag": {
+            "flag": "sanguo_started"
+          }
+        }
+      },
+      "name": "魏廷许昌整令",
+      "description": "许昌朝堂再颁军令，曹操以天子名义调度北方军粮与法吏。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "wei_xuchang_order_issued"
+        }
+      ]
+    },
+    {
+      "id": "wu-jianye-river-watch",
+      "type": "main",
+      "dynasty_id": "wu",
+      "trigger": {
+        "year": 208,
+        "month": 5,
+        "at_region_id": "sg-jianye",
+        "condition": {
+          "world_flag": {
+            "flag": "sanguo_started"
+          }
+        }
+      },
+      "name": "吴地建业巡江",
+      "description": "建业水军清点战船，孙权令江防诸营暗中演练火攻与连环破阵。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "wu_jianye_river_watch_set"
+        }
+      ]
+    },
+    {
+      "id": "jingzhou-alliance-talk",
+      "type": "main",
+      "dynasty_id": "shu",
+      "trigger": {
+        "year": 208,
+        "month": 8,
+        "at_region_id": "sg-jingzhou",
+        "condition": {
+          "world_flag": {
+            "flag": "sanguo_started"
+          }
+        }
+      },
+      "name": "荆州联兵议",
+      "description": "荆州幕府中蜀吴使者互探底线，联兵抗魏的盟约尚未写定。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "jingzhou_alliance_discussed"
+        }
+      ]
+    },
+    {
+      "id": "liu-bei-arrives-at-chibi-eve",
+      "type": "main",
+      "dynasty_id": "shu",
+      "trigger": {
+        "year": 208,
+        "month": 10,
+        "at_region_id": "sg-chibi",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "liu-bei"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "sanguo_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "赤壁前夜：刘备",
+      "description": "赤壁江风压营，刘备在灯下权衡仁义、盟约与退路。",
+      "choices": [
+        {
+          "id": "hold-faith",
+          "title": "稳住盟心",
+          "description": "先稳住孙权，再等待东风与火势。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "sanguo_chibi_eve_witnessed_by_{controlled_avatar}"
+            },
+            {
+              "type": "gain_stat",
+              "stat": "alliance_resolve",
+              "amount": 1
+            }
+          ]
+        }
+      ],
+      "default_outcome": "hold-faith",
+      "effects": []
+    },
+    {
+      "id": "cao-cao-arrives-at-chibi-eve",
+      "type": "main",
+      "dynasty_id": "wei",
+      "trigger": {
+        "year": 208,
+        "month": 10,
+        "at_region_id": "sg-chibi",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "cao-cao"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "sanguo_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "赤壁前夜：曹操",
+      "description": "赤壁北岸战船相连，曹操在江雾中判断南军火计与士气虚实。",
+      "choices": [
+        {
+          "id": "press-fleet",
+          "title": "压上水军",
+          "description": "以北军数量和法度压迫江面，不让孙刘喘息。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "sanguo_chibi_eve_witnessed_by_{controlled_avatar}"
+            },
+            {
+              "type": "gain_stat",
+              "stat": "fleet_pressure",
+              "amount": 1
+            }
+          ]
+        }
+      ],
+      "default_outcome": "press-fleet",
+      "effects": []
+    },
+    {
+      "id": "sun-quan-arrives-at-chibi-eve",
+      "type": "main",
+      "dynasty_id": "wu",
+      "trigger": {
+        "year": 208,
+        "month": 10,
+        "at_region_id": "sg-chibi",
+        "condition": {
+          "all": [
+            {
+              "controlled_avatar_is": {
+                "target_id": "sun-quan"
+              }
+            },
+            {
+              "world_flag": {
+                "flag": "sanguo_started"
+              }
+            }
+          ]
+        }
+      },
+      "name": "赤壁前夜：孙权",
+      "description": "赤壁江面火星未起，孙权听周瑜报备风向，决意以江东为赌注。",
+      "choices": [
+        {
+          "id": "trust-river",
+          "title": "信任江防",
+          "description": "把战机交给水军与东风，不再摇摆求和。",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "sanguo_chibi_eve_witnessed_by_{controlled_avatar}"
+            },
+            {
+              "type": "gain_stat",
+              "stat": "river_command",
+              "amount": 1
+            }
+          ]
+        }
+      ],
+      "default_outcome": "trust-river",
+      "effects": []
+    },
+    {
+      "id": "luoyang-old-han-omen",
+      "type": "main",
+      "dynasty_id": "wei",
+      "trigger": {
+        "year": 209,
+        "month": 1,
+        "at_region_id": "sg-luoyang",
+        "condition": {
+          "world_flag": {
+            "flag": "sanguo_started"
+          }
+        }
+      },
+      "name": "洛阳旧汉异兆",
+      "description": "洛阳旧宫忽有龙纹浮现，魏地法吏封锁消息，各方密探却已闻风而动。",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "luoyang_old_han_omen_seen"
+        }
+      ]
+    }
+  ]
+}

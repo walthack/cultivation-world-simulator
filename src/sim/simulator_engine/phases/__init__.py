@@ -1,3 +1,3 @@
-from . import actions, annual, lifecycle, sect_war, social, world
+from . import actions, annual, lifecycle, scripted_scenario, sect_war, social, world
 
-__all__ = ["actions", "annual", "lifecycle", "sect_war", "social", "world"]
+__all__ = ["actions", "annual", "lifecycle", "scripted_scenario", "sect_war", "social", "world"]

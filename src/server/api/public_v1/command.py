@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable, Literal, Optional
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.config import RunConfig
 from src.server.services.public_api_contract import ok_response
@@ -71,6 +71,16 @@ class SetPhenomenonRequest(BaseModel):
     id: int
 
 
+class BulkImportAvatarRequest(BaseModel):
+    id: str
+    name: str
+
+
+class BulkImportWorldRequest(BaseModel):
+    avatars: list[BulkImportAvatarRequest] = Field(default_factory=list)
+    world_flags: dict = Field(default_factory=dict)
+
+
 class SaveGameRequest(BaseModel):
     custom_name: Optional[str] = None
 
@@ -131,6 +141,7 @@ def create_public_command_router(
     run_generate_custom_content: Callable[[BaseModel], object],
     run_create_custom_content: Callable[[BaseModel], object],
     run_set_phenomenon: Callable[..., object],
+    run_bulk_import_world: Callable[[BaseModel], object],
     run_cleanup_events: Callable[..., object],
     run_save_game: Callable[..., dict],
     run_delete_save: Callable[..., dict],
@@ -205,6 +216,10 @@ def create_public_command_router(
     @router.post("/api/v1/command/world/set-phenomenon")
     async def set_phenomenon_v1(req: SetPhenomenonRequest):
         return ok_response(await run_set_phenomenon(phenomenon_id=req.id))
+
+    @router.post("/api/v1/command/world/bulk-import")
+    async def bulk_import_world_v1(req: BulkImportWorldRequest):
+        return ok_response(await run_bulk_import_world(req))
 
     @router.delete("/api/v1/command/events/cleanup")
     async def cleanup_events_v1(

@@ -5,7 +5,7 @@ from src.utils.config import CONFIG
 
 from .context import SimulationStepContext
 from .finalizer import finalize_step
-from .phases import actions, annual, lifecycle, sect_war, social, world as world_phases
+from .phases import actions, annual, lifecycle, scripted_scenario, sect_war, social, world as world_phases
 
 
 class Simulator:
@@ -36,6 +36,7 @@ class Simulator:
         10. 年龄更新与出生/觉醒处理
         11. 身世背景生成
         12. 被动效果与世界性随机事件
+        12.5 剧本场景事件
         13. 小型随机事件 + 宗门随机事件
         14. 外号生成
         15. 天象（大环境气候）更新
@@ -86,6 +87,9 @@ class Simulator:
 
         # 12. 被动效果 + 世界性事件
         ctx.add_events(await world_phases.phase_passive_effects(self.world, ctx.living_avatars))
+
+        # 12.5 Scripted scenario tick
+        ctx.add_events(await scripted_scenario.phase_scripted_scenario_tick(self.world, ctx))
 
         # 13. 角色自主创作 + 小型随机事件 + 宗门随机事件
         ctx.add_events(await world_phases.phase_autonomous_custom_creation(self.world, ctx.living_avatars))

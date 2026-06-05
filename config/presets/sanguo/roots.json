@@ -1,0 +1,32 @@
+{
+  "preset_id": "sanguo",
+  "roots": [
+    {
+      "id": "GOLD",
+      "name": "金灵根",
+      "description": "刚强果断，适合兵锋与法度。",
+      "elements": ["GOLD"],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": ["sanguo"]
+    },
+    {
+      "id": "WOOD",
+      "name": "木灵根",
+      "description": "仁厚坚韧，适合生息与联盟。",
+      "elements": ["WOOD"],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": ["sanguo"]
+    },
+    {
+      "id": "WATER",
+      "name": "水灵根",
+      "description": "圆融善变，适合水军与权衡。",
+      "elements": ["WATER"],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": ["sanguo"]
+    }
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "preset_id": "default",
+  "dynasties": [
+    {
+      "id": "1",
+      "name": "秦",
+      "description": "尚法重军，朝纲严整，凡俗秩序如铁。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "尚法重军"
+      ]
+    },
+    {
+      "id": "2",
+      "name": "晋",
+      "description": "门第森然，士族清谈，朝野重礼而尚名教。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [
+        "confucianism"
+      ],
+      "tags": [
+        "清谈名教"
+      ]
+    },
+    {
+      "id": "3",
+      "name": "宋",
+      "description": "重文轻武，典章繁密，民间书院兴盛。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [
+        "confucianism"
+      ],
+      "tags": [
+        "重文理政"
+      ]
+    },
+    {
+      "id": "4",
+      "name": "梁",
+      "description": "宫廷清雅，士风浮丽，兼容并蓄而多机变。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "风流雅政"
+      ]
+    },
+    {
+      "id": "5",
+      "name": "楚",
+      "description": "地广俗杂，巫风犹存，边地豪强并起。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "山泽杂行"
+      ]
+    },
+    {
+      "id": "6",
+      "name": "齐",
+      "description": "工商富庶，沿海通达，朝廷善于聚敛调度。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "尚实通商"
+      ]
+    },
+    {
+      "id": "7",
+      "name": "燕",
+      "description": "北地苦寒，尚武守边，朝廷风格沉毅。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "沉毅守边"
+      ]
+    },
+    {
+      "id": "8",
+      "name": "赵",
+      "description": "骑射成俗，军政并重，边镇气息浓厚。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [
+        "wu"
+      ],
+      "tags": [
+        "骑射尚武"
+      ]
+    },
+    {
+      "id": "9",
+      "name": "魏",
+      "description": "法度明密，君权强盛，百官运转高效。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "法密权重"
+      ]
+    },
+    {
+      "id": "10",
+      "name": "韩",
+      "description": "国势虽不张扬，却重实务与基层治理。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "务本守成"
+      ]
+    },
+    {
+      "id": "11",
+      "name": "吴",
+      "description": "水网纵横，商旅频繁，朝廷善用舟楫之利。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [],
+      "tags": [
+        "柔治机变"
+      ]
+    },
+    {
+      "id": "12",
+      "name": "越",
+      "description": "山泽深密，民风坚忍，朝廷善守而后发。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [],
+      "orthodoxy_ids": [
+        "dao"
+      ],
+      "tags": [
+        "坚忍后发"
+      ]
+    }
+  ]
+}

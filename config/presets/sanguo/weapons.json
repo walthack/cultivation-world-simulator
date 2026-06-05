@@ -1,0 +1,17 @@
+{
+  "preset_id": "sanguo",
+  "weapons": [
+    {
+      "id": "sanguo-training-sword",
+      "name": "练气佩剑",
+      "tier": 1,
+      "attributes": [
+        "SWORD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    }
+  ]
+}

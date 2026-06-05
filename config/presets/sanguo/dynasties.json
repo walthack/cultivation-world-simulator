@@ -1,0 +1,106 @@
+{
+  "preset_id": "sanguo",
+  "dynasties": [
+    {
+      "id": "shu",
+      "name": "蜀",
+      "description": "刘备所据的汉室余脉政权，依托巴蜀山川与汉中关隘保存一线正统。",
+      "capital_region_id": "sg-chengdu",
+      "ruler_avatar_id": "liu-bei",
+      "territory_region_ids": [
+        "sg-chengdu",
+        "sg-hanzhong"
+      ],
+      "status": "active",
+      "founding_year": 208,
+      "relations": [
+        {
+          "other_dynasty_id": "wei",
+          "type": "rival",
+          "value": -40
+        },
+        {
+          "other_dynasty_id": "wu",
+          "type": "neutral",
+          "value": 10
+        }
+      ],
+      "orthodoxy_ids": [
+        "confucianism_han_legitimacy",
+        "taoism_wudoumi"
+      ],
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    },
+    {
+      "id": "wei",
+      "name": "魏",
+      "description": "曹操掌控的北方霸权，挟汉廷名分而行法度军政。",
+      "capital_region_id": "sg-xuchang",
+      "ruler_avatar_id": "cao-cao",
+      "territory_region_ids": [
+        "sg-xuchang",
+        "sg-luoyang",
+        "sg-hebei"
+      ],
+      "status": "active",
+      "founding_year": 208,
+      "relations": [
+        {
+          "other_dynasty_id": "shu",
+          "type": "rival",
+          "value": -40
+        },
+        {
+          "other_dynasty_id": "wu",
+          "type": "rival",
+          "value": -30
+        }
+      ],
+      "orthodoxy_ids": [
+        "legalism_wei",
+        "confucianism_han_legitimacy"
+      ],
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    },
+    {
+      "id": "wu",
+      "name": "吴",
+      "description": "孙权承接父兄江东基业，以长江水势、水军与士族联盟立国。",
+      "capital_region_id": "sg-jianye",
+      "ruler_avatar_id": "sun-quan",
+      "territory_region_ids": [
+        "sg-jianye",
+        "sg-jingzhou",
+        "sg-chibi"
+      ],
+      "status": "active",
+      "founding_year": 208,
+      "relations": [
+        {
+          "other_dynasty_id": "wei",
+          "type": "rival",
+          "value": -30
+        },
+        {
+          "other_dynasty_id": "shu",
+          "type": "neutral",
+          "value": 10
+        }
+      ],
+      "orthodoxy_ids": [
+        "confucianism_han_legitimacy",
+        "taoism_wudoumi"
+      ],
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    }
+  ]
+}

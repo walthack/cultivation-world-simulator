@@ -138,6 +138,7 @@ def configure_routes_and_mounts(
     run_generate_custom_content,
     run_create_custom_content,
     run_set_phenomenon,
+    run_bulk_import_world,
     run_cleanup_events,
     run_save_game,
     run_delete_save,
@@ -222,6 +223,7 @@ def configure_routes_and_mounts(
             run_generate_custom_content=run_generate_custom_content,
             run_create_custom_content=run_create_custom_content,
             run_set_phenomenon=run_set_phenomenon,
+            run_bulk_import_world=run_bulk_import_world,
             run_cleanup_events=run_cleanup_events,
             run_save_game=run_save_game,
             run_delete_save=run_delete_save,
@@ -290,3 +292,11 @@ def start_server(
             print(f"Failed to open browser: {exc}")
 
     uvicorn_module.run(app, host=host, port=port, log_level="info")
+
+
+def __getattr__(name: str):
+    if name == "app":
+        from src.server.main import app
+
+        return app
+    raise AttributeError(name)

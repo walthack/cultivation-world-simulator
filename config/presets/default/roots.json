@@ -1,0 +1,123 @@
+{
+  "preset_id": "default",
+  "roots": [
+    {
+      "id": "GOLD",
+      "name": "金灵根",
+      "description": "刚强果断；攻击力强，适合剑修",
+      "elements": [
+        "GOLD"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "WOOD",
+      "name": "木灵根",
+      "description": "仁厚坚韧；擅恢复、毒术与木属性法术",
+      "elements": [
+        "WOOD"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "WATER",
+      "name": "水灵根",
+      "description": "智慧圆融；身法轻盈，善辅助与隐匿",
+      "elements": [
+        "WATER"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "FIRE",
+      "name": "火灵根",
+      "description": "激情暴烈；高爆发攻术，火系功法",
+      "elements": [
+        "FIRE"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "EARTH",
+      "name": "土灵根",
+      "description": "稳重踏实；防御高，体修或傀儡术",
+      "elements": [
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "THUNDER",
+      "name": "雷灵根",
+      "description": "爆发性极强；战斗系顶尖",
+      "elements": [
+        "WATER",
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "ICE",
+      "name": "冰灵根",
+      "description": "控制力强；持久性好",
+      "elements": [
+        "GOLD",
+        "WATER"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "WIND",
+      "name": "风灵根",
+      "description": "身法卓绝；难以捉摸",
+      "elements": [
+        "WOOD",
+        "WATER"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "DARK",
+      "name": "暗灵根",
+      "description": "隐匿系；擅幻术与诡道",
+      "elements": [
+        "FIRE",
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "",
+      "tags": []
+    },
+    {
+      "id": "HEAVEN",
+      "name": "天灵根",
+      "description": "资质通天；五行皆通，修行全面",
+      "elements": [
+        "GOLD",
+        "WOOD",
+        "WATER",
+        "FIRE",
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_breakthrough_success_rate: 0.1, extra_retreat_success_rate: 0.1}",
+      "tags": []
+    }
+  ]
+}

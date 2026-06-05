@@ -86,6 +86,7 @@ from src.server.services.save_load_control import (
     save_current_game,
 )
 from src.server.services.world_control import set_world_phenomenon
+from src.server.services.world_bulk_import import bulk_import_world
 from src.run.load_map import load_cultivation_world_map
 from src.sim.avatar_init import make_avatars as _new_make_random, create_avatar_from_request
 from src.systems.dynasty_generator import generate_dynasty, generate_emperor
@@ -110,9 +111,12 @@ from src.classes.language import language_manager
 from src.systems.sect_relations import compute_sect_relations
 from src.i18n import t
 from src.config import get_settings_service
+from src.config.presets import get_preset_realm_enum_order, set_active_preset
 from src.config.data_paths import get_data_paths
 from src.i18n.locale_registry import uses_space_separated_names
 from src.utils.llm.config import LLMConfig
+from src.scenario.injector import inject_scenario_into_world
+from src.scenario import scenario_loader
 from src.server.runtime import GameSessionRuntime, create_default_game_state
 from src.server.host_runtime import (
     ConnectionManager,
@@ -182,6 +186,52 @@ AVATAR_ASSETS = {
 IS_DEV_MODE = "--dev" in sys.argv
 
 
+def _read_cli_option(name: str, default: str | None = None) -> str | None:
+    prefix = f"{name}="
+    for idx, item in enumerate(sys.argv):
+        if item == name and idx + 1 < len(sys.argv):
+            return sys.argv[idx + 1]
+        if item.startswith(prefix):
+            return item[len(prefix):]
+    return default
+
+
+ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
+ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
+ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
+
+
+class ScenarioInjectedWorld:
+    @staticmethod
+    def _apply_scenario_start_time(kwargs):
+        if ACTIVE_SCENARIO is None:
+            return kwargs
+
+        initial_state = ACTIVE_SCENARIO.scenario.get("initial_state", {}) or {}
+        year = initial_state.get("year")
+        month = initial_state.get("month")
+        if year is None or month is None:
+            return kwargs
+
+        try:
+            scenario_year = int(year)
+            scenario_month = Month(int(month))
+        except (TypeError, ValueError):
+            return kwargs
+
+        kwargs["month_stamp"] = create_month_stamp(Year(scenario_year), scenario_month)
+        kwargs["start_year"] = scenario_year
+        return kwargs
+
+    @classmethod
+    def create_with_db(cls, *args, **kwargs):
+        kwargs = cls._apply_scenario_start_time(dict(kwargs))
+        world = World.create_with_db(*args, **kwargs)
+        if ACTIVE_SCENARIO is not None:
+            inject_scenario_into_world(world, ACTIVE_SCENARIO)
+        return world
+
+
 def apply_runtime_content_locale(lang_code: str) -> None:
     """兼容保留：按当前主运行时切换内容语言。"""
     _apply_runtime_content_locale(
@@ -245,7 +295,7 @@ public_query_builders = create_public_query_builders(
     get_game_data_query=get_game_data_query,
     races_by_id=races_by_id,
     personas_by_id=personas_by_id,
-    realm_order=REALM_ORDER,
+    realm_order=get_preset_realm_enum_order(ACTIVE_PRESET_ID),
     techniques_by_id=techniques_by_id,
     weapons_by_id=weapons_by_id,
     auxiliaries_by_id=auxiliaries_by_id,
@@ -328,7 +378,7 @@ async def init_game_async():
         load_cultivation_world_map=load_cultivation_world_map,
         get_events_db_path=get_events_db_path,
         get_runtime_run_config=_get_runtime_run_config,
-        world_cls=World,
+        world_cls=ScenarioInjectedWorld,
         create_month_stamp=create_month_stamp,
         year_cls=Year,
         month_enum=Month,
@@ -446,6 +496,7 @@ command_handlers = create_command_handlers(
     create_custom_content_from_draft=create_custom_content_from_draft,
     set_long_term_objective_for_avatar=set_long_term_objective_for_avatar,
     clear_long_term_objective_for_avatar=clear_long_term_objective_for_avatar,
+    bulk_import_world=bulk_import_world,
     set_user_long_term_objective=set_user_long_term_objective,
     clear_user_long_term_objective=clear_user_long_term_objective,
     save_current_game=save_current_game,
@@ -473,6 +524,7 @@ run_pause_game = command_handlers.run_pause_game
 run_resume_game = command_handlers.run_resume_game
 run_cleanup_events = command_handlers.run_cleanup_events
 run_set_phenomenon = command_handlers.run_set_phenomenon
+run_bulk_import_world = command_handlers.run_bulk_import_world
 run_create_avatar = command_handlers.run_create_avatar
 run_delete_avatar = command_handlers.run_delete_avatar
 run_update_avatar_adjustment = command_handlers.run_update_avatar_adjustment
@@ -655,6 +707,7 @@ configure_routes_and_mounts(
     run_generate_custom_content=run_generate_custom_content,
     run_create_custom_content=run_create_custom_content,
     run_set_phenomenon=run_set_phenomenon,
+    run_bulk_import_world=run_bulk_import_world,
     run_cleanup_events=run_cleanup_events,
     run_save_game=run_save_game,
     run_delete_save=run_delete_save,

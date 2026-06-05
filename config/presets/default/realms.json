@@ -1,0 +1,36 @@
+{
+  "preset_id": "default",
+  "realm_order": [
+    "QI_REFINEMENT",
+    "FOUNDATION_ESTABLISHMENT",
+    "CORE_FORMATION",
+    "NASCENT_SOUL"
+  ],
+  "stage_order": [
+    "EARLY_STAGE",
+    "MIDDLE_STAGE",
+    "LATE_STAGE"
+  ],
+  "realms": [
+    {
+      "id": "QI_REFINEMENT",
+      "canonical_name": "QI_REFINEMENT",
+      "display_name": "练气"
+    },
+    {
+      "id": "FOUNDATION_ESTABLISHMENT",
+      "canonical_name": "FOUNDATION_ESTABLISHMENT",
+      "display_name": "筑基"
+    },
+    {
+      "id": "CORE_FORMATION",
+      "canonical_name": "CORE_FORMATION",
+      "display_name": "金丹"
+    },
+    {
+      "id": "NASCENT_SOUL",
+      "canonical_name": "NASCENT_SOUL",
+      "display_name": "元婴"
+    }
+  ]
+}

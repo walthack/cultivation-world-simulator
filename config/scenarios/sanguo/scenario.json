@@ -1,0 +1,109 @@
+{
+  "schema_version": "0.2",
+  "scenario_id": "sanguo",
+  "title": "三国仙纪",
+  "version": "1.0",
+  "author": "Chaldeas",
+  "description": "Stage 2d minimal 三国 scenario demo proving scenario engine generality.",
+  "world_preset": {
+    "preset_id": "sanguo"
+  },
+  "world_background": "汉末三分，龙气入鼎。刘备、曹操、孙权各据一方，诸侯争衡亦是修士争道。",
+  "initial_state": {
+    "year": 208,
+    "month": 1,
+    "avatars": [
+      {
+        "id": "liu-bei",
+        "surname": "刘",
+        "given_name": "备",
+        "name": "刘备",
+        "gender": "男",
+        "age": 47,
+        "sect_id": 0,
+        "realm": "YUAN_YING",
+        "realm_id": "YUAN_YING",
+        "stage": "MIDDLE_STAGE",
+        "level": 82,
+        "race_id": "human",
+        "root_id": "WOOD",
+        "location_region_id": "sg-chengdu",
+        "backstory": "以仁义聚众的汉室宗亲，正试图在荆益之间保存一线龙气。",
+        "persona_traits": ["RENYI", "ZHUGONG"],
+        "goldfinger_id": "HAN-LONGQI",
+        "long_term_objective": "匡扶汉室，在乱世中为百姓与旧统争得立足之地。"
+      },
+      {
+        "id": "cao-cao",
+        "surname": "曹",
+        "given_name": "操",
+        "name": "曹操",
+        "gender": "男",
+        "age": 53,
+        "sect_id": 0,
+        "realm": "HUA_SHEN",
+        "realm_id": "HUA_SHEN",
+        "stage": "EARLY_STAGE",
+        "level": 104,
+        "race_id": "human",
+        "root_id": "GOLD",
+        "location_region_id": "sg-xuchang",
+        "backstory": "挟天子以令诸侯的北方雄主，法度、兵锋与霸气同铸一身。",
+        "persona_traits": ["XIAOXIONG", "ZHUGONG"],
+        "goldfinger_id": "WANGBA-QI",
+        "long_term_objective": "平定群雄，以魏地法度重塑天下秩序。"
+      },
+      {
+        "id": "sun-quan",
+        "surname": "孙",
+        "given_name": "权",
+        "name": "孙权",
+        "gender": "男",
+        "age": 26,
+        "sect_id": 0,
+        "realm": "JIE_DAN",
+        "realm_id": "JIE_DAN",
+        "stage": "LATE_STAGE",
+        "level": 68,
+        "race_id": "human",
+        "root_id": "WATER",
+        "location_region_id": "sg-jianye",
+        "backstory": "承父兄基业的江东之主，倚长江水势与群臣谋断守成开局。",
+        "persona_traits": ["ZHUGONG", "MOUZHU"],
+        "goldfinger_id": "JIANGDONG-SHUIYUN",
+        "long_term_objective": "稳住江东，借水路与盟约在三分天下中自立。"
+      }
+    ],
+    "sects": [
+      {
+        "id": 0,
+        "leader_avatar_id": null,
+        "member_avatar_ids": ["liu-bei", "cao-cao", "sun-quan"],
+        "headquarters_region_id": null
+      }
+    ],
+    "relationships": [
+      {
+        "a": "liu-bei",
+        "b": "cao-cao",
+        "value": -40,
+        "tag": "汉魏相争"
+      },
+      {
+        "a": "cao-cao",
+        "b": "sun-quan",
+        "value": -30,
+        "tag": "江北江东对峙"
+      },
+      {
+        "a": "liu-bei",
+        "b": "sun-quan",
+        "value": 10,
+        "tag": "联吴抗魏"
+      }
+    ],
+    "world_flags": {
+      "sanguo_started": true
+    }
+  }
+}

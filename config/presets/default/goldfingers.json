@@ -1,0 +1,92 @@
+{
+  "preset_id": "default",
+  "goldfinger_keys": [
+    "CHILD_OF_FORTUNE",
+    "BLESSED_WITH_GOOD_FORTUNE",
+    "TRANSMIGRATOR",
+    "REINCARNATOR",
+    "OLD_GRANDPA"
+  ],
+  "goldfingers": [
+    {
+      "id": "CHILD_OF_FORTUNE",
+      "name": "气运之子",
+      "description": "你仿佛生来便被天地眷顾，很多人求而不得的机缘总会向你靠近。",
+      "rarity": "SSR",
+      "mechanism_type": "effect_only",
+      "story_prompt": "若角色拥有“气运之子”外挂，请把“天命偏爱、机缘主动靠近、顺势而为”作为故事中的重要线索。",
+      "effect_dsl": "{extra_luck: 20}",
+      "side_effects": [],
+      "synergies": [],
+      "initial_state_patch": {},
+      "tags": [
+        "SSR",
+        "effect_only"
+      ]
+    },
+    {
+      "id": "BLESSED_WITH_GOOD_FORTUNE",
+      "name": "福缘深厚",
+      "description": "你福缘深厚，常常能在险处见转机，在寻常处见收获。",
+      "rarity": "SR",
+      "mechanism_type": "effect_only",
+      "story_prompt": "若角色拥有“福缘深厚”外挂，请把“逢凶化吉、小处见福、顺手撞见好事”作为故事中的重要线索。",
+      "effect_dsl": "{extra_luck: 12, extra_epiphany_probability: 0.05, extra_fortune_probability: 0.01}",
+      "side_effects": [],
+      "synergies": [],
+      "initial_state_patch": {},
+      "tags": [
+        "SR",
+        "effect_only"
+      ]
+    },
+    {
+      "id": "TRANSMIGRATOR",
+      "name": "穿越者",
+      "description": "你来自另一个世界，现代的记忆与思维仍在影响你看待修仙界的方式。",
+      "rarity": "SR",
+      "mechanism_type": "story_driven",
+      "story_prompt": "若角色拥有“穿越者”外挂，请重点描写其现代思维、异世界错位感，以及试图用现代经验理解或处理修仙问题的视角。",
+      "effect_dsl": "{extra_luck: 8, extra_epiphany_probability: 0.04, extra_breakthrough_success_rate: 0.03}",
+      "side_effects": [],
+      "synergies": [],
+      "initial_state_patch": {},
+      "tags": [
+        "SR",
+        "story_driven"
+      ]
+    },
+    {
+      "id": "REINCARNATOR",
+      "name": "重生者",
+      "description": "你像是带着上一世的残影归来，对某些选择与危险有说不清的敏锐直觉。",
+      "rarity": "SSR",
+      "mechanism_type": "story_driven",
+      "story_prompt": "若角色拥有“重生者”外挂，请重点描写其前世残留记忆、避坑冲动、旧日执念与对未来的误判。",
+      "effect_dsl": "{extra_luck: 10, extra_breakthrough_success_rate: 0.06, extra_epiphany_probability: 0.03}",
+      "side_effects": [],
+      "synergies": [],
+      "initial_state_patch": {},
+      "tags": [
+        "SSR",
+        "story_driven"
+      ]
+    },
+    {
+      "id": "OLD_GRANDPA",
+      "name": "随身老爷爷",
+      "description": "你的命运里像是始终藏着一位看不见的前辈，在关键时刻指点、催促，甚至与你争执。",
+      "rarity": "SSR",
+      "mechanism_type": "story_driven",
+      "story_prompt": "若角色拥有“随身老爷爷”外挂，请重点描写那位隐秘前辈的指点、争执、隐瞒与安排，让故事带出明显的陪伴视角。",
+      "effect_dsl": "{extra_luck: 6, extra_epiphany_probability: 0.08, extra_breakthrough_success_rate: 0.08}",
+      "side_effects": [],
+      "synergies": [],
+      "initial_state_patch": {},
+      "tags": [
+        "SSR",
+        "story_driven"
+      ]
+    }
+  ]
+}

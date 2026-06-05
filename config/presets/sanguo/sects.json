@@ -1,0 +1,21 @@
+{
+  "preset_id": "sanguo",
+  "sect_ids": [0, 1, 2],
+  "sects": [
+    {
+      "id": 0,
+      "scenario_id": "unaffiliated",
+      "name": "无门派"
+    },
+    {
+      "id": 1,
+      "scenario_id": "huangjin-dao",
+      "name": "黄巾道"
+    },
+    {
+      "id": 2,
+      "scenario_id": "wudoumi-dao",
+      "name": "五斗米道"
+    }
+  ]
+}

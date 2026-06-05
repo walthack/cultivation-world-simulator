@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.i18n import t
+from src.config.presets import get_active_preset_id, get_preset_realm_display_name
 from src.systems.cultivation import Realm, Stage
 from src.utils.df import game_configs, get_str
 
@@ -99,6 +100,7 @@ def build_cultivation_display(cultivation_progress: Any, *, profile_id: str) -> 
     canonical_realm_name = str(realm)
     canonical_stage_name = str(stage)
     canonical_full_name = _join_realm_stage(canonical_realm_name, canonical_stage_name)
+    preset_realm_name = get_preset_realm_display_name(get_active_preset_id(), realm_id)
 
     entries = _alias_entries()
     entry = (
@@ -106,7 +108,7 @@ def build_cultivation_display(cultivation_progress: Any, *, profile_id: str) -> 
         or entries.get((DEFAULT_PROFILE_ID, realm_id, stage_id))
     )
 
-    display_realm_name = canonical_realm_name
+    display_realm_name = preset_realm_name or canonical_realm_name
     display_stage_name = canonical_stage_name
     display_full_name = canonical_full_name
     resolved_profile_id = profile_id if entry and entry.profile_id == profile_id else DEFAULT_PROFILE_ID

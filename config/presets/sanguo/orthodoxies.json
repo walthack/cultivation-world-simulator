@@ -1,0 +1,53 @@
+{
+  "preset_id": "sanguo",
+  "orthodoxies": [
+    {
+      "id": "confucianism_han_legitimacy",
+      "name": "儒",
+      "description": "以汉统、礼法与名分维系天下秩序的正朔道统。",
+      "axes": {
+        "汉统": 100,
+        "礼": 95,
+        "法": 45,
+        "玄": 20,
+        "武": 35
+      },
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    },
+    {
+      "id": "taoism_wudoumi",
+      "name": "道",
+      "description": "承接方术、山林与天时观测的玄门道统。",
+      "axes": {
+        "汉统": 45,
+        "礼": 20,
+        "法": 15,
+        "玄": 100,
+        "武": 25
+      },
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    },
+    {
+      "id": "legalism_wei",
+      "name": "法",
+      "description": "以律令、军功与赏罚驱动乱世秩序的法家道统。",
+      "axes": {
+        "汉统": 55,
+        "礼": 35,
+        "法": 100,
+        "玄": 10,
+        "武": 80
+      },
+      "tags": [
+        "sanguo",
+        "confirmed"
+      ]
+    }
+  ]
+}
