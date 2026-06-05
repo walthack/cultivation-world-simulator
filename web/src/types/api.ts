@@ -601,6 +601,100 @@ export interface ScenarioStateUpdate {
   enabled: boolean;
 }
 
+export interface ScenarioDraftAvatarDTO {
+  id: string;
+  surname?: string;
+  given_name?: string;
+  name?: string;
+  gender?: string;
+  age?: number;
+  sect_id?: number | null;
+  realm?: string;
+  stage?: string;
+  level?: number;
+  persona_traits?: string[];
+  goldfinger_id?: string;
+  long_term_objective?: string;
+}
+
+export interface ScenarioDraftRelationshipDTO {
+  a: string;
+  b: string;
+  value: number;
+  tag?: string;
+}
+
+export interface ScenarioTimelineDraftEventDTO {
+  id: string;
+  type: string;
+  trigger: {
+    year: number;
+    month: number;
+    [key: string]: unknown;
+  };
+  name: string;
+  description: string;
+  effects?: Array<Record<string, unknown>>;
+}
+
+export interface ScenarioDraftDTO {
+  scenario: {
+    schema_version: string;
+    scenario_id: string;
+    title: string;
+    version: string;
+    author?: string;
+    description: string;
+    tags?: string[];
+    world_preset: {
+      preset_id: string;
+    };
+    world_background?: string;
+    initial_state: {
+      year?: number;
+      month?: number;
+      avatars: ScenarioDraftAvatarDTO[];
+      relationships: ScenarioDraftRelationshipDTO[];
+      sects: Array<Record<string, unknown>>;
+      world_flags?: Record<string, unknown>;
+    };
+  };
+  timeline: {
+    schema_version: string;
+    events: ScenarioTimelineDraftEventDTO[];
+  };
+}
+
+export interface ScenarioTemplateMetaDTO {
+  category: string;
+  summary: string;
+  title: string;
+  scenario_id: string;
+  preset_id: string;
+}
+
+export interface ScenarioTemplatesResponseDTO {
+  templates: ScenarioTemplateMetaDTO[];
+}
+
+export interface ScenarioGenerateResultDTO {
+  ok: boolean;
+  draft: ScenarioDraftDTO | null;
+  raw_output: unknown;
+  validation_errors: string[];
+  attempts: number;
+}
+
+export interface ScenarioSaveDraftResultDTO {
+  status: string;
+  scenario_id: string;
+  path: string;
+  warnings: string[];
+  zip_filename: string;
+  zip_mime: string;
+  zip_base64: string;
+}
+
 export interface ScenarioTimelineEventTriggerDTO {
   year: number | null;
   month: number | null;

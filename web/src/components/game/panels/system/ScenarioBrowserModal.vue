@@ -5,6 +5,7 @@ import { NButton, NEmpty, NModal, NSpin, NTag, useMessage } from 'naive-ui'
 import { ApiError } from '@/api/http'
 import { useScenarioStore } from '@/stores/scenario'
 import type { InstalledScenarioMeta } from '@/types/api'
+import ScenarioWizardModal from './ScenarioWizardModal.vue'
 
 const props = defineProps<{
   show: boolean
@@ -22,6 +23,7 @@ const pendingConflictFile = ref<File | null>(null)
 const conflictScenarioId = ref('')
 const isDragActive = ref(false)
 const isImporting = ref(false)
+const showCreatorWizard = ref(false)
 const showConflictModal = computed(() => pendingConflictFile.value !== null)
 
 function close() {
@@ -36,6 +38,10 @@ function selectScenario(scenario: InstalledScenarioMeta) {
 
 function openFilePicker() {
   fileInput.value?.click()
+}
+
+function openCreatorWizard() {
+  showCreatorWizard.value = true
 }
 
 function extractConflictId(error: unknown): string {
@@ -129,6 +135,10 @@ function renameConflict() {
   }
 }
 
+async function onScenarioSaved() {
+  await scenarioStore.fetchInstalledScenarios()
+}
+
 watch(
   () => props.show,
   (isShown) => {
@@ -157,6 +167,9 @@ watch(
       @drop="onDrop"
     >
       <div class="scenario-browser-toolbar">
+        <n-button size="small" @click="openCreatorWizard">
+          Create Scenario
+        </n-button>
         <n-button size="small" type="primary" :loading="isImporting" @click="openFilePicker">
           Import...
         </n-button>
@@ -244,6 +257,12 @@ watch(
       </div>
     </template>
   </n-modal>
+
+  <scenario-wizard-modal
+    v-if="showCreatorWizard"
+    v-model:show="showCreatorWizard"
+    @saved="onScenarioSaved"
+  />
 </template>
 
 <style scoped>

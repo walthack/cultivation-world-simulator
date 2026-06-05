@@ -1,0 +1,152 @@
+{
+  "category": "fantasy",
+  "summary": "A cultivation fantasy starter with three rivals and one hidden heir using the default preset.",
+  "scenario": {
+    "schema_version": "0.1",
+    "scenario_id": "fantasy_starter",
+    "title": "Ashen Star Valley",
+    "version": "1.0",
+    "author": "CWS Creator Toolkit",
+    "description": "A fantasy starter about a fallen star, a sealed valley, and competing cultivators.",
+    "tags": ["fantasy", "cultivation", "starter"],
+    "world_preset": {
+      "preset_id": "default"
+    },
+    "world_background": "A fallen star opens an old valley seal, drawing sect envoys, wanderers, and fortune seekers.",
+    "initial_state": {
+      "year": 1,
+      "month": 1,
+      "avatars": [
+        {
+          "id": "lin-aurelia",
+          "surname": "Lin",
+          "given_name": "Aurelia",
+          "gender": "女",
+          "age": 24,
+          "sect_id": 1,
+          "realm": "QI_REFINEMENT",
+          "stage": "LATE_STAGE",
+          "level": 18,
+          "persona_traits": ["RATIONAL", "ALCHEMIST"],
+          "goldfinger_id": "BLESSED_WITH_GOOD_FORTUNE",
+          "long_term_objective": "Refine the fallen star dust before rival sects claim it."
+        },
+        {
+          "id": "kael-moros",
+          "surname": "Kael",
+          "given_name": "Moros",
+          "gender": "男",
+          "age": 31,
+          "sect_id": 2,
+          "realm": "FOUNDATION_ESTABLISHMENT",
+          "stage": "EARLY_STAGE",
+          "level": 28,
+          "persona_traits": ["SWORD_FANATIC", "RUTHLESS"],
+          "goldfinger_id": "CHILD_OF_FORTUNE",
+          "long_term_objective": "Cut open the valley seal and seize the star core."
+        },
+        {
+          "id": "sera-mist",
+          "surname": "Sera",
+          "given_name": "Mist",
+          "gender": "女",
+          "age": 27,
+          "sect_id": null,
+          "realm": "QI_REFINEMENT",
+          "stage": "MIDDLE_STAGE",
+          "level": 13,
+          "persona_traits": ["TRAVELER", "OPEN_MINDED"],
+          "goldfinger_id": "TRANSMIGRATOR",
+          "long_term_objective": "Map the valley and understand why the star calls her name."
+        },
+        {
+          "id": "orin-vale",
+          "surname": "Orin",
+          "given_name": "Vale",
+          "gender": "男",
+          "age": 19,
+          "sect_id": null,
+          "realm": "QI_REFINEMENT",
+          "stage": "EARLY_STAGE",
+          "level": 6,
+          "persona_traits": ["SHY", "LATE_BLOOMER"],
+          "goldfinger_id": "OLD_GRANDPA",
+          "long_term_objective": "Hide his inheritance until the valley chooses a master."
+        }
+      ],
+      "sects": [
+        {"id": 1, "leader_avatar_id": "lin-aurelia", "member_avatar_ids": ["lin-aurelia"]},
+        {"id": 2, "leader_avatar_id": "kael-moros", "member_avatar_ids": ["kael-moros"]}
+      ],
+      "relationships": [
+        {"a": "lin-aurelia", "b": "kael-moros", "value": -25, "tag": "sect rivalry"},
+        {"a": "sera-mist", "b": "orin-vale", "value": 25, "tag": "shared secret"},
+        {"a": "kael-moros", "b": "orin-vale", "value": -15, "tag": "suspected heir"}
+      ],
+      "world_flags": {
+        "fantasy_starter_loaded": true
+      }
+    }
+  },
+  "timeline": {
+    "schema_version": "0.1",
+    "events": [
+      {
+        "id": "starfall-night",
+        "type": "main",
+        "trigger": {"year": 1, "month": 1},
+        "name": "Starfall Night",
+        "description": "A silver star breaks over the valley and wakes old inscriptions.",
+        "effects": [{"type": "set_flag", "flag": "starfall_seen"}]
+      },
+      {
+        "id": "valley-gate-opens",
+        "type": "world_event",
+        "trigger": {"year": 1, "month": 2},
+        "name": "Valley Gate Opens",
+        "description": "Stone doors under the ridge grind open for the first time in centuries.",
+        "effects": [{"type": "set_flag", "flag": "valley_gate_open"}]
+      },
+      {
+        "id": "alchemist-claim",
+        "type": "side_event",
+        "trigger": {"year": 1, "month": 3},
+        "name": "Alchemist Claim",
+        "description": "Lin Aurelia stakes a refining circle around the safest star dust field.",
+        "effects": [{"type": "set_flag", "flag": "alchemist_claim_posted"}]
+      },
+      {
+        "id": "sword-trial",
+        "type": "main",
+        "trigger": {"year": 1, "month": 5},
+        "name": "Sword Trial",
+        "description": "Kael Moros challenges anyone who enters the eastern ravine.",
+        "effects": [{"type": "set_flag", "flag": "sword_trial_declared"}]
+      },
+      {
+        "id": "hidden-heir-rumor",
+        "type": "character_introduction",
+        "trigger": {"year": 1, "month": 7},
+        "name": "Hidden Heir Rumor",
+        "description": "A rumor claims the valley bloodline survived in a nameless youth.",
+        "effects": [{"type": "set_flag", "flag": "hidden_heir_rumor_spread"}]
+      },
+      {
+        "id": "mist-map-complete",
+        "type": "side_event",
+        "trigger": {"year": 1, "month": 9},
+        "name": "Mist Map Complete",
+        "description": "Sera Mist finishes the first reliable map of the seal chambers.",
+        "effects": [{"type": "set_flag", "flag": "mist_map_complete"}]
+      },
+      {
+        "id": "star-core-choice",
+        "type": "ending",
+        "trigger": {"year": 1, "month": 12},
+        "name": "Star Core Choice",
+        "description": "The star core pulses once, forcing the valley factions to decide who may approach.",
+        "effects": [{"type": "set_flag", "flag": "star_core_choice_reached"}]
+      }
+    ]
+  }
+}
