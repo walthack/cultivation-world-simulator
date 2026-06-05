@@ -1,8 +1,29 @@
 # v1.0 Release Verification Report
 
-**Generated**: 2026-06-04 (Layer 1+2+3+4+5 verification cycle)
+**Generated**: 2026-06-04 (initial cycle), refreshed 2026-06-05 (final RC)
 **Author**: Hassan + 御主
-**Status**: ✅ **GO** — engineering + Layer 3 + Layer 4 automation all green; manual visual checklist remains
+**Status**: ✅ **GO** — final RC 5/5 green; release screenshot pack 11/11 captured for manual visual sign-off
+
+## Final RC results (2026-06-05)
+
+御主's fixed scope:
+
+| Item | Result | Notes |
+|---|---|---|
+| Backend pytest (full suite) | ✅ **1694 passed / 3 pre-existing failed / 2 skipped** in 65s | 3 failures in `tests/test_game_init_integration.py` are pre-existing from Stage 2b (sects-related), unchanged by v1.0 |
+| Frontend vitest (full suite) | ✅ **571 passed / 8 pre-existing failed** in 7.8s | 8 failures in `RoleplayDock.test.ts` are pre-existing localStorage issues, unchanged by v1.0 |
+| Boot smoke (no flag / liuchao / sanguo) | ✅ **3/3** | year=100 / year=1 / year=208 |
+| Playwright Layer 3 (mod platform Python gate) | ✅ **6/6 PASS** in 7.6s | Re-run against this session's backend |
+| Playwright Layer 4A (scenario engine E2E) | ✅ **7/7 PASS** in 9.2s | Re-run against this session's backend |
+| Playwright Layer 4 LLM authoring | ✅ **2/2 SKIPPED w/ reason** | `has_api_key=false` per design |
+
+Manual visual checklist is replaced by the **Release Screenshot Pack**
+(11 screenshots at `docs/release-artifacts/v1.0/screenshots/`,
+index + milestone mapping at `docs/release-artifacts/v1.0/index.md`).
+Reviewer questions: (i) UI legible? (ii) Warnings clear? (iii) Panels
+don't block main flow? (iv) Screenshots archived?
+
+---
 
 ## Executive Summary
 
