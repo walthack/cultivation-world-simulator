@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.classes.relation.relation import RelationState
 from src.scenario.scenario_loader import ResolvedScenario
 from src.scenario.state import ScriptedScenarioState
+from src.sim.avatar_init import create_scenario_avatar
 
 
 def _build_initial_scenario_state(resolved: ResolvedScenario) -> dict[str, Any]:
@@ -55,3 +57,28 @@ def inject_scenario_into_world(world: Any, resolved: ResolvedScenario) -> None:
         timeline=list(resolved.timeline or []),
         state=_build_initial_scenario_state(resolved),
     )
+
+
+def inject_scenario_initial_state_into_world(world: Any, resolved: ResolvedScenario) -> None:
+    initial = resolved.scenario.get("initial_state", {}) or {}
+    avatars = list(initial.get("avatars", []) or [])
+    relationships = list(initial.get("relationships", []) or [])
+
+    for item in avatars:
+        avatar = create_scenario_avatar(
+            world,
+            item,
+            world.month_stamp,
+            preset_id=resolved.preset_id,
+        )
+        world.avatar_manager.register_avatar(avatar, is_newly_born=True)
+
+    for item in relationships:
+        avatar_a = world.avatar_manager.get_avatar(str(item.get("a") or ""))
+        avatar_b = world.avatar_manager.get_avatar(str(item.get("b") or ""))
+        if avatar_a is None or avatar_b is None:
+            raise ValueError(f"Scenario relationship references missing avatar: {item}")
+
+        value = int(item.get("value", 0) or 0)
+        avatar_a.relations[avatar_b] = RelationState(friendliness=value)
+        avatar_b.relations[avatar_a] = RelationState(friendliness=value)

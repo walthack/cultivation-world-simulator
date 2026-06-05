@@ -58,7 +58,11 @@ def _get_current_saves_dir() -> Path:
     return Path(app_config.CONFIG.paths.saves)
 
 
-def load_game(save_path: Optional[Path] = None) -> Tuple["World", "Simulator", List["Sect"]]:
+def load_game(
+    save_path: Optional[Path] = None,
+    *,
+    active_scenario_id: str | None = None,
+) -> Tuple["World", "Simulator", List["Sect"]]:
     """
     从文件加载游戏状态
     
@@ -118,6 +122,27 @@ def load_game(save_path: Optional[Path] = None) -> Tuple["World", "Simulator", L
             events_db_path=events_db_path,
             start_year=start_year,
         )
+        saved_sc = save_data.get("scripted_scenario")
+        if saved_sc is not None:
+            saved_id = str(saved_sc["scenario_id"])
+            if active_scenario_id != saved_id:
+                boot_label = active_scenario_id or "no scenario"
+                raise ValueError(
+                    f"Save was for scenario {saved_id}; current boot is {boot_label}. "
+                    f"Restart with --scenario {saved_id} to load."
+                )
+            from src.scenario import scenario_loader
+            from src.scenario.state import ScriptedScenarioState
+            from src.sim.avatar_init import prepare_scenario_avatar_references
+
+            resolved = scenario_loader.load(saved_id)
+            prepare_scenario_avatar_references(resolved)
+            world.scripted_scenario = ScriptedScenarioState(
+                scenario_id=saved_id,
+                timeline=list(resolved.timeline or []),
+                state=dict(saved_sc.get("state", {}) or {}),
+                triggered_events=set(saved_sc.get("triggered_events", []) or []),
+            )
         CustomContentRegistry.load_from_dict(save_data.get("custom_content"))
         dynasty_data = world_data.get("dynasty")
         if dynasty_data is not None:
@@ -332,4 +357,3 @@ def check_save_compatibility(save_path: Path) -> Tuple[bool, str]:
         
     except Exception as e:
         return False, f"无法读取存档文件: {e}"
-

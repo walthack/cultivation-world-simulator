@@ -81,6 +81,15 @@ async def _generate_initial_avatars(
     return random_avatars
 
 
+def _inject_scripted_scenario_initial_state_if_needed(*, world, resolved_scenario) -> None:
+    if getattr(world, "scripted_scenario", None) is None or resolved_scenario is None:
+        return
+
+    from src.scenario.injector import inject_scenario_initial_state_into_world
+
+    inject_scenario_initial_state_into_world(world, resolved_scenario)
+
+
 async def _prepare_initial_character_profiles(*, world) -> None:
     from src.sim.simulator_engine.phases import lifecycle
 
@@ -211,6 +220,7 @@ async def perform_game_initialization(
     sects_by_id,
     make_random_avatars,
     check_llm_connectivity: Callable[[], tuple[bool, str]],
+    get_active_scenario: Callable[[], Any | None] | None = None,
 ) -> None:
     runtime.begin_initialization()
     runtime.clear_roleplay_session()
@@ -284,6 +294,10 @@ async def perform_game_initialization(
         )
 
         world.avatar_manager.avatars.update(final_avatars)
+        _inject_scripted_scenario_initial_state_if_needed(
+            world=world,
+            resolved_scenario=get_active_scenario() if get_active_scenario is not None else None,
+        )
         world.existed_sects = existed_sects
         world.sect_context.from_existed_sects(existed_sects)
         runtime.update({"world": world, "sim": sim})

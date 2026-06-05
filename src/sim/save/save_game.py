@@ -242,6 +242,12 @@ def save_game(
             "events": events_data,
             "simulator": simulator_data
         }
+        if getattr(world, "scripted_scenario", None) is not None:
+            save_data["scripted_scenario"] = {
+                "scenario_id": world.scripted_scenario.scenario_id,
+                "state": dict(world.scripted_scenario.state),
+                "triggered_events": sorted(world.scripted_scenario.triggered_events),
+            }
         
         # 写入文件
         with open(save_path, "w", encoding="utf-8") as f:
@@ -300,4 +306,3 @@ def list_saves(saves_dir: Optional[Path] = None) -> List[tuple[Path, dict]]:
     # 按保存时间倒序排列
     saves.sort(key=lambda x: x[1].get("save_time", ""), reverse=True)
     return saves
-
