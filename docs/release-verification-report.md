@@ -2,7 +2,7 @@
 
 **Generated**: 2026-06-04 (Layer 1+2+3+4+5 verification cycle)
 **Author**: Hassan + 御主
-**Status**: ⚠️ **Conditional GO** — engineering invariants verified, UI selectors need iteration
+**Status**: ✅ **GO** — engineering + Layer 3 + Layer 4 automation all green; manual visual checklist remains
 
 ## Executive Summary
 
@@ -11,8 +11,8 @@
 | **Layer 1** | Per-version RC | ✅ **PASS** | 1693 backend / 571 frontend vitest / 3 boot smoke green |
 | **Layer 2** | Stack integration | ✅ **PASS** | Dry-run merge clean; merged-state pytest identical |
 | **Layer 3** | Python gate Playwright | ✅ **PASS** | 6/6 (3 API + 3 UI) — gate state observable via `data.extensions: [{kind,name,active,inert}]`; UI flow goes Splash → Settings → SystemMenu (Settings tab + Mod Manager tab); 2 consecutive clean runs at 8.7s / 5.9s |
-| **Layer 4A** | Scenario engine E2E | 🟡 **NOT RUN** | Awaits Layer 3 UI selector convergence |
-| **Layer 4 LLM** | LLM authoring opt | 🟡 **AUTO-SKIP** | No LLM key configured in test env (per design) |
+| **Layer 4A** | Scenario engine E2E | ✅ **PASS** | 7/7 — covers new-game/badge/panel/hot-swap/save-draft+export/wizard/repository/mod-gate. Two consecutive clean runs at 10.1s / 8.7s |
+| **Layer 4 LLM** | LLM authoring opt | ✅ **2/2 SKIPPED w/ reason** | `has_api_key=false` in test env → spec auto-skips both tests with explicit reason (matches design) |
 | **Layer 4B** | Manual visual | 🟡 **READY** | Checklist drafted; awaiting御主 mac time |
 | **Layer 5** | Milestone A negative | ✅ **PASS** | 2 negative tests added → PR #10 |
 
@@ -110,19 +110,43 @@ in-process without restart. No v1.1 backlog item remains from this thread.
 
 ## Layer 4 — Scenario engine + LLM ⏸️
 
-### 4A non-LLM happy path
+### 4A non-LLM happy path — ✅ PASS (7/7)
 
-NOT RUN. Layer 3 UI selectors have now converged (Splash → SystemMenu via the Settings button); Layer 4A can follow the same pattern when prioritized. **Backend logic verified by 188 pytest tests**:
-- v0.5 picker → scenario_id in GameStartRequest works
-- v0.6 import / export round-trip works
-- v0.7 wizard data path works (LLM-less mode)
-- v0.8 hot-swap returns verbatim warning in API response
-- v0.9 export/repository works
-- v1.0 mod install works (verified during e2e setup)
+Tests run serially against a single backend (`test.describe.serial`). Two
+consecutive clean runs at 10.1s and 8.7s. The seven steps cover:
 
-### 4 LLM (opt-in)
+| Step | What it verifies | Selector / API path |
+|---|---|---|
+| 1+2 | New game with liuchao → scenario badge "六朝纪事" renders | `.scenario-badge-title` text match |
+| 3 | Click badge → ScenarioOverviewModal Timeline section headings | text "已触发事件" / "未触发事件" |
+| 4 | advanced_runtime_control ON → select sanguo → Activate hot-swap → verbatim warning displayed | `.scenario-select` + `.n-base-select-option` text + "Hot-swap does not re-anchor time…" copy |
+| 5 | save-draft installs custom scenario `e2e_test` → export returns valid zip blob | POST `/scenario/save-draft` + `/scenario/export` |
+| 6 | Splash → 开始游戏 → Browse → Create Scenario → Wizard with 6 steps (Basics … Review) | role buttons + `.wizard-steps .wizard-step` count |
+| 7 | Repository endpoint returns shape `{installed[], downloaded[], updates[]}` with the installed draft | GET `/scenario/repository` |
+| 8 | sample-overhaul installed → Python gate OFF reflected in extensions API | `data.extensions.find(kind==="predicate" && name==="sample_predicate")` |
 
-Auto-skips when `has_api_key=false` (verified in test env).
+**Notes verified by screenshot iteration on 2026-06-05:**
+- Step 5 changed from "export bundled liuchao zip" → "save-draft a custom
+  scenario then export it." Bundled scenarios are protected by the
+  `scenario_export_not_found` contract and cannot be exported directly;
+  the positive happy path requires an installed (non-bundled) scenario.
+- Step 7 likewise changed from "find bundled liuchao in repository.installed"
+  to "find the e2e_test draft in repository.installed." Bundled scenarios
+  live in `/api/v1/query/scenarios`, not `/scenario/repository`.
+- Setup requires (i) packaging `examples/mods/sample-overhaul/` and POSTing
+  it to `/api/v1/command/mod/install`, and (ii) writing a stub LLM profile
+  via PUT `/api/settings/llm` so the auto-open of the non-closable LLM
+  SystemMenu does not intercept clicks. The spec also installs a tiny
+  WebSocket filter via `page.addInitScript` to drop the one
+  `llm_config_required` socket message that fires on boot with the stub URL.
+
+### 4 LLM (opt-in) — ✅ 2/2 SKIPPED w/ reason
+
+beforeAll calls `hasLLMKey()` (reads `llm.profile.has_api_key` from
+`/api/v1/query/system/current-run`); without a real LLM profile the
+hook calls `test.skip` with an explicit reason and both downstream tests
+are reported as skipped. This matches the design (御主 09:35 SGT mandate:
+"LLM-related tests must not block automation").
 
 ### 4B Manual visual checklist
 
@@ -181,11 +205,9 @@ Selectors used are limited to `data-testid="python-mod-switch"`,
 `.python-badge`, `.trust-modal`, and accessible-name role buttons — no
 brittle CSS chains.
 
-**Recommended path forward for Layer 4A**:
-1. Reuse the same Splash → SystemMenu entry pattern
-2. Drive new-game flow through the `Start Game` / `开始游戏` button + the
-   downstream scenario picker selectors (to be added)
-3. Keep `test.describe.serial` since all e2e specs share one backend
+**Layer 4A also green** (7/7) using the same Splash → SystemMenu entry
+pattern plus a WebSocket filter for the boot-time `llm_config_required`
+message. Layer 4 LLM (2/2) auto-skips with reason in the no-key test env.
 
 ### Manual layer: 🟡 READY FOR御主
 

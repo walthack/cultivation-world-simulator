@@ -1,34 +1,63 @@
 /**
  * Layer 4A — End-to-end Scenario Engine happy path (non-LLM).
  *
- * Walks the 8 milestone integration in one Playwright run:
- *   1. new game with --scenario liuchao default
- *   2. scenario badge visible
- *   3. scenario panel — triggered/upcoming events grouped
- *   4. enable advanced runtime control → activate hot-swap to sanguo →
- *      verbatim hot-swap warning displayed
- *   5. export scenario zip → download triggered
- *   6. open wizard → create minimal scenario WITHOUT LLM step
- *   7. import the exported zip → repository fingerprint verified
- *   8. install sample mod → Python gate OFF default verified
+ * Covers the 8 milestone integrations:
+ *   1+2. new game with liuchao → scenario badge visible
+ *   3.   click badge → ScenarioOverviewModal shows triggered/未触发 sections
+ *   4.   advanced runtime control ON → hot-swap warning text appears
+ *   5.   save scenario draft via API → export the installed scenario zip
+ *   6.   splash → 开始游戏 → ScenarioBrowserModal → Create Scenario → Wizard
+ *        with 6 steps visible
+ *   7.   repository endpoint returns the installed draft with shape
+ *        { installed[], downloaded[], updates[] }
+ *   8.   sample-overhaul mod present → Python gate OFF reflected in
+ *        /api/v1/query/mods/extensions-active (data.extensions shape)
  *
- * Prerequisites:
- *   - Dev server running with CWS_DATA_DIR=/tmp/cws-e2e-data
- *   - --scenario liuchao at startup (the default for this test)
+ * Notes verified by screenshot iteration on 2026-06-05:
+ *   - Tests must run serially because they share a single backend process.
+ *   - The frontend auto-opens SystemMenu with the LLM tab (non-closable)
+ *     when llm.profile is not configured. The beforeAll hook writes a stub
+ *     LLM config so this auto-open does not intercept UI clicks.
+ *   - Bundled scenarios (liuchao / sanguo / sample) live in
+ *     /api/v1/query/scenarios and CANNOT be exported (contract:
+ *     scenario_export_not_found). For an end-to-end export test we first
+ *     install a custom scenario via /api/v1/command/scenario/save-draft.
+ *   - `data.extensions` is the real shape returned by extensions-active
+ *     (kind/name/active/inert/python_required). The previous spec read a
+ *     non-existent `data.predicates` field.
+ *
+ * Prereq sample mod: package examples/mods/sample-overhaul/ and POST it to
+ * /api/v1/command/mod/install before running this spec.
  *
  * Run:
- *   # Terminal 1
+ *   # Terminal 1 — fresh data dir, stub LLM
+ *   rm -rf /tmp/cws-e2e-data && mkdir /tmp/cws-e2e-data
  *   CWS_DATA_DIR=/tmp/cws-e2e-data CWS_NO_BROWSER=1 \
- *     .venv/bin/python src/server/main.py --dev --scenario liuchao
+ *     .venv/bin/python src/server/main.py --dev
  *
- *   # Terminal 2
+ *   # Terminal 2 — Vite or `npm run preview`
+ *   cd web && npm run dev
+ *
+ *   # Terminal 3
+ *   (cd examples/mods/sample-overhaul && zip -r /tmp/sample-overhaul.mod .)
+ *   curl -X POST -F "file=@/tmp/sample-overhaul.mod" \
+ *     http://127.0.0.1:8002/api/v1/command/mod/install
  *   cd web && CWS_SMOKE_BASE_URL=http://localhost:5173 CWS_SMOKE_SKIP_WEBSERVER=1 \
- *     npx playwright test layer4-scenario-engine.spec.ts
+ *     CWS_E2E_BACKEND_BASE=http://127.0.0.1:8002 \
+ *     npx playwright test layer4-scenario-engine.spec.ts --workers=1
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const BACKEND_BASE = process.env.CWS_E2E_BACKEND_BASE || 'http://localhost:8002'
+
+type ExtensionDTO = {
+  kind: string
+  name: string
+  active: boolean
+  inert: boolean
+  python_required: boolean
+}
 
 async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BACKEND_BASE}${path}`, init)
@@ -39,180 +68,333 @@ async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-async function startGameWithScenario(scenario_id?: string) {
-  const body: any = {
-    init_npc_num: 3,
-    sect_num: 1,
-    content_locale: 'zh-CN',
-  }
-  if (scenario_id !== undefined) {
-    body.scenario_id = scenario_id
-  }
+async function configureStubLLM() {
+  // Write a dummy LLM profile so the splash/socket auto-open of the
+  // non-closable LLM config menu doesn't intercept clicks in the tests.
+  await fetch(`${BACKEND_BASE}/api/settings/llm`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      base_url: 'http://127.0.0.1:9999',
+      api_key: 'sk-test-noop',
+      model_name: 'noop',
+      fast_model_name: 'noop',
+      mode: 'default',
+      max_concurrent_requests: 10,
+      api_format: 'openai',
+    }),
+  })
+}
+
+async function resetSettings() {
+  await api('/api/settings', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      advanced_runtime_control: false,
+      allow_trusted_python_mods: false,
+    }),
+  })
+}
+
+async function resetGame() {
+  // Idempotent: if no game running this still returns ok.
+  await fetch(`${BACKEND_BASE}/api/v1/command/game/reset`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{}',
+  })
+}
+
+async function startGameWithScenario(scenario_id: string) {
   await api('/api/v1/command/game/start', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      init_npc_num: 3,
+      sect_num: 1,
+      content_locale: 'zh-CN',
+      scenario_id,
+    }),
   })
-  // Wait for status to settle to "ready"
+  // Wait for status to settle to "ready" / "running"
   for (let i = 0; i < 30; i++) {
     const status = await api<{ ok: boolean; data: { status: string } }>(
       '/api/v1/query/runtime/status',
     )
     if (status.data.status === 'ready' || status.data.status === 'running') break
-    await new Promise((r) => setTimeout(r, 1000))
+    await new Promise((r) => setTimeout(r, 500))
   }
 }
 
-test.describe('Layer 4A — Scenario engine E2E happy path', () => {
+async function installWsFilter(page: Page) {
+  // The backend WebSocket emits an `llm_config_required` message when the
+  // boot-time LLM connectivity check fails (our stub LLM URL is unreachable
+  // by design — we only need the menu to NOT auto-open). The FE handler
+  // opens a non-closable SystemMenu on the LLM tab, which intercepts every
+  // subsequent click. Drop that one message at the WebSocket layer before
+  // any application listener sees it.
+  await page.addInitScript(() => {
+    const Original = window.WebSocket
+    class Wrapped extends Original {
+      constructor(url: string | URL, protocols?: string | string[]) {
+        super(url, protocols)
+        this.addEventListener(
+          'message',
+          (event) => {
+            try {
+              const data = JSON.parse((event as MessageEvent).data)
+              if (data && data.type === 'llm_config_required') {
+                event.stopImmediatePropagation()
+                event.stopPropagation()
+              }
+            } catch {
+              /* not JSON — pass through */
+            }
+          },
+          true,
+        )
+      }
+    }
+    ;(window as any).WebSocket = Wrapped
+  })
+}
+
+async function gotoGameShell(page: Page) {
+  await installWsFilter(page)
+  await page.goto('/')
+  // Game shell is keyed by `.scenario-badge-title` or any in-game control.
+  await expect(page.locator('.scenario-badge-title').first()).toBeVisible({
+    timeout: 15000,
+  })
+}
+
+async function gotoSplash(page: Page) {
+  await installWsFilter(page)
+  await page.goto('/')
+  // Splash exposes Settings/开始游戏 buttons inside its glass-panel menu.
+  await expect(page.getByRole('button', { name: /开始游戏|Start Game/ }).first()).toBeVisible({
+    timeout: 15000,
+  })
+}
+
+test.describe.serial('Layer 4A — Scenario engine E2E happy path', () => {
+  test.beforeAll(async () => {
+    await configureStubLLM()
+  })
+
+  test.beforeEach(async () => {
+    await resetSettings()
+    await resetGame()
+  })
+
   test('step 1+2: new game with liuchao → scenario badge visible', async ({ page }) => {
     await startGameWithScenario('liuchao')
-    await page.goto('/')
-    // Scenario badge from Milestone B shows scenario title "六朝纪事"
-    await expect(page.getByText(/六朝纪事|Liuchao|liuchao/i).first()).toBeVisible({
-      timeout: 15000,
-    })
+    await gotoGameShell(page)
+    await expect(page.locator('.scenario-badge-title').filter({ hasText: /六朝纪事/ }).first())
+      .toBeVisible({ timeout: 15000 })
   })
 
   test('step 3: scenario panel — events grouped triggered vs upcoming', async ({ page }) => {
     await startGameWithScenario('liuchao')
-    await page.goto('/')
+    await gotoGameShell(page)
 
-    // Click badge → opens ScenarioOverviewModal
-    const badge = page.getByText(/六朝纪事/).first()
-    await badge.click()
+    await page.locator('.scenario-badge-title').filter({ hasText: /六朝纪事/ }).first().click()
 
-    // Panel sections: "已触发事件" + "未触发事件"
-    await expect(page.getByText(/已触发|Triggered/i)).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(/未触发|Upcoming|Pending/i)).toBeVisible()
+    // ScenarioOverviewModal Timeline tab default — Chinese section headings.
+    await expect(page.getByText('已触发事件').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('未触发事件').first()).toBeVisible()
   })
 
-  test('step 4: advanced runtime control → hot-swap to sanguo shows verbatim warning', async ({
-    page,
-  }) => {
+  test('step 4: advanced runtime control → hot-swap shows verbatim warning', async ({ page }) => {
     await startGameWithScenario('liuchao')
-
-    // Enable advanced_runtime_control via API
     await api('/api/settings', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ advanced_runtime_control: true }),
     })
 
-    await page.goto('/')
+    await gotoGameShell(page)
+    await page.locator('.scenario-badge-title').filter({ hasText: /六朝纪事/ }).first().click()
 
-    // Click scenario badge → open modal
-    const badge = page.getByText(/六朝纪事/).first()
-    await badge.click()
-
-    // Click Activate button (advanced mode reveals it)
-    const activate = page
-      .getByRole('button', { name: /Activate|激活|切换|启用 scenario/ })
+    // Runtime-controls section appears with the scenario select + activate buttons.
+    const scenarioSelect = page.locator('.scenario-select').first()
+    await expect(scenarioSelect).toBeVisible({ timeout: 10000 })
+    await scenarioSelect.click()
+    // Naive Select dropdown renders options as .n-base-select-option in a
+    // teleported layer; filter by visible text rather than role=option.
+    await page
+      .locator('.n-base-select-option')
+      .filter({ hasText: /三国仙纪|sanguo/i })
       .first()
-    await activate.click()
+      .click()
 
-    // Select hot-swap mode + scenario_id sanguo
-    // UI form may vary; key assertion is the verbatim warning text appears
+    await page.getByRole('button', { name: /Activate hot-swap/i }).click()
+
+    // Confirmation modal contains the verbatim hot-swap warning text.
     await expect(
-      page.getByText(/Hot-swap does not re-anchor time/i),
+      page.getByText(/Hot-swap does not re-anchor time\. Events scheduled before the current world time will not fire\./),
     ).toBeVisible({ timeout: 10000 })
-
-    // Disable advanced for next tests
-    await api('/api/settings', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ advanced_runtime_control: false }),
-    })
   })
 
-  test('step 5: export liuchao scenario → returns valid .zip blob', async ({}) => {
-    // Direct API export — UI download is tested separately in manual checklist
-    const res = await fetch(`${BACKEND_BASE}/api/v1/command/scenario/export`, {
+  test('step 5: scenario save-draft installs + export returns valid zip blob', async () => {
+    // Bundled scenarios cannot be exported (contract: scenario_export_not_found).
+    // For an end-to-end export test, first install a custom scenario via
+    // /api/v1/command/scenario/save-draft, then export that one.
+    const sampleScenario = await fetch(
+      'data:application/json;base64,' +
+        Buffer.from(
+          JSON.stringify({
+            schema_version: '0.1',
+            scenario_id: 'e2e_test',
+            title: 'E2E Test',
+            version: '1.0',
+            author: 'e2e',
+            description: 'smoke',
+            world_preset: { preset_id: 'default' },
+            initial_state: {
+              year: 1,
+              month: 1,
+              avatars: [
+                {
+                  id: 'e2e-avatar',
+                  surname: '测',
+                  given_name: '试',
+                  gender: '男',
+                  age: 28,
+                  sect_id: null,
+                  realm: 'QI_REFINEMENT',
+                  stage: 'EARLY_STAGE',
+                  level: 1,
+                  persona_traits: ['RATIONAL'],
+                  goldfinger_id: 'CHILD_OF_FORTUNE',
+                  long_term_objective: 'E2E export smoke.',
+                },
+              ],
+              sects: [],
+              relationships: [],
+              world_flags: {},
+            },
+          }),
+        ).toString('base64'),
+    )
+      .then((r) => r.json())
+      .catch(() => null)
+    expect(sampleScenario).toBeTruthy()
+
+    const saveRes = await fetch(`${BACKEND_BASE}/api/v1/command/scenario/save-draft`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ scenario_id: 'liuchao' }),
+      body: JSON.stringify({
+        scenario: sampleScenario,
+        timeline: { schema_version: '0.1', events: [] },
+      }),
     })
-    expect(res.status).toBe(200)
-    const blob = await res.blob()
-    expect(blob.size).toBeGreaterThan(100) // zip with content > 100 bytes
-    // Content-Type should suggest zip / octet-stream
-    expect(res.headers.get('content-type')).toMatch(/zip|octet-stream/i)
-  })
+    expect(saveRes.ok).toBe(true)
 
-  test('step 6: open ScenarioWizardModal — 6 steps visible (LLM step optional)', async ({
-    page,
-  }) => {
-    await page.goto('/')
-
-    // Open Scenario Browser (from system menu)
-    const browseButton = page
-      .getByRole('button', { name: /Scenario|场景|Browse/ })
-      .first()
-    await browseButton.click()
-
-    // Click "Create Scenario" button
-    const createButton = page.getByRole('button', { name: /Create Scenario|创建 Scenario|新建/ })
-    await createButton.first().click()
-
-    // Wizard step indicator should show 6 steps
-    // Selectors lean on common patterns; relax to "Basics" + "Save" presence
-    await expect(page.getByText(/Basics|基础/i)).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(/Save|保存/i)).toBeVisible()
-  })
-
-  test('step 7: import → repository fingerprint verified', async ({}) => {
-    // Programmatic import: re-import the .zip we exported in step 5
-    // Use API directly since file upload via Playwright requires page interaction
     const exportRes = await fetch(`${BACKEND_BASE}/api/v1/command/scenario/export`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ scenario_id: 'liuchao' }),
+      body: JSON.stringify({ scenario_id: 'e2e_test' }),
     })
-    const zipBlob = await exportRes.blob()
+    expect(exportRes.status).toBe(200)
+    expect(exportRes.headers.get('content-type')).toMatch(/zip|octet-stream/i)
+    const blob = await exportRes.blob()
+    expect(blob.size).toBeGreaterThan(200)
+  })
 
-    const formData = new FormData()
-    formData.append('file', zipBlob, 'liuchao-export-test.zip')
-    // Import with force=true if collision (liuchao already installed bundled)
-    formData.append('force_collision', 'true')
+  test('step 6: splash → Browse → Create Scenario → Wizard shows 6 steps', async ({ page }) => {
+    await gotoSplash(page)
+    // "开始游戏" opens SystemMenu start tab where the new-game form is rendered.
+    await page.getByRole('button', { name: /开始游戏|Start Game/ }).first().click()
+    // The new-game form has a Scenario picker with a small "Browse" text button.
+    const browseButton = page.getByRole('button', { name: /^Browse$/ }).first()
+    await expect(browseButton).toBeVisible({ timeout: 10000 })
+    await browseButton.click()
 
-    // Import endpoint will reject (bundled collision per Q3a) — that's OK,
-    // the contract is "bundled cannot be overwritten". This test verifies the
-    // export bytes are import-shaped. We test fingerprint on a different scenario.
+    // ScenarioBrowserModal: click "Create Scenario" to open ScenarioWizardModal.
+    await page.getByRole('button', { name: /Create Scenario/ }).first().click()
 
-    // Better test: fetch repository, find liuchao, verify verification field
+    // Wizard step nav lists 6 steps; assert the first and last to anchor.
+    const stepNav = page.locator('.wizard-steps').first()
+    await expect(stepNav).toBeVisible({ timeout: 10000 })
+    await expect(stepNav.locator('.wizard-step').nth(0)).toContainText('Basics')
+    await expect(stepNav.locator('.wizard-step').nth(5)).toContainText('Review')
+    await expect(stepNav.locator('.wizard-step')).toHaveCount(6)
+  })
+
+  test('step 7: scenario/repository returns valid shape with installed draft', async () => {
+    // Make sure the draft from step 5 is present (idempotent install).
+    await fetch(`${BACKEND_BASE}/api/v1/command/scenario/save-draft`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        scenario: {
+          schema_version: '0.1',
+          scenario_id: 'e2e_test',
+          title: 'E2E Test',
+          version: '1.0',
+          author: 'e2e',
+          description: 'smoke',
+          world_preset: { preset_id: 'default' },
+          initial_state: {
+            year: 1,
+            month: 1,
+            avatars: [],
+            sects: [],
+            relationships: [],
+            world_flags: {},
+          },
+        },
+        timeline: { schema_version: '0.1', events: [] },
+      }),
+    })
+
     const repo = await api<{
       ok: boolean
-      data: { installed: Array<{ scenario_id: string; verification?: { status?: string } }> }
+      data: {
+        installed: Array<{ id: string; verification?: { status?: string } }>
+        downloaded: Array<unknown>
+        updates: Array<unknown>
+      }
     }>('/api/v1/query/scenario/repository')
 
-    const liuchao = repo.data.installed.find((s) => s.scenario_id === 'liuchao')
-    expect(liuchao, 'liuchao should be in repository installed list').toBeTruthy()
-    // verification field may be present with verified/modified/unsigned
-    // Bundled scenarios may show "unsigned" since they don't ship with fingerprint
-    if (liuchao?.verification?.status) {
-      expect(['verified', 'modified', 'unsigned']).toContain(liuchao.verification.status)
+    expect(Array.isArray(repo.data.installed)).toBe(true)
+    expect(Array.isArray(repo.data.downloaded)).toBe(true)
+    expect(Array.isArray(repo.data.updates)).toBe(true)
+
+    const installed = repo.data.installed.find((s) => s.id === 'e2e_test')
+    expect(installed, 'e2e_test should be in repository installed list').toBeTruthy()
+    if (installed?.verification?.status) {
+      expect(['verified', 'modified', 'unsigned']).toContain(installed.verification.status)
     }
   })
 
-  test('step 8: sample mod installed — Python gate default OFF verified via API', async ({}) => {
-    const mods = await api<{ ok: boolean; data: { mods: Array<any> } }>(
+  test('step 8: sample mod installed — Python gate default OFF reported via extensions API', async () => {
+    const mods = await api<{ ok: boolean; data: { mods: Array<{ mod_id: string }> } }>(
       '/api/v1/query/mods/installed',
     )
     const sample = mods.data.mods.find((m) => m.mod_id === 'sample-overhaul')
-    if (!sample) {
-      test.skip(true, 'sample-overhaul not pre-installed in CWS_DATA_DIR/mods/')
-      return
-    }
-    // Setting allow_trusted_python_mods should be false by default
+    expect(
+      sample,
+      'sample-overhaul mod must be pre-installed; package and POST examples/mods/sample-overhaul/ before running',
+    ).toBeTruthy()
+
     await api('/api/settings', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ allow_trusted_python_mods: false }),
     })
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 300))
 
-    const active = await api<{ ok: boolean; data: any }>('/api/v1/query/mods/extensions-active')
-    const predicates: string[] =
-      active.data?.predicates || active.data?.rules?.predicates || []
-    expect(predicates).not.toContain('sample_predicate')
+    const active = await api<{ ok: boolean; data: { extensions: ExtensionDTO[] } }>(
+      '/api/v1/query/mods/extensions-active',
+    )
+    const samplePred = active.data.extensions.find(
+      (e) => e.kind === 'predicate' && e.name === 'sample_predicate',
+    )
+    expect(samplePred, 'sample_predicate must be declared by sample-overhaul').toBeDefined()
+    expect(samplePred!.active).toBe(false)
+    expect(samplePred!.inert).toBe(true)
   })
 })
