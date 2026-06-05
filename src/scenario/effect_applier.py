@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from src.scenario.scenario_loader import MissingReferenceError
 
@@ -29,6 +29,29 @@ logger = logging.getLogger(__name__)
 
 class EffectError(ValueError):
     pass
+
+
+EffectFn = Callable[[Any, dict[str, Any]], None]
+_EFFECT_REGISTRY: dict[str, tuple[EffectFn, str]] = {}
+
+
+def register_effect(name: str, fn: EffectFn, *, source: str = "mod") -> None:
+    normalized = str(name)
+    if normalized in CANONICAL_EFFECT_TYPES or normalized in _EFFECT_REGISTRY:
+        raise EffectError(f"Effect already registered: {normalized}")
+    _EFFECT_REGISTRY[normalized] = (fn, source)
+
+
+def unregister_effect(name: str) -> None:
+    _EFFECT_REGISTRY.pop(str(name), None)
+
+
+def reset_effect_registry() -> None:
+    _EFFECT_REGISTRY.clear()
+
+
+def get_registered_effects() -> dict[str, str]:
+    return {name: source for name, (_, source) in _EFFECT_REGISTRY.items()}
 
 
 def _require(effect: dict[str, Any], key: str) -> Any:
@@ -150,6 +173,12 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
         return
     if effect_type == "set_var":
         get_scenario_vars(state)[str(_require(effect, "name"))] = _require(effect, "value")
+        return
+
+    registered = _EFFECT_REGISTRY.get(effect_type)
+    if registered is not None:
+        fn, _ = registered
+        fn(state, effect)
         return
 
     if effect_type not in CANONICAL_EFFECT_TYPES:

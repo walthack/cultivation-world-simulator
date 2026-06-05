@@ -120,6 +120,7 @@ class SettingsService:
         return AppSettings(
             schema_version=2,
             advanced_runtime_control=False,
+            allow_trusted_python_mods=False,
             ui={
                 "locale": get_default_locale(),
                 "audio": AudioSettings(),
@@ -213,6 +214,9 @@ class SettingsService:
 
         if patch_payload.get("advanced_runtime_control") is not None:
             payload["advanced_runtime_control"] = bool(patch_payload["advanced_runtime_control"])
+
+        if patch_payload.get("allow_trusted_python_mods") is not None:
+            payload["allow_trusted_python_mods"] = bool(patch_payload["allow_trusted_python_mods"])
 
         if patch_payload.get("simulation"):
             sim_patch = patch_payload["simulation"]

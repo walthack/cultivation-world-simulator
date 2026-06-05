@@ -9,6 +9,7 @@ import userPlusIcon from '@/assets/icons/ui/lucide/user-plus.svg'
 import trashIcon from '@/assets/icons/ui/lucide/trash-2.svg'
 import botIcon from '@/assets/icons/ui/lucide/bot.svg'
 import settingsIcon from '@/assets/icons/ui/lucide/settings.svg'
+import packageIcon from '@/assets/icons/ui/lucide/package.svg'
 import infoIcon from '@/assets/icons/ui/lucide/info.svg'
 import ellipsisIcon from '@/assets/icons/ui/lucide/ellipsis.svg'
 import xIcon from '@/assets/icons/ui/lucide/x.svg'
@@ -35,6 +36,7 @@ const tabs = computed((): Array<{ key: SystemMenuTab; label: string; disabled: b
   { key: 'delete', label: t('ui.delete_character'), disabled: !props.gameInitialized, icon: trashIcon },
   { key: 'llm', label: t('ui.llm_settings'), disabled: false, icon: botIcon },
   { key: 'settings', label: t('ui.settings'), disabled: false, icon: settingsIcon },
+  { key: 'mods', label: t('ui.mod_manager'), disabled: false, icon: packageIcon },
   { key: 'about', label: t('ui.about'), disabled: false, icon: infoIcon },
   { key: 'other', label: t('ui.other'), disabled: false, icon: ellipsisIcon },
 ]))

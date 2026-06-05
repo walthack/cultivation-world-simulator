@@ -132,12 +132,20 @@ def t(message: str, **kwargs) -> str:
         # zh-CN: "Zhang San 战胜了 Li Si"
         # en-US: "Zhang San defeated Li Si"
     """
-    trans = _get_translation()
-    
-    if trans:
-        translated = trans.gettext(message)
+    try:
+        from src.mod_platform.locale_overlay import translate as translate_overlay
+        overlay = translate_overlay(_get_current_lang(), message)
+    except Exception:
+        overlay = None
+    if overlay is not None:
+        translated = overlay
     else:
-        translated = message
+        trans = _get_translation()
+
+        if trans:
+            translated = trans.gettext(message)
+        else:
+            translated = message
     
     # Check for missing translation if not in fallback locale.
     # Do not treat "translation equals source" as missing by itself because
@@ -145,6 +153,7 @@ def t(message: str, **kwargs) -> str:
     if (
         _get_current_lang() != get_fallback_locale()
         and message.strip()
+        and overlay is None
         and not _has_explicit_translation_entry(trans, message)
     ):
         logger.warning(f"[i18n] Missing translation for msgid: '{message}'")

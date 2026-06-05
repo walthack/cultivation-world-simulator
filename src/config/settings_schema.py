@@ -95,6 +95,7 @@ class RunConfig(NewGameDefaults):
 class AppSettings(BaseModel):
     schema_version: int = 2
     advanced_runtime_control: bool = False
+    allow_trusted_python_mods: bool = False
     ui: UISettings = Field(default_factory=UISettings)
     simulation: SimulationSettings = Field(default_factory=SimulationSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
@@ -103,6 +104,7 @@ class AppSettings(BaseModel):
 
 class AppSettingsPatch(BaseModel):
     advanced_runtime_control: Optional[bool] = None
+    allow_trusted_python_mods: Optional[bool] = None
     ui: Optional[UISettingsPatch] = None
     simulation: Optional[SimulationSettingsPatch] = None
     new_game_defaults: Optional[NewGameDefaultsPatch] = None

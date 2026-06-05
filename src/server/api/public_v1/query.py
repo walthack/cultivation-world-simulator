@@ -9,6 +9,10 @@ from src.server.services.public_api_contract import ok_response
 from src.server.services.scenario_repository import list_repository
 from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import load_template, list_templates
+from src.mod_platform.mod_conflict import get_last_conflicts
+from src.mod_platform.mod_loader import get_active_extensions
+from src.mod_platform.mod_registry import get_load_order, list_installed_mods
+from src.config import get_settings_service
 
 
 class ScenarioTimelineEventTriggerDTO(BaseModel):
@@ -243,5 +247,25 @@ def create_public_query_router(
     @router.get("/api/v1/query/roleplay/session")
     def get_roleplay_session_v1():
         return ok_response(build_roleplay_session())
+
+    @router.get("/api/v1/query/mods/installed")
+    def get_installed_mods_v1():
+        allow_python = bool(get_settings_service().get_settings_view().allow_trusted_python_mods)
+        mods = []
+        for mod in list_installed_mods():
+            mod.python_hooks_enabled = bool(allow_python and mod.python_hooks_declared and mod.enabled)
+            mods.append(mod.to_dict())
+        return ok_response({
+            "mods": mods,
+            "conflicts": get_last_conflicts(),
+        })
+
+    @router.get("/api/v1/query/mods/load-order")
+    def get_mod_load_order_v1():
+        return ok_response({"load_order": get_load_order()})
+
+    @router.get("/api/v1/query/mods/extensions-active")
+    def get_mod_extensions_active_v1():
+        return ok_response({"extensions": get_active_extensions()})
 
     return router

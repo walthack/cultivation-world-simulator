@@ -22,6 +22,16 @@ from src.server.services.scenario_repository import install_from_download, updat
 from src.server.services.scenario_registry import list_installed_scenarios
 from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import save_draft
+from src.mod_platform.mod_conflict import ModConflictError
+from src.mod_platform.mod_import import (
+    MAX_MOD_UPLOAD_BYTES,
+    ModImportError,
+    export_mod,
+    install_mod_zip,
+    uninstall_mod,
+)
+from src.mod_platform.mod_loader import refresh_mods_after_state_change
+from src.mod_platform.mod_registry import set_enabled as set_mod_enabled, set_load_order as set_mod_load_order
 
 
 class GameStartRequest(RunConfig):
@@ -176,6 +186,23 @@ class ScenarioUpdateRequest(BaseModel):
     installed_scenario_id: str
     download_id: str
     confirm_warnings: bool = False
+
+
+class ModRemoveRequest(BaseModel):
+    mod_id: str
+
+
+class ModSetEnabledRequest(BaseModel):
+    mod_id: str
+    enabled: bool
+
+
+class ModReorderRequest(BaseModel):
+    mod_ids: list[str]
+
+
+class ModExportRequest(BaseModel):
+    mod_id: str
 
 
 async def _read_capped_body(request: Request, max_size: int) -> bytes:
@@ -539,5 +566,77 @@ def create_public_command_router(
             return await run_reload_scenario()
         except ScenarioRuntimeError as exc:
             return {"ok": False, "error": str(exc)}
+
+    @router.post("/api/v1/command/mod/install")
+    async def install_mod_v1(request: Request):
+        body = await _read_capped_body(request, MAX_MOD_UPLOAD_BYTES)
+        zip_bytes = _extract_single_file_from_multipart(
+            request.headers.get("content-type", ""),
+            body,
+        )
+        try:
+            result = install_mod_zip(zip_bytes, max_size=MAX_MOD_UPLOAD_BYTES)
+            refresh_mods_after_state_change()
+        except ModConflictError as exc:
+            raise_public_error(
+                status_code=409,
+                code="mod_conflict",
+                message="Mod extension conflict",
+                details=exc.to_dict(),
+            )
+        except ModImportError as exc:
+            raise_public_error(
+                status_code=exc.status_code,
+                code=exc.code,
+                message=str(exc),
+                details=exc.details,
+            )
+        return ok_response(result)
+
+    @router.post("/api/v1/command/mod/uninstall")
+    def uninstall_mod_v1(req: ModRemoveRequest):
+        try:
+            result = uninstall_mod(req.mod_id)
+            refresh_mods_after_state_change()
+            return ok_response(result)
+        except ModImportError as exc:
+            raise_public_error(status_code=exc.status_code, code=exc.code, message=str(exc), details=exc.details)
+
+    @router.post("/api/v1/command/mod/set-enabled")
+    def set_mod_enabled_v1(req: ModSetEnabledRequest):
+        try:
+            mod = set_mod_enabled(req.mod_id, req.enabled)
+            refresh_mods_after_state_change()
+            return ok_response(mod.to_dict())
+        except KeyError:
+            raise_public_error(
+                status_code=404,
+                code="mod_not_found",
+                message=f"Mod {req.mod_id!r} was not found",
+                details={"mod_id": req.mod_id},
+            )
+        except ModConflictError as exc:
+            raise_public_error(status_code=409, code="mod_conflict", message="Mod extension conflict", details=exc.to_dict())
+
+    @router.post("/api/v1/command/mod/reorder")
+    def reorder_mods_v1(req: ModReorderRequest):
+        try:
+            order = set_mod_load_order(req.mod_ids)
+            refresh_mods_after_state_change()
+            return ok_response({"load_order": order})
+        except ModConflictError as exc:
+            raise_public_error(status_code=409, code="mod_conflict", message="Mod extension conflict", details=exc.to_dict())
+
+    @router.post("/api/v1/command/mod/export")
+    def export_mod_v1(req: ModExportRequest):
+        try:
+            zip_bytes = export_mod(req.mod_id)
+        except ModImportError as exc:
+            raise_public_error(status_code=exc.status_code, code=exc.code, message=str(exc), details=exc.details)
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{req.mod_id}.mod"'},
+        )
 
     return router

@@ -1,0 +1,37 @@
+{
+  "mod_id": "sample-overhaul",
+  "name": "Sample Overhaul",
+  "version": "1.0.0",
+  "author": "CWS Team",
+  "description": "Reference v1.0 mod showing data overlays plus gated Python extensions.",
+  "fingerprint": "sha256:18687a7388292bb3cc545955e536398550ea57ca00ee0a85518cd540603d2954",
+  "engine": {
+    "schema_version_min": "0.2",
+    "cws_version_min": "3.4.0"
+  },
+  "dependencies": [],
+  "extensions": {
+    "rules": {
+      "predicates": ["sample_predicate"],
+      "effects": []
+    },
+    "assets": {
+      "portraits": ["portraits/sample-male.png"],
+      "icons": [],
+      "localizations": {
+        "en-US": "locale/en_US.json"
+      }
+    },
+    "llm": {
+      "prompts": [
+        {
+          "key": "sample_npc_action",
+          "template_path": "llm/sample_npc_action.txt"
+        }
+      ]
+    },
+    "code": {
+      "hooks": ["on_world_init"]
+    }
+  }
+}

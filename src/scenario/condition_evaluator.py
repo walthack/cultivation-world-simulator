@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Any
+from typing import Any, Callable
 
 from .schema_constants import CANONICAL_PREDICATES
 from .state_access import (
@@ -22,6 +22,29 @@ class ConditionEvaluationError(ValueError):
         self.expression = expression
         self.reason = reason
         super().__init__(f"Condition evaluation failed: {reason}; expression={expression!r}")
+
+
+PredicateFn = Callable[[Any, dict[str, Any]], bool]
+_PREDICATE_REGISTRY: dict[str, tuple[PredicateFn, str]] = {}
+
+
+def register_predicate(name: str, fn: PredicateFn, *, source: str = "mod") -> None:
+    normalized = str(name)
+    if normalized in CANONICAL_PREDICATES or normalized in _PREDICATE_REGISTRY:
+        raise ConditionEvaluationError({normalized: {}}, f"predicate already registered: {normalized}")
+    _PREDICATE_REGISTRY[normalized] = (fn, source)
+
+
+def unregister_predicate(name: str) -> None:
+    _PREDICATE_REGISTRY.pop(str(name), None)
+
+
+def reset_predicate_registry() -> None:
+    _PREDICATE_REGISTRY.clear()
+
+
+def get_registered_predicates() -> dict[str, str]:
+    return {name: source for name, (_, source) in _PREDICATE_REGISTRY.items()}
 
 
 def _require(params: dict[str, Any], key: str, expression: Any) -> Any:
@@ -129,6 +152,11 @@ def _eval_atomic(state: Any, predicate: str, params: Any, expression: Any, *, rn
     if predicate == "var_equals":
         name = str(_require(params, "name", expression))
         return get_scenario_vars(state).get(name) == _require(params, "value", expression)
+
+    registered = _PREDICATE_REGISTRY.get(predicate)
+    if registered is not None:
+        fn, _ = registered
+        return bool(fn(state, params))
 
     if predicate not in CANONICAL_PREDICATES:
         raise ConditionEvaluationError(expression, f"unknown predicate: {predicate}")

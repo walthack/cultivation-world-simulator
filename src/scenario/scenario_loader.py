@@ -181,8 +181,8 @@ def _validate_optional_metadata(data: dict[str, Any]) -> None:
         if not isinstance(dependency, dict):
             raise ScenarioValidationError(path, "object", dependency)
         dep_type = dependency.get("type")
-        if dep_type != "preset":
-            raise ScenarioValidationError(f"{path}.type", "preset", dep_type)
+        if dep_type not in {"preset", "mod"}:
+            raise ScenarioValidationError(f"{path}.type", "preset or mod", dep_type)
         dep_id = dependency.get("id")
         if not isinstance(dep_id, str) or not dep_id.strip():
             raise ScenarioValidationError(f"{path}.id", "non-empty string", dep_id)

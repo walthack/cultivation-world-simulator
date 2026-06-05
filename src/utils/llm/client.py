@@ -423,7 +423,12 @@ async def call_llm_with_template(
     max_retries: int | None = None
 ) -> dict:
     """使用模板调用 LLM"""
-    template = load_template(template_path)
+    try:
+        from src.mod_platform.llm_overlay import resolve_prompt_template
+        overlay_path = resolve_prompt_template(template_path)
+    except Exception:
+        overlay_path = None
+    template = load_template(overlay_path or template_path)
     prompt = build_prompt(template, infos)
     return await call_llm_json(prompt, mode, max_retries)
 

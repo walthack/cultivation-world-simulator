@@ -19,6 +19,7 @@ export type SystemMenuTab =
   | 'llm'
   | 'start'
   | 'settings'
+  | 'mods'
   | 'about'
   | 'other';
 
@@ -151,4 +152,3 @@ export const useUiStore = defineStore('ui', () => {
     refreshDetail
   };
 });
-
