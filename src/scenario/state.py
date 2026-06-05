@@ -10,3 +10,4 @@ class ScriptedScenarioState:
     timeline: list[dict[str, Any]]
     state: dict[str, Any] = field(default_factory=dict)
     triggered_events: set[str] = field(default_factory=set)
+    dispatch_log: list[dict[str, Any]] = field(default_factory=list)

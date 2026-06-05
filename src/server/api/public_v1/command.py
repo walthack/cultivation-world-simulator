@@ -18,6 +18,7 @@ from src.server.services.scenario_import import (
 )
 from src.server.services.scenario_generate import generate_scenario_from_description
 from src.server.services.scenario_registry import list_installed_scenarios
+from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import save_draft
 
 
@@ -155,6 +156,11 @@ class ScenarioSaveDraftRequest(BaseModel):
     timeline: dict = Field(default_factory=dict)
 
 
+class ScenarioActivateRequest(BaseModel):
+    scenario_id: str
+    mode: Literal["reset", "hot-swap"] = "reset"
+
+
 async def _read_capped_body(request: Request, max_size: int) -> bytes:
     chunks: list[bytes] = []
     total = 0
@@ -230,6 +236,9 @@ def create_public_command_router(
     run_submit_roleplay_choice: Callable[..., object],
     run_send_roleplay_conversation: Callable[..., object],
     run_end_roleplay_conversation: Callable[..., object],
+    run_activate_scenario: Callable[..., object] | None = None,
+    run_deactivate_scenario: Callable[[], object] | None = None,
+    run_reload_scenario: Callable[[], object] | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -433,5 +442,32 @@ def create_public_command_router(
                 details={"scenario_id": req.scenario_id},
             )
         return ok_response(scenario_state.set_enabled(req.scenario_id, req.enabled))
+
+    @router.post("/api/v1/command/scenario/activate")
+    async def activate_scenario_v1(req: ScenarioActivateRequest):
+        try:
+            if run_activate_scenario is None:
+                return {"ok": False, "error": "Scenario runtime control unavailable"}
+            return await run_activate_scenario(scenario_id=req.scenario_id, mode=req.mode)
+        except ScenarioRuntimeError as exc:
+            return {"ok": False, "error": str(exc)}
+
+    @router.post("/api/v1/command/scenario/deactivate")
+    async def deactivate_scenario_v1():
+        try:
+            if run_deactivate_scenario is None:
+                return {"ok": False, "error": "Scenario runtime control unavailable"}
+            return await run_deactivate_scenario()
+        except ScenarioRuntimeError as exc:
+            return {"ok": False, "error": str(exc)}
+
+    @router.post("/api/v1/command/scenario/reload")
+    async def reload_scenario_v1():
+        try:
+            if run_reload_scenario is None:
+                return {"ok": False, "error": "Scenario runtime control unavailable"}
+            return await run_reload_scenario()
+        except ScenarioRuntimeError as exc:
+            return {"ok": False, "error": str(exc)}
 
     return router

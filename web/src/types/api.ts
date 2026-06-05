@@ -260,6 +260,7 @@ export interface RunConfigDTO {
 
 export interface AppSettingsDTO {
   schema_version: number;
+  advanced_runtime_control: boolean;
   ui: UISettingsDTO;
   simulation: SimulationSettingsDTO;
   llm: {
@@ -269,6 +270,7 @@ export interface AppSettingsDTO {
 }
 
 export interface AppSettingsPatchDTO {
+  advanced_runtime_control?: boolean;
   ui?: {
     locale?: UISettingsDTO['locale'];
     audio?: Partial<AudioSettingsDTO>;
@@ -736,6 +738,37 @@ export interface ActiveScenarioStatusResponseDTO {
 export type ScenarioStatusResponseDTO =
   | InactiveScenarioStatusResponseDTO
   | ActiveScenarioStatusResponseDTO;
+
+export type ScenarioActivateMode = 'reset' | 'hot-swap';
+
+export interface ScenarioActivateRequest {
+  scenario_id: string;
+  mode: ScenarioActivateMode;
+}
+
+export interface ScenarioActivateResponse {
+  ok: boolean;
+  warning?: string;
+  error?: string;
+}
+
+export interface ScenarioRuntimeResponse {
+  ok: boolean;
+  error?: string;
+}
+
+export interface ScenarioDispatchLogEntryDTO {
+  month_stamp: string;
+  event_id: string;
+  fired: boolean;
+  reason?: string;
+}
+
+export interface ScenarioDebugSnapshotDTO {
+  state: Record<string, unknown>;
+  triggered_events: string[];
+  dispatch_log: ScenarioDispatchLogEntryDTO[];
+}
 
 // --- Deceased Characters ---
 

@@ -93,6 +93,20 @@ const languageOptions = computed(() =>
           @update:value="settingStore.setAutoSave"
         />
       </div>
+
+      <div class="setting-item">
+        <div class="setting-label-group">
+          <span class="setting-icon" :style="{ '--icon-url': `url(${saveIcon})` }" aria-hidden="true"></span>
+          <div class="setting-description">
+            <span class="setting-label">Advanced runtime control</span>
+            <span class="setting-subtitle">Hot-swap does not re-anchor time. Events scheduled before the current world time will not fire.</span>
+          </div>
+        </div>
+        <n-switch
+          v-model:value="settingStore.advancedRuntimeControl"
+          @update:value="settingStore.setAdvancedRuntimeControl"
+        />
+      </div>
     </div>
   </div>
 </template>

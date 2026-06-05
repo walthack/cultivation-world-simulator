@@ -34,6 +34,7 @@ export const useSettingStore = defineStore('setting', () => {
   const bgmVolume = ref(0.5);
   const isAutoSave = ref(false);
   const maxAutoSaves = ref(5);
+  const advancedRuntimeControl = ref(false);
   const newGameDraft = ref<RunConfigDTO>({
     content_locale: defaultLocale,
     init_npc_num: 9,
@@ -51,6 +52,7 @@ export const useSettingStore = defineStore('setting', () => {
     sfxVolume.value = settings.ui.audio.sfx_volume;
     isAutoSave.value = settings.simulation.auto_save_enabled;
     maxAutoSaves.value = settings.simulation.max_auto_saves;
+    advancedRuntimeControl.value = Boolean(settings.advanced_runtime_control);
     newGameDraft.value = {
       ...settings.new_game_defaults,
       scenario_id: newGameDraft.value.scenario_id ?? null,
@@ -164,6 +166,19 @@ export const useSettingStore = defineStore('setting', () => {
     }
   }
 
+  async function setAdvancedRuntimeControl(enabled: boolean) {
+    const previous = advancedRuntimeControl.value;
+    advancedRuntimeControl.value = enabled;
+
+    try {
+      const settings = await systemApi.patchSettings({ advanced_runtime_control: enabled });
+      applySettings(settings);
+    } catch (e) {
+      advancedRuntimeControl.value = previous;
+      logWarn('SettingStore set advanced runtime control', e);
+    }
+  }
+
   function updateNewGameDraft(patch: Partial<RunConfigDTO>) {
     newGameDraft.value = {
       ...newGameDraft.value,
@@ -210,12 +225,14 @@ export const useSettingStore = defineStore('setting', () => {
     bgmVolume,
     isAutoSave,
     maxAutoSaves,
+    advancedRuntimeControl,
     newGameDraft,
     hydrate,
     setLocale,
     setSfxVolume,
     setBgmVolume,
     setAutoSave,
+    setAdvancedRuntimeControl,
     updateNewGameDraft,
     saveNewGameDefaults,
     startGameWithDraft,

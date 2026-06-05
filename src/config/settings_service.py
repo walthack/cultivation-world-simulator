@@ -119,6 +119,7 @@ class SettingsService:
 
         return AppSettings(
             schema_version=2,
+            advanced_runtime_control=False,
             ui={
                 "locale": get_default_locale(),
                 "audio": AudioSettings(),
@@ -209,6 +210,9 @@ class SettingsService:
                     payload["ui"]["audio"]["bgm_volume"] = audio_patch["bgm_volume"]
                 if audio_patch.get("sfx_volume") is not None:
                     payload["ui"]["audio"]["sfx_volume"] = audio_patch["sfx_volume"]
+
+        if patch_payload.get("advanced_runtime_control") is not None:
+            payload["advanced_runtime_control"] = bool(patch_payload["advanced_runtime_control"])
 
         if patch_payload.get("simulation"):
             sim_patch = patch_payload["simulation"]

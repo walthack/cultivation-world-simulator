@@ -49,6 +49,7 @@ def create_public_query_builders(
     get_dynasty_detail_query,
     build_dynasty_detail,
     build_scenario_status,
+    build_scenario_debug_snapshot,
     list_installed_scenarios,
     get_active_scenario,
     get_avatar_overview_query,
@@ -168,6 +169,9 @@ def create_public_query_builders(
     def build_public_scenario_status() -> dict:
         return build_scenario_status(runtime.get("world"), get_active_scenario())
 
+    def build_public_scenario_debug_snapshot() -> dict:
+        return build_scenario_debug_snapshot(runtime)
+
     def build_public_installed_scenarios() -> dict:
         return {
             "scenarios": [
@@ -204,6 +208,7 @@ def create_public_query_builders(
         build_public_dynasty_overview=build_public_dynasty_overview,
         build_public_dynasty_detail=build_public_dynasty_detail,
         build_public_scenario_status=build_public_scenario_status,
+        build_public_scenario_debug_snapshot=build_public_scenario_debug_snapshot,
         build_public_installed_scenarios=build_public_installed_scenarios,
         build_public_avatar_overview=build_public_avatar_overview,
         build_public_deceased_list=build_public_deceased_list,

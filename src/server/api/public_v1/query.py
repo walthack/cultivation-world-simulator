@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from src.server.services.public_api_contract import ok_response
+from src.server.services.scenario_runtime import ScenarioRuntimeError
 from src.server.services.scenario_templates import load_template, list_templates
 
 
@@ -98,6 +99,7 @@ def create_public_query_router(
     build_detail: Callable[..., dict],
     build_deceased_list: Callable[[], dict],
     build_roleplay_session: Callable[[], dict],
+    build_scenario_debug_snapshot: Callable[[], dict] | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -190,6 +192,14 @@ def create_public_query_router(
     )
     def get_scenario_status_v1():
         return ok_response(build_scenario_status())
+
+    @router.get("/api/v1/query/scenario/debug")
+    def get_scenario_debug_v1():
+        try:
+            builder = build_scenario_debug_snapshot or (lambda: {"state": {}, "triggered_events": [], "dispatch_log": []})
+            return {"ok": True, "data": builder()}
+        except ScenarioRuntimeError as exc:
+            return {"ok": False, "error": str(exc)}
 
     @router.get(
         "/api/v1/query/scenarios",

@@ -44,6 +44,13 @@ from src.server.services.custom_goldfinger_service import (
 )
 from src.server.services.game_lifecycle import reinit_game_lifecycle, start_game_lifecycle
 from src.server.services.scenario_registry import list_installed_scenarios
+from src.server.services.scenario_debug import get_debug_snapshot
+from src.server.services.scenario_runtime import (
+    ensure_advanced_runtime_control,
+    activate_scenario as activate_scenario_runtime,
+    deactivate_scenario as deactivate_scenario_runtime,
+    reload_scenario as reload_scenario_runtime,
+)
 from src.server.services.game_queries import (
     get_detail as get_detail_query,
     get_deceased_list,
@@ -202,6 +209,14 @@ ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
 ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
 ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
 runtime.active_scenario = ACTIVE_SCENARIO
+
+
+def sync_advanced_runtime_control(settings_view=None) -> None:
+    if settings_view is None:
+        settings_view = get_settings_service().get_settings_view()
+    enabled = bool(getattr(settings_view, "advanced_runtime_control", False))
+    runtime.advanced_runtime_control = enabled
+    game_instance["advanced_runtime_control"] = enabled
 
 
 def get_active_scenario():
@@ -368,6 +383,9 @@ public_query_builders = create_public_query_builders(
     get_dynasty_detail_query=get_dynasty_detail_query,
     build_dynasty_detail=build_dynasty_detail,
     build_scenario_status=build_scenario_status,
+    build_scenario_debug_snapshot=lambda rt: (
+        ensure_advanced_runtime_control(rt) or get_debug_snapshot(rt.get("world"))
+    ),
     list_installed_scenarios=list_installed_scenarios,
     get_active_scenario=get_active_scenario,
     get_avatar_overview_query=get_avatar_overview_query,
@@ -394,6 +412,7 @@ build_public_mortal_overview = public_query_builders.build_public_mortal_overvie
 build_public_dynasty_overview = public_query_builders.build_public_dynasty_overview
 build_public_dynasty_detail = public_query_builders.build_public_dynasty_detail
 build_public_scenario_status = public_query_builders.build_public_scenario_status
+build_public_scenario_debug_snapshot = public_query_builders.build_public_scenario_debug_snapshot
 build_public_installed_scenarios = public_query_builders.build_public_installed_scenarios
 build_public_avatar_overview = public_query_builders.build_public_avatar_overview
 build_public_deceased_list = public_query_builders.build_public_deceased_list
@@ -473,6 +492,7 @@ async def game_loop():
     )
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sync_advanced_runtime_control()
 
 lifespan = create_lifespan(
     endpoint_filter=EndpointFilter,
@@ -593,13 +613,41 @@ run_send_roleplay_conversation = command_handlers.run_send_roleplay_conversation
 run_end_roleplay_conversation = command_handlers.run_end_roleplay_conversation
 
 
+async def run_activate_scenario(*, scenario_id: str, mode: str) -> dict:
+    if mode == "reset":
+        return await activate_scenario_runtime(
+            runtime,
+            scenario_id,
+            mode,
+            run_start_game=run_start_game,
+            start_request_factory=lambda next_scenario_id: GameStartRequest(scenario_id=next_scenario_id),
+        )
+    return await runtime.run_mutation(
+        activate_scenario_runtime,
+        runtime,
+        scenario_id,
+        mode,
+    )
+
+
+async def run_deactivate_scenario() -> dict:
+    return await runtime.run_mutation(deactivate_scenario_runtime, runtime)
+
+
+async def run_reload_scenario() -> dict:
+    return await runtime.run_mutation(reload_scenario_runtime, runtime)
+
+
 def get_settings() -> dict:
     """兼容保留：返回当前应用设置视图。"""
-    return _model_to_dict(get_settings_service().get_settings_view())
+    settings_view = get_settings_service().get_settings_view()
+    sync_advanced_runtime_control(settings_view)
+    return _model_to_dict(settings_view)
 
 
 def _patch_settings_model(req):
     updated = get_settings_service().patch_settings(req)
+    sync_advanced_runtime_control(updated)
     next_locale = str(updated.new_game_defaults.content_locale)
     current_locale = str(language_manager)
 
@@ -620,6 +668,7 @@ def patch_settings(req) -> dict:
 
 def _reset_settings_model():
     updated = get_settings_service().reset_settings()
+    sync_advanced_runtime_control(updated)
     next_locale = str(updated.new_game_defaults.content_locale)
     current_locale = str(language_manager)
 
@@ -736,6 +785,7 @@ configure_routes_and_mounts(
     build_dynasty_overview=build_public_dynasty_overview,
     build_dynasty_detail=build_public_dynasty_detail,
     build_scenario_status=build_public_scenario_status,
+    build_scenario_debug_snapshot=build_public_scenario_debug_snapshot,
     build_installed_scenarios=build_public_installed_scenarios,
     build_avatar_overview=build_public_avatar_overview,
     build_saves=build_public_saves,
@@ -769,6 +819,9 @@ configure_routes_and_mounts(
     run_submit_roleplay_choice=run_submit_roleplay_choice,
     run_send_roleplay_conversation=run_send_roleplay_conversation,
     run_end_roleplay_conversation=run_end_roleplay_conversation,
+    run_activate_scenario=run_activate_scenario,
+    run_deactivate_scenario=run_deactivate_scenario,
+    run_reload_scenario=run_reload_scenario,
     assets_path=ASSETS_PATH,
     web_dist_path=WEB_DIST_PATH,
     is_dev_mode=IS_DEV_MODE,
