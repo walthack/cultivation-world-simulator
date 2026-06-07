@@ -1632,6 +1632,9 @@ def create_scenario_avatar(
     if not name:
         raise ValueError(f"Scenario avatar {avatar_id} missing name fields")
 
+    pos_x = random.randint(0, world.map.width - 1)
+    pos_y = random.randint(0, world.map.height - 1)
+
     avatar = Avatar(
         world=world,
         name=name,
@@ -1644,7 +1647,11 @@ def create_scenario_avatar(
         personas=personas,
         goldfinger=goldfinger,
         sect=sect,
+        pos_x=pos_x,
+        pos_y=pos_y,
     )
+    avatar.tile = world.map.get_tile(avatar.pos_x, avatar.pos_y)
+    avatar.born_region_id = get_born_region_id(world, parents=[], sect=sect, race=None)
     avatar.goldfinger_state = {}
     avatar.backstory = str(scenario_avatar.get("backstory") or "")
     objective = str(scenario_avatar.get("long_term_objective") or "").strip()
