@@ -1582,6 +1582,41 @@ def _resolve_scenario_sect(raw_value: object, *, preset_id: str, avatar_id: str)
     return sect
 
 
+def _resolve_scenario_avatar_position(world: World, scenario_avatar: dict, *, avatar_id: str) -> tuple[int, int, int | None]:
+    pos = scenario_avatar.get("pos")
+    if pos is not None:
+        pos_x = int(pos.get("x"))
+        pos_y = int(pos.get("y"))
+        if not world.map.is_in_bounds(pos_x, pos_y):
+            raise ValueError(
+                f"Scenario avatar {avatar_id} pos is outside map bounds: "
+                f"({pos_x}, {pos_y}) for map {world.map.width}x{world.map.height}"
+            )
+        tile = world.map.get_tile(pos_x, pos_y)
+        tile_region = getattr(tile, "region", None)
+        return pos_x, pos_y, getattr(tile_region, "id", None)
+
+    raw_region_id = scenario_avatar.get("region_id")
+    if raw_region_id is not None:
+        region_id = int(raw_region_id)
+        region = getattr(world.map, "regions", {}).get(region_id)
+        if region is None:
+            raise ValueError(f"Scenario avatar {avatar_id} region_id references unknown region: {region_id}")
+
+        coords = list(getattr(region, "cors", []) or getattr(world.map, "region_cors", {}).get(region_id, []) or [])
+        coords = [(int(x), int(y)) for x, y in coords if world.map.is_in_bounds(int(x), int(y))]
+        if not coords:
+            raise ValueError(f"Scenario avatar {avatar_id} region_id has no in-bounds tiles: {region_id}")
+        pos_x, pos_y = random.choice(coords)
+        return pos_x, pos_y, region_id
+
+    return (
+        random.randint(0, world.map.width - 1),
+        random.randint(0, world.map.height - 1),
+        None,
+    )
+
+
 def create_scenario_avatar(
     world: World,
     scenario_avatar: dict,
@@ -1632,8 +1667,11 @@ def create_scenario_avatar(
     if not name:
         raise ValueError(f"Scenario avatar {avatar_id} missing name fields")
 
-    pos_x = random.randint(0, world.map.width - 1)
-    pos_y = random.randint(0, world.map.height - 1)
+    pos_x, pos_y, explicit_born_region_id = _resolve_scenario_avatar_position(
+        world,
+        scenario_avatar,
+        avatar_id=avatar_id,
+    )
 
     avatar = Avatar(
         world=world,
@@ -1651,7 +1689,10 @@ def create_scenario_avatar(
         pos_y=pos_y,
     )
     avatar.tile = world.map.get_tile(avatar.pos_x, avatar.pos_y)
-    avatar.born_region_id = get_born_region_id(world, parents=[], sect=sect, race=None)
+    if explicit_born_region_id is not None:
+        avatar.born_region_id = int(explicit_born_region_id)
+    else:
+        avatar.born_region_id = get_born_region_id(world, parents=[], sect=sect, race=None)
     avatar.goldfinger_state = {}
     avatar.backstory = str(scenario_avatar.get("backstory") or "")
     objective = str(scenario_avatar.get("long_term_objective") or "").strip()

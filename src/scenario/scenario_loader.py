@@ -24,7 +24,7 @@ from src.config.presets import (
 
 
 SCHEMA_VERSION = "0.1"
-SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2"}
+SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2", "1.1"}
 SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
 EVENT_TYPES = {
@@ -192,7 +192,55 @@ def _validate_optional_metadata(data: dict[str, Any]) -> None:
 
 
 def _is_v02(data: dict[str, Any]) -> bool:
-    return str(data.get("schema_version")) == "0.2"
+    return str(data.get("schema_version")) in {"0.2", "1.1"}
+
+
+def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None:
+    profile = initial_state.get("generation_profile")
+    if profile is None:
+        return
+    if not isinstance(profile, dict):
+        raise ScenarioValidationError("scenario.initial_state.generation_profile", "object", profile)
+
+    for key in ("random_npc_count", "random_sect_count"):
+        value = profile.get(key)
+        if value is None:
+            continue
+        if type(value) is not int or value < 0:
+            raise ScenarioValidationError(
+                f"scenario.initial_state.generation_profile.{key}",
+                "integer >= 0",
+                value,
+            )
+
+    value = profile.get("use_scripted_only")
+    if value is not None and not isinstance(value, bool):
+        raise ScenarioValidationError(
+            "scenario.initial_state.generation_profile.use_scripted_only",
+            "boolean",
+            value,
+        )
+
+
+def _validate_optional_avatar_placement(avatar: dict[str, Any], path: str) -> None:
+    has_pos = avatar.get("pos") is not None
+    has_region_id = avatar.get("region_id") is not None
+    if has_pos and has_region_id:
+        raise ScenarioValidationError(f"{path}.pos", "mutually exclusive with region_id", avatar.get("pos"))
+
+    if has_pos:
+        pos = avatar.get("pos")
+        if not isinstance(pos, dict):
+            raise ScenarioValidationError(f"{path}.pos", "object", pos)
+        for key in ("x", "y"):
+            value = pos.get(key)
+            if type(value) is not int or value < 0:
+                raise ScenarioValidationError(f"{path}.pos.{key}", "integer >= 0", value)
+
+    if has_region_id:
+        region_id = avatar.get("region_id")
+        if type(region_id) is not int:
+            raise ScenarioValidationError(f"{path}.region_id", "integer", region_id)
 
 
 def _persona_trait_id(trait: Any) -> str:
@@ -356,21 +404,47 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         initial_state = {}
     if not isinstance(initial_state, dict):
         raise ScenarioValidationError("scenario.initial_state", "object", initial_state)
+    _validate_optional_generation_profile(initial_state)
+
+    avatars = initial_state.get("avatars", [])
+    if not isinstance(avatars, list):
+        raise ScenarioValidationError("scenario.initial_state.avatars", "list", avatars)
+    sects = initial_state.get("sects", []) or []
+    dynasties = initial_state.get("dynasties")
+    uses_v02 = _is_v02(data)
+    needs_race_ids = uses_v02 and any(isinstance(avatar, dict) and avatar.get("race_id") is not None for avatar in avatars)
+    needs_root_ids = uses_v02 and any(isinstance(avatar, dict) and avatar.get("root_id") is not None for avatar in avatars)
+    needs_technique_ids = uses_v02 and any(isinstance(avatar, dict) and avatar.get("techniques") for avatar in avatars)
+    needs_weapon_ids = uses_v02 and any(isinstance(avatar, dict) and avatar.get("weapons") for avatar in avatars)
+    region_refs_present = (
+        uses_v02
+        and (
+            any(isinstance(avatar, dict) and avatar.get("location_region_id") is not None for avatar in avatars)
+            or any(isinstance(sect, dict) and sect.get("headquarters_region_id") is not None for sect in sects)
+            or (
+                isinstance(dynasties, list)
+                and any(
+                    isinstance(item, dict)
+                    and (
+                        item.get("capital_region_id") is not None
+                        or bool(item.get("territory_region_ids", []) or [])
+                    )
+                    for item in dynasties
+                )
+            )
+        )
+    )
 
     avatar_ids: set[str] = set()
     sect_ids = set(get_preset_sect_ids(preset_id))
     realm_ids = set(get_preset_realm_order(preset_id))
     persona_keys = get_preset_persona_keys(preset_id)
     goldfinger_keys = get_preset_goldfinger_keys(preset_id)
-    race_ids = get_preset_race_ids(preset_id) if _is_v02(data) else set()
-    root_ids = get_preset_root_ids(preset_id) if _is_v02(data) else set()
-    technique_ids = get_preset_technique_ids(preset_id) if _is_v02(data) else set()
-    weapon_ids = get_preset_weapon_ids(preset_id) if _is_v02(data) else set()
-    region_ids = get_preset_region_ids(preset_id) if _is_v02(data) else set()
-
-    avatars = initial_state.get("avatars", [])
-    if not isinstance(avatars, list):
-        raise ScenarioValidationError("scenario.initial_state.avatars", "list", avatars)
+    race_ids = get_preset_race_ids(preset_id) if needs_race_ids else set()
+    root_ids = get_preset_root_ids(preset_id) if needs_root_ids else set()
+    technique_ids = get_preset_technique_ids(preset_id) if needs_technique_ids else set()
+    weapon_ids = get_preset_weapon_ids(preset_id) if needs_weapon_ids else set()
+    region_ids = get_preset_region_ids(preset_id) if region_refs_present else set()
     for idx, avatar in enumerate(avatars):
         path = f"scenario.initial_state.avatars[{idx}]"
         if not isinstance(avatar, dict):
@@ -381,6 +455,7 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         if avatar_id in avatar_ids:
             raise ScenarioValidationError(f"{path}.id", "unique avatar id", avatar_id)
         avatar_ids.add(avatar_id)
+        _validate_optional_avatar_placement(avatar, path)
 
         sect_id = avatar.get("sect_id")
         if sect_id is not None and sect_id not in sect_ids:
@@ -388,7 +463,7 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         realm = avatar.get("realm")
         if realm is not None and str(realm) not in realm_ids:
             raise MissingReferenceError(f"{path}.realm", realm, "preset realms.json")
-        if _is_v02(data):
+        if uses_v02:
             race_id = avatar.get("race_id")
             if race_id is not None and str(race_id) not in race_ids:
                 raise MissingReferenceError(f"{path}.race_id", race_id, "preset races.json")
@@ -402,7 +477,7 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         if goldfinger_id is not None:
             resolved_goldfinger_id = (
                 _validate_goldfinger_model(goldfinger_id, f"{path}.goldfinger_id")
-                if _is_v02(data)
+                if uses_v02
                 else str(goldfinger_id)
             )
             if str(resolved_goldfinger_id).upper() not in goldfinger_keys:
@@ -410,12 +485,12 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         for trait_idx, trait in enumerate(avatar.get("persona_traits", []) or []):
             resolved_trait = (
                 _validate_persona_trait(trait, f"{path}.persona_traits[{trait_idx}]")
-                if _is_v02(data)
+                if uses_v02
                 else _persona_trait_id(trait)
             )
             if str(resolved_trait).upper() not in persona_keys:
                 raise MissingReferenceError(f"{path}.persona_traits", trait, "preset personas.json")
-        if _is_v02(data):
+        if uses_v02:
             _validate_avatar_techniques(avatar, path, technique_ids)
             _validate_avatar_weapons(avatar, path, weapon_ids)
 
@@ -426,7 +501,7 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
             if avatar_id not in avatar_ids:
                 raise MissingReferenceError(f"{path}.{key}", avatar_id, "initial_state.avatars")
 
-    for idx, sect in enumerate(initial_state.get("sects", []) or []):
+    for idx, sect in enumerate(sects):
         path = f"scenario.initial_state.sects[{idx}]"
         sect_id = _require(sect, "id", path)
         if sect_id not in sect_ids:
@@ -437,24 +512,13 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         for member_id in sect.get("member_avatar_ids", []) or []:
             if member_id not in avatar_ids:
                 raise MissingReferenceError(f"{path}.member_avatar_ids", member_id, "initial_state.avatars")
-        if _is_v02(data):
+        if uses_v02:
             headquarters_region_id = sect.get("headquarters_region_id")
             if headquarters_region_id is not None and str(headquarters_region_id) not in region_ids:
                 raise MissingReferenceError(f"{path}.headquarters_region_id", headquarters_region_id, "preset regions.json")
 
-    if _is_v02(data) and "dynasties" in initial_state:
+    if uses_v02 and "dynasties" in initial_state:
         dynasty_entries = initial_state.get("dynasties")
-        region_refs_present = (
-            isinstance(dynasty_entries, list)
-            and any(
-                isinstance(item, dict)
-                and (
-                    item.get("capital_region_id") is not None
-                    or bool(item.get("territory_region_ids", []) or [])
-                )
-                for item in dynasty_entries
-            )
-        )
         orthodoxy_refs_present = (
             isinstance(dynasty_entries, list)
             and any(isinstance(item, dict) and bool(item.get("orthodoxy_ids", []) or []) for item in dynasty_entries)

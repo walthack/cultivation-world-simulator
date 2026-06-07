@@ -17,6 +17,15 @@
 | Playwright Layer 4A (scenario engine E2E) | ✅ **7/7 PASS** in 9.2s | Re-run against this session's backend |
 | Playwright Layer 4 LLM authoring | ✅ **2/2 SKIPPED w/ reason** | `has_api_key=false` per design |
 
+## v1.1 Scenario World Generation Control Update (2026-06-07)
+
+| Item | Result | Notes |
+|---|---|---|
+| Focused backend pytest | ✅ **17/17 PASS** in 0.66s | `tests/test_scenario_avatar_fallback_position.py tests/test_scenario_generation_profile.py` |
+| Backend pytest full suite | 🟡 **1713 passed / 3 pre-existing failed / 2 skipped** in 60.26s | Remaining failures are the known sect-related `tests/test_game_init_integration.py` failures already documented in v1.0 |
+| No-scenario server smoke | ⚠️ **blocked in sandbox** | `src/server/main.py --dev` reached startup, then macOS sandbox denied bind on `127.0.0.1:8002` |
+| Playwright Layer 4A v1.1 Step 9/10 | ⚠️ **not run in sandbox** | Requires a bindable backend and Vite server; spec updated with API assertions |
+
 Manual visual checklist is replaced by the **Release Screenshot Pack**
 (11 screenshots at `docs/release-artifacts/v1.0/screenshots/`,
 index + milestone mapping at `docs/release-artifacts/v1.0/index.md`).

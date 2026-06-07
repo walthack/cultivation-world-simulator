@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2",
+  "schema_version": "1.1",
   "scenario_id": "sanguo",
   "title": "三国仙纪",
   "version": "1.0",
@@ -12,6 +12,10 @@
   "initial_state": {
     "year": 208,
     "month": 1,
+    "generation_profile": {
+      "random_npc_count": 5,
+      "random_sect_count": 2
+    },
     "avatars": [
       {
         "id": "liu-bei",

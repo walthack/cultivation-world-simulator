@@ -12,6 +12,9 @@
  *        { installed[], downloaded[], updates[] }
  *   8.   sample-overhaul mod present → Python gate OFF reflected in
  *        /api/v1/query/mods/extensions-active (data.extensions shape)
+ *   9.   liuchao scripted avatars have distinct non-origin positions
+ *        and non-unknown born regions
+ *   10.  liuchao total avatar count equals scripted + generation profile
  *
  * Notes verified by screenshot iteration on 2026-06-05:
  *   - Tests must run serially because they share a single backend process.
@@ -57,6 +60,13 @@ type ExtensionDTO = {
   active: boolean
   inert: boolean
   python_required: boolean
+}
+
+type AvatarOverviewDTO = {
+  id: string
+  name: string
+  x: number
+  y: number
 }
 
 async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
@@ -396,5 +406,45 @@ test.describe.serial('Layer 4A — Scenario engine E2E happy path', () => {
     expect(samplePred, 'sample_predicate must be declared by sample-overhaul').toBeDefined()
     expect(samplePred!.active).toBe(false)
     expect(samplePred!.inert).toBe(true)
+  })
+
+  test('step 9: liuchao scripted avatars have placed runtime positions', async () => {
+    await startGameWithScenario('liuchao')
+
+    const overview = await api<{
+      ok: boolean
+      data: { avatars: AvatarOverviewDTO[] }
+    }>('/api/v1/query/avatars/overview')
+
+    const scriptedIds = ['cheng-zongyang', 'wang-zhe', 'xiao-zi']
+    const scripted = scriptedIds.map((id) => overview.data.avatars.find((avatar) => avatar.id === id))
+    for (const avatar of scripted) {
+      expect(avatar, 'scripted avatar should exist in overview').toBeTruthy()
+      expect([avatar!.x, avatar!.y], `${avatar!.id} should not remain at origin`).not.toEqual([0, 0])
+    }
+
+    const positions = new Set(scripted.map((avatar) => `${avatar!.x}:${avatar!.y}`))
+    expect(positions.size, 'scripted avatars should not stack on one tile').toBe(scriptedIds.length)
+
+    for (const id of scriptedIds) {
+      const detail = await api<{
+        ok: boolean
+        data: { id: string; born_region_id: number | null }
+      }>(`/api/v1/query/detail?type=avatar&id=${encodeURIComponent(id)}`)
+      expect(detail.data.id).toBe(id)
+      expect(detail.data.born_region_id, `${id} should have a born_region_id`).not.toBeNull()
+      expect(detail.data.born_region_id, `${id} should have a known born_region_id`).not.toBe(-1)
+    }
+  })
+
+  test('step 10: liuchao avatar count equals scripted plus profile random NPC count', async () => {
+    await startGameWithScenario('liuchao')
+
+    const overview = await api<{
+      ok: boolean
+      data: { avatar_count: number }
+    }>('/api/v1/query/avatars/overview')
+
+    expect(overview.data.avatar_count).toBe(6)
   })
 })

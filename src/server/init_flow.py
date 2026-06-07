@@ -35,6 +35,68 @@ def _select_existed_sects(*, sects_by_id, needed_sects: int) -> list[Any]:
     return pool[:needed_sects]
 
 
+def _setting_count(settings: Any, name: str) -> int:
+    direct = getattr(settings, name, None)
+    if direct is not None:
+        return int(direct)
+    defaults = getattr(settings, "new_game_defaults", None)
+    if defaults is not None and hasattr(defaults, name):
+        return int(getattr(defaults, name))
+    raise AttributeError(f"settings missing {name}")
+
+
+def resolve_generation_counts(*, scenario, settings) -> dict[str, int]:
+    initial_state = getattr(scenario, "scenario", scenario) or {}
+    if isinstance(initial_state, dict) and "initial_state" in initial_state:
+        initial_state = initial_state.get("initial_state", {}) or {}
+    profile = (
+        initial_state.get("generation_profile")
+        if isinstance(initial_state, dict)
+        else None
+    ) or {}
+
+    if profile.get("use_scripted_only"):
+        return {"npc_count": 0, "sect_count": 0}
+
+    npc_count = profile.get("random_npc_count")
+    if npc_count is None:
+        npc_count = _setting_count(settings, "init_npc_num")
+
+    sect_count = profile.get("random_sect_count")
+    if sect_count is None:
+        sect_count = _setting_count(settings, "sect_num")
+
+    return {"npc_count": int(npc_count), "sect_count": int(sect_count)}
+
+
+def _select_scenario_existed_sects(*, sects_by_id, random_sect_count: int, resolved_scenario) -> list[Any]:
+    initial_state = (
+        getattr(resolved_scenario, "scenario", {}) or {}
+    ).get("initial_state", {}) if resolved_scenario is not None else {}
+    scripted_ids: list[int] = []
+    for item in list((initial_state or {}).get("sects", []) or []):
+        try:
+            sect_id = int(item.get("id"))
+        except (TypeError, ValueError):
+            continue
+        if sect_id in sects_by_id and sect_id not in scripted_ids:
+            scripted_ids.append(sect_id)
+
+    scripted_sects = [sects_by_id[sect_id] for sect_id in scripted_ids]
+    if random_sect_count <= 0:
+        return scripted_sects
+
+    remaining = {
+        sect_id: sect
+        for sect_id, sect in sects_by_id.items()
+        if int(sect_id) not in set(scripted_ids)
+    }
+    return scripted_sects + _select_existed_sects(
+        sects_by_id=remaining,
+        needed_sects=random_sect_count,
+    )
+
+
 async def _apply_world_lore_if_needed(
     *,
     world,
@@ -60,11 +122,10 @@ async def _apply_world_lore_if_needed(
 async def _generate_initial_avatars(
     *,
     world,
-    run_config,
+    target_total_count: int,
     existed_sects,
     make_random_avatars,
 ) -> dict[Any, Any]:
-    target_total_count = int(run_config.init_npc_num)
     if target_total_count <= 0:
         return {}
 
@@ -270,6 +331,11 @@ async def perform_game_initialization(
         sim = simulator_cls(world)
         sim.awakening_rate = run_config.npc_awakening_rate_per_month
         world.run_config_snapshot = model_to_dict(run_config)
+        resolved_scenario = get_active_scenario() if get_active_scenario is not None else None
+        generation_counts = resolve_generation_counts(
+            scenario=resolved_scenario,
+            settings=run_config,
+        )
 
         update_init_progress(2, "shaping_world_lore")
         await _apply_world_lore_if_needed(
@@ -280,15 +346,22 @@ async def perform_game_initialization(
         )
 
         update_init_progress(3, "initializing_sects")
-        existed_sects = _select_existed_sects(
-            sects_by_id=sects_by_id,
-            needed_sects=int(run_config.sect_num or 0),
-        )
+        if resolved_scenario is None:
+            existed_sects = _select_existed_sects(
+                sects_by_id=sects_by_id,
+                needed_sects=int(generation_counts["sect_count"] or 0),
+            )
+        else:
+            existed_sects = _select_scenario_existed_sects(
+                sects_by_id=sects_by_id,
+                random_sect_count=int(generation_counts["sect_count"] or 0),
+                resolved_scenario=resolved_scenario,
+            )
 
         update_init_progress(4, "generating_avatars")
         final_avatars = await _generate_initial_avatars(
             world=world,
-            run_config=run_config,
+            target_total_count=int(generation_counts["npc_count"] or 0),
             existed_sects=existed_sects,
             make_random_avatars=make_random_avatars,
         )
@@ -296,7 +369,7 @@ async def perform_game_initialization(
         world.avatar_manager.avatars.update(final_avatars)
         _inject_scripted_scenario_initial_state_if_needed(
             world=world,
-            resolved_scenario=get_active_scenario() if get_active_scenario is not None else None,
+            resolved_scenario=resolved_scenario,
         )
         world.existed_sects = existed_sects
         world.sect_context.from_existed_sects(existed_sects)

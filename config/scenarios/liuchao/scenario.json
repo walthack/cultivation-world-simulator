@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "1.1",
   "scenario_id": "liuchao",
   "title": "六朝纪事",
   "version": "1.0",
@@ -12,6 +12,10 @@
   "initial_state": {
     "year": 1,
     "month": 1,
+    "generation_profile": {
+      "random_npc_count": 3,
+      "random_sect_count": 1
+    },
     "avatars": [
       {
         "id": "cheng-zongyang",
@@ -35,6 +39,7 @@
         "gender": "男",
         "age": 82,
         "sect_id": 1,
+        "region_id": 401,
         "realm": "YUAN_YING",
         "stage": "LATE_STAGE",
         "level": 90,
