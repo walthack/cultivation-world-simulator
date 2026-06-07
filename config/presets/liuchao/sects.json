@@ -1,11 +1,56 @@
 {
   "preset_id": "liuchao",
-  "sect_ids": [1],
+  "sect_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   "sects": [
     {
       "id": 1,
       "scenario_id": "taiyi-zhenzong",
       "name": "太乙真宗"
+    },
+    {
+      "id": 2,
+      "scenario_id": "liuchao-menfa-wangshi",
+      "name": "王氏玄门"
+    },
+    {
+      "id": 3,
+      "scenario_id": "liuchao-menfa-xieshi",
+      "name": "谢氏清府"
+    },
+    {
+      "id": 4,
+      "scenario_id": "liuchao-qingtan-lanting",
+      "name": "兰亭清谈社"
+    },
+    {
+      "id": 5,
+      "scenario_id": "liuchao-siguan-qixia",
+      "name": "栖霞禅院"
+    },
+    {
+      "id": 6,
+      "scenario_id": "liuchao-siguan-maoshan",
+      "name": "茅山道观"
+    },
+    {
+      "id": 7,
+      "scenario_id": "liuchao-liuwang-beifu",
+      "name": "北府流亡盟"
+    },
+    {
+      "id": 8,
+      "scenario_id": "liuchao-shanshui-fuchun",
+      "name": "富春山隐宗"
+    },
+    {
+      "id": 9,
+      "scenario_id": "liuchao-xuanxue-zhulin",
+      "name": "竹林玄社"
+    },
+    {
+      "id": 10,
+      "scenario_id": "liuchao-jiangzuo-qinhuai",
+      "name": "秦淮江左会"
     }
   ]
 }

@@ -282,6 +282,42 @@ def _validate_generation_sources(data: dict[str, Any], *, preset_id: str) -> Non
             )
 
 
+def _warn_if_random_sect_count_exceeds_pool(data: dict[str, Any], *, preset_id: str) -> None:
+    sources = data.get("generation_sources")
+    if not isinstance(sources, dict) or sources.get("sects") != "scenario":
+        return
+
+    initial_state = data.get("initial_state", {}) or {}
+    if not isinstance(initial_state, dict):
+        return
+    profile = initial_state.get("generation_profile") or {}
+    if not isinstance(profile, dict):
+        return
+
+    random_sect_count = profile.get("random_sect_count")
+    if type(random_sect_count) is not int or random_sect_count <= 0:
+        return
+
+    preset_sects = _load_json(get_presets_root() / preset_id / "sects.json", required=False)
+    pool_size = len(preset_sects.get("sects", []) or [])
+    scripted_count = len(initial_state.get("sects", []) or [])
+    available = max(0, pool_size - scripted_count)
+    if random_sect_count <= available:
+        return
+
+    scenario_id = str(data.get("scenario_id") or "")
+    LOGGER.warning(
+        "Scenario %r declared random_sect_count=%s but available_count=%s after "
+        "scripted_count=%s from preset %r sect pool. effective_cap=%s.",
+        scenario_id,
+        random_sect_count,
+        available,
+        scripted_count,
+        preset_id,
+        available,
+    )
+
+
 def _validate_optional_avatar_placement(avatar: dict[str, Any], path: str) -> None:
     has_pos = avatar.get("pos") is not None
     has_region_id = avatar.get("region_id") is not None
@@ -647,6 +683,7 @@ def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedSce
     timeline_data = _load_json(scenario_dir / "timeline.json", required=False)
     preset_id = _validate_scenario_top_level(scenario)
     _validate_generation_sources(scenario, preset_id=preset_id)
+    _warn_if_random_sect_count_exceeds_pool(scenario, preset_id=preset_id)
     _validate_initial_state(scenario, preset_id)
     timeline = _validate_timeline(timeline_data, preset_id=preset_id, scenario_schema_version=str(scenario["schema_version"]))
     return ResolvedScenario(
@@ -675,6 +712,7 @@ def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResu
         )
 
     _validate_generation_sources(scenario, preset_id=preset_id)
+    _warn_if_random_sect_count_exceeds_pool(scenario, preset_id=preset_id)
     _validate_initial_state(scenario, preset_id)
     _validate_timeline(
         timeline_data,

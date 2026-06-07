@@ -1,6 +1,6 @@
 {
   "preset_id": "sanguo",
-  "sect_ids": [0, 1, 2],
+  "sect_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   "sects": [
     {
       "id": 0,
@@ -16,6 +16,46 @@
       "id": 2,
       "scenario_id": "wudoumi-dao",
       "name": "五斗米道"
+    },
+    {
+      "id": 3,
+      "scenario_id": "sanguo-huangjin-yunmeng",
+      "name": "云梦黄巾余部"
+    },
+    {
+      "id": 4,
+      "scenario_id": "sanguo-huangjin-taiping",
+      "name": "太平遗箓会"
+    },
+    {
+      "id": 5,
+      "scenario_id": "sanguo-wudoumi-hanzhong",
+      "name": "汉中米坛"
+    },
+    {
+      "id": 6,
+      "scenario_id": "sanguo-jiangdong-wujun",
+      "name": "吴郡豪宗"
+    },
+    {
+      "id": 7,
+      "scenario_id": "sanguo-jiangdong-shanyue",
+      "name": "山越盟社"
+    },
+    {
+      "id": 8,
+      "scenario_id": "sanguo-xiliang-tieqi",
+      "name": "西凉铁骑门"
+    },
+    {
+      "id": 9,
+      "scenario_id": "sanguo-beidi-yongliang",
+      "name": "雍凉武宗"
+    },
+    {
+      "id": 10,
+      "scenario_id": "sanguo-xudu-taixue",
+      "name": "许都太学清议社"
     }
   ]
 }
