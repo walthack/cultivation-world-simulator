@@ -9,7 +9,7 @@
         "SWORD"
       ],
       "effects": [
-        "{extra_battle_strength_points: 1}"
+        "{extra_battle_strength_points: 1, extra_harvest_materials: 1}"
       ],
       "required_realm": "QI_REFINEMENT"
     },
@@ -21,7 +21,7 @@
         "SABER"
       ],
       "effects": [
-        "{extra_battle_strength_points: 1}"
+        "{extra_battle_strength_points: 1, extra_escape_success_rate: 0.05}"
       ],
       "required_realm": "QI_REFINEMENT"
     },
@@ -33,7 +33,79 @@
         "FAN"
       ],
       "effects": [
-        "{extra_battle_strength_points: 1}"
+        "{extra_appearance: 1, extra_retreat_success_rate: 0.05}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-jiangzuo-feather-fan",
+      "name": "江左羽扇",
+      "tier": 1,
+      "attributes": [
+        "FAN"
+      ],
+      "effects": [
+        "{extra_observation_radius: 1, extra_retreat_success_rate: 0.08}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-menfa-ritual-blade",
+      "name": "门阀礼刀",
+      "tier": 1,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_item_sell_price_multiplier: 0.08, extra_appearance: 1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-qingtan-zither",
+      "name": "清谈焦琴",
+      "tier": 1,
+      "attributes": [
+        "ZITHER"
+      ],
+      "effects": [
+        "{extra_retreat_success_rate: 0.1, extra_respire_exp: 10}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-siguan-staff",
+      "name": "寺观戒杖",
+      "tier": 1,
+      "attributes": [
+        "STAFF"
+      ],
+      "effects": [
+        "{extra_max_hp: 30, extra_rest_hp_recovery_rate: 0.08}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-zhiguai-bone-flute",
+      "name": "志怪骨笛",
+      "tier": 1,
+      "attributes": [
+        "FLUTE"
+      ],
+      "effects": [
+        "{extra_fortune_probability: 0.002, extra_luck: -1}"
+      ],
+      "required_realm": "QI_REFINEMENT"
+    },
+    {
+      "id": "liuchao-exile-hidden-needle",
+      "name": "流亡袖针",
+      "tier": 1,
+      "attributes": [
+        "HIDDEN_WEAPON"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1, extra_escape_success_rate: 0.12}"
       ],
       "required_realm": "QI_REFINEMENT"
     }

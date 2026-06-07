@@ -4,66 +4,157 @@
     {
       "id": "GOLD",
       "name": "金灵根",
-      "description": "刚强肃杀，适合兵锋与护道。",
+      "description": "刚强肃杀，适合兵锋与护道。六朝乱世中，此根常被门阀部曲与守城修士看重。",
       "elements": [
         "GOLD"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "",
+      "effect_dsl": "{extra_battle_strength_points: 1}",
       "tags": [
-        "liuchao"
+        "liuchao",
+        "menfa",
+        "luanshi"
       ]
     },
     {
       "id": "WOOD",
       "name": "木灵根",
-      "description": "生发绵长，适合养气与医药。",
+      "description": "生发绵长，适合养气与医药。山林隐者常以此根调息草木，远离州郡兵尘。",
       "elements": [
         "WOOD"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "",
+      "effect_dsl": "{extra_harvest_materials: 1}",
       "tags": [
-        "liuchao"
+        "liuchao",
+        "shanshui"
       ]
     },
     {
       "id": "WATER",
       "name": "水灵根",
-      "description": "流转隐忍，适合遁行与谋断。",
+      "description": "流转隐忍，适合遁行与谋断。江左渡口与寒雨夜航，使此根更适合漂泊者。",
       "elements": [
         "WATER"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "",
+      "effect_dsl": "{extra_escape_success_rate: 0.08}",
       "tags": [
-        "liuchao"
+        "liuchao",
+        "jiangzuo",
+        "liuwang"
       ]
     },
     {
       "id": "FIRE",
       "name": "火灵根",
-      "description": "炽烈明快，适合攻伐与炼化。",
+      "description": "炽烈明快，适合攻伐与炼化。桓玄旧事与鼎革兵火，使此根常带急进之气。",
       "elements": [
         "FIRE"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "",
+      "effect_dsl": "{extra_cast_success_rate: 0.03}",
       "tags": [
-        "liuchao"
+        "liuchao",
+        "luanshi"
       ]
     },
     {
       "id": "EARTH",
       "name": "土灵根",
-      "description": "厚重安稳，适合守御与持久修行。",
+      "description": "厚重安稳，适合守御与持久修行。流亡者在坞壁、山寺和田园间求一处可守之地。",
       "elements": [
         "EARTH"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "",
+      "effect_dsl": "{extra_max_hp: 30}",
       "tags": [
-        "liuchao"
+        "liuchao",
+        "liuwang",
+        "siguan"
+      ]
+    },
+    {
+      "id": "liuchao-shanshui-root",
+      "name": "山水灵根",
+      "description": "受山水诗意浸润，近陶渊明式的归隐气象。修行者更擅在溪山间观物养神，而非争一时胜负。",
+      "elements": [
+        "WOOD",
+        "WATER"
+      ],
+      "stat_modifiers": {
+        "wisdom": 1
+      },
+      "effect_dsl": "{extra_respire_exp: 15, extra_retreat_success_rate: 0.05}",
+      "tags": [
+        "liuchao",
+        "shanshui",
+        "xuanxue"
+      ]
+    },
+    {
+      "id": "liuchao-river-mist-root",
+      "name": "江雾灵根",
+      "description": "生于江左烟水与寒潮之间，气机善藏。适合流亡修士沿水路遁行，也适合在雾中观势。",
+      "elements": [
+        "WATER",
+        "GOLD"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_escape_success_rate: 0.1, extra_observation_radius: 1}",
+      "tags": [
+        "liuchao",
+        "jiangzuo",
+        "liuwang"
+      ]
+    },
+    {
+      "id": "liuchao-siguan-incense-root",
+      "name": "香火灵根",
+      "description": "受寺观钟磬与香火熏养，气息平缓而能护心。此根不以斗胜见长，更适合疗养、守戒与收束杂念。",
+      "elements": [
+        "WOOD",
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_rest_hp_recovery_rate: 0.12, extra_retreat_success_rate: 0.04}",
+      "tags": [
+        "liuchao",
+        "siguan"
+      ]
+    },
+    {
+      "id": "liuchao-mourning-ash-root",
+      "name": "丧乱灰根",
+      "description": "由兵火后的灰烬与哀思凝成，带着乱世求生的寒意。修行者命途多舛，却更能忍受败退和迁徙。",
+      "elements": [
+        "FIRE",
+        "EARTH"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_luck: -3, extra_escape_success_rate: 0.12}",
+      "tags": [
+        "liuchao",
+        "luanshi",
+        "liuwang"
+      ]
+    },
+    {
+      "id": "liuchao-xuanxue-salon-root",
+      "name": "玄谈灵根",
+      "description": "受清谈玄学之风浸染，重虚静与辨名理。它不直接催生蛮勇，却能令修士在进退之间多一分明悟。",
+      "elements": [
+        "WATER",
+        "FIRE"
+      ],
+      "stat_modifiers": {
+        "wisdom": 1
+      },
+      "effect_dsl": "{extra_breakthrough_success_rate: 0.03, extra_retreat_success_rate: 0.05}",
+      "tags": [
+        "liuchao",
+        "qingtan",
+        "xuanxue"
       ]
     }
   ]
