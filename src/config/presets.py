@@ -34,6 +34,12 @@ def set_active_preset(preset_id: str | None) -> str:
         raise PresetConfigError(f"Unknown preset: {normalized}")
     _ACTIVE_PRESET_ID = normalized
     os.environ["CWS_PRESET"] = normalized
+    try:
+        from src.scenario.source_resolver import clear_active_scenario_source
+
+        clear_active_scenario_source()
+    except Exception:
+        pass
     return _ACTIVE_PRESET_ID
 
 

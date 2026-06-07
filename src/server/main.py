@@ -210,6 +210,8 @@ ACTIVE_PRESET_ID = set_active_preset(_read_cli_option("--preset", "default"))
 ACTIVE_SCENARIO_ID = _read_cli_option("--scenario", None)
 ACTIVE_SCENARIO = scenario_loader.load(ACTIVE_SCENARIO_ID) if ACTIVE_SCENARIO_ID is not None else None
 runtime.active_scenario = ACTIVE_SCENARIO
+from src.scenario.source_resolver import set_active_scenario_source
+set_active_scenario_source(ACTIVE_SCENARIO, explicit=ACTIVE_SCENARIO is not None)
 
 
 def sync_advanced_runtime_control(settings_view=None) -> None:

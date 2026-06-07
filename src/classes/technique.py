@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Dict, List
 import json
+import zlib
 from src.classes.effect import load_effect_from_str
 from src.classes.color import Color, TECHNIQUE_GRADE_COLORS
 from src.systems.cultivation import Realm
@@ -212,6 +213,70 @@ def reload():
 reload()
 
 
+def _scenario_technique_id(raw_id: object) -> int:
+    try:
+        return int(raw_id)
+    except (TypeError, ValueError):
+        return 950001 + (zlib.crc32(str(raw_id).encode("utf-8")) % 50000)
+
+
+def _effect_dsl_from_preset(value: object) -> str:
+    if isinstance(value, list):
+        return ",".join(str(item) for item in value if str(item))
+    return str(value or "")
+
+
+def _technique_from_preset_item(item: dict[str, object]) -> Technique:
+    raw_id = item.get("id")
+    technique_id = _scenario_technique_id(raw_id)
+    if technique_id in techniques_by_id:
+        return techniques_by_id[technique_id]
+
+    attributes = item.get("attributes")
+    if isinstance(attributes, list) and attributes:
+        attr_raw = str(attributes[0])
+    else:
+        attr_raw = str(item.get("technique_root") or "GOLD")
+    effects = load_effect_from_str(_effect_dsl_from_preset(item.get("effects")))
+    if not isinstance(effects, dict):
+        effects = {}
+    from src.classes.effect import format_effects_to_text
+
+    source_sect_id = item.get("source_sect_id")
+    try:
+        sect_id = int(source_sect_id) if source_sect_id is not None else None
+    except (TypeError, ValueError):
+        sect_id = None
+    technique = Technique(
+        id=technique_id,
+        name=str(item.get("name") or raw_id or technique_id),
+        attribute=TechniqueAttribute(attr_raw),
+        grade=TechniqueGrade.from_str(str(item.get("grade") or "LOWER")),
+        realm=Realm.from_str(str(item.get("prereq_realm") or "")) if item.get("prereq_realm") else None,
+        desc=str(item.get("description") or item.get("desc") or ""),
+        weight=float(item.get("weight") or 1.0),
+        condition=str(item.get("condition") or ""),
+        sect_id=sect_id,
+        effects=effects,
+        effect_desc=format_effects_to_text(effects),
+    )
+    techniques_by_id[technique.id] = technique
+    techniques_by_name[technique.name] = technique
+    return technique
+
+
+def _resolved_technique_candidates() -> list[Technique]:
+    from src.scenario.source_resolver import resolve_source
+
+    data = resolve_source("techniques").data
+    raw_items = data.get("techniques")
+    if isinstance(raw_items, dict):
+        raw_items = [{"id": key, **value} if isinstance(value, dict) else {"id": key} for key, value in raw_items.items()]
+    if isinstance(raw_items, list) and raw_items:
+        return [_technique_from_preset_item(dict(item)) for item in raw_items if isinstance(item, dict)]
+    return list(techniques_by_id.values())
+
+
 def is_attribute_compatible_with_root(attr: TechniqueAttribute, root: Root) -> bool:
     if attr == TechniqueAttribute.EVIL:
         # 邪功法仅由阵营约束，这里视为与灵根无关
@@ -247,7 +312,7 @@ def is_attribute_compatible_with_root(attr: TechniqueAttribute, root: Root) -> b
 def get_random_technique_for_avatar(avatar) -> Technique:
     import random
     candidates: List[Technique] = []
-    for t in techniques_by_id.values():
+    for t in _resolved_technique_candidates():
         if not t.is_allowed_for(avatar):
             continue
         if t.attribute == TechniqueAttribute.EVIL and avatar.alignment != Alignment.EVIL:
@@ -258,10 +323,10 @@ def get_random_technique_for_avatar(avatar) -> Technique:
     if not candidates:
         # 回退：不考虑条件，仅按灵根兼容挑选（若仍为空，则全量）
         fallback = [
-            t for t in techniques_by_id.values()
+            t for t in _resolved_technique_candidates()
             if (t.attribute != TechniqueAttribute.EVIL) and is_attribute_compatible_with_root(t.attribute, avatar.root)
         ]
-        candidates = fallback or list(techniques_by_id.values())
+        candidates = fallback or _resolved_technique_candidates()
     weights = [max(0.0, t.weight) for t in candidates]
     return random.choices(candidates, weights=weights, k=1)[0]
 
@@ -273,7 +338,7 @@ def get_random_upper_technique_for_avatar(avatar) -> Technique | None:
     """
     import random
     candidates: List[Technique] = []
-    for t in techniques_by_id.values():
+    for t in _resolved_technique_candidates():
         if t.grade is not TechniqueGrade.UPPER:
             continue
         if not t.is_allowed_for(avatar):
@@ -308,9 +373,9 @@ def get_technique_by_sect(sect) -> Technique:
     def _in_allowed_sect(t: Technique) -> bool:
         return t.sect_id in allowed_sect_ids
 
-    candidates: List[Technique] = [t for t in techniques_by_id.values() if _in_allowed_sect(t)]
+    candidates: List[Technique] = [t for t in _resolved_technique_candidates() if _in_allowed_sect(t)]
     if not candidates:
-        candidates = list(techniques_by_id.values())
+        candidates = _resolved_technique_candidates()
     weights = [max(0.0, t.weight) for t in candidates]
     return random.choices(candidates, weights=weights, k=1)[0]
 

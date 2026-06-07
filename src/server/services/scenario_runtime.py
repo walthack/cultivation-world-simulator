@@ -5,6 +5,7 @@ from typing import Any, Awaitable, Callable, Literal
 from pydantic import BaseModel
 
 from src.scenario import scenario_loader
+from src.scenario.source_resolver import set_active_scenario_source
 from src.scenario.state import ScriptedScenarioState
 
 
@@ -40,6 +41,7 @@ def _replace_active_scenario(runtime: Any, resolved: Any | None) -> None:
         runtime.active_scenario_explicit = True
     if hasattr(runtime, "state") and isinstance(runtime.state, dict):
         runtime.state["active_scenario"] = getattr(resolved, "scenario_id", None)
+    set_active_scenario_source(resolved, explicit=resolved is not None)
 
 
 async def activate_scenario(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import zlib
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 
@@ -126,9 +127,66 @@ def reload():
 reload()
 
 
+def _scenario_weapon_id(raw_id: object) -> int:
+    try:
+        return int(raw_id)
+    except (TypeError, ValueError):
+        return 960001 + (zlib.crc32(str(raw_id).encode("utf-8")) % 50000)
+
+
+def _effect_dsl_from_preset(value: object) -> str:
+    if isinstance(value, list):
+        return ",".join(str(item) for item in value if str(item))
+    return str(value or "")
+
+
+def _weapon_from_preset_item(item: dict[str, object]) -> Weapon:
+    raw_id = item.get("id")
+    weapon_id = _scenario_weapon_id(raw_id)
+    if weapon_id in weapons_by_id:
+        return weapons_by_id[weapon_id]
+
+    attributes = item.get("attributes")
+    if isinstance(attributes, list) and attributes:
+        weapon_type_raw = str(attributes[0])
+    else:
+        weapon_type_raw = str(item.get("weapon_type") or "SWORD")
+    effects = load_effect_from_str(_effect_dsl_from_preset(item.get("effects")))
+    if not isinstance(effects, dict):
+        effects = {}
+    from src.classes.effect import format_effects_to_text
+    from src.classes.items.registry import ItemRegistry
+
+    weapon = Weapon(
+        id=weapon_id,
+        name=str(item.get("name") or raw_id or weapon_id),
+        weapon_type=WeaponType.from_str(weapon_type_raw),
+        realm=Realm.from_str(str(item.get("required_realm") or item.get("realm") or "QI_REFINEMENT")),
+        desc=str(item.get("description") or item.get("desc") or ""),
+        effects=effects,
+        effect_desc=format_effects_to_text(effects),
+    )
+    weapons_by_id[weapon.id] = weapon
+    weapons_by_name[weapon.name] = weapon
+    ItemRegistry.register(weapon.id, weapon)
+    return weapon
+
+
+def _resolved_weapon_candidates() -> list[Weapon]:
+    from src.scenario.source_resolver import resolve_source
+
+    data = resolve_source("weapons").data
+    raw_items = data.get("weapons")
+    if isinstance(raw_items, dict):
+        raw_items = [{"id": key, **value} if isinstance(value, dict) else {"id": key} for key, value in raw_items.items()]
+    if isinstance(raw_items, list) and raw_items:
+        return [_weapon_from_preset_item(dict(item)) for item in raw_items if isinstance(item, dict)]
+    return list(weapons_by_id.values())
+
+
 def get_random_weapon_by_realm(realm: Realm, weapon_type: Optional[WeaponType] = None) -> Optional[Weapon]:
     """获取指定境界（及可选类型）的随机兵器"""
-    candidates = [w for w in weapons_by_id.values() if w.realm == realm]
+    candidates = [w for w in _resolved_weapon_candidates() if w.realm == realm]
     if weapon_type is not None:
         candidates = [w for w in candidates if w.weapon_type == weapon_type]
         

@@ -1,4 +1,5 @@
 import random
+import zlib
 from dataclasses import dataclass
 from typing import List, Optional, TYPE_CHECKING
 
@@ -126,6 +127,69 @@ def _is_persona_allowed(persona_id: int, already_selected_ids: set[int], avatar:
             return False
     return True
 
+
+def _scenario_persona_id(key: str) -> int:
+    return 940001 + (zlib.crc32(key.encode("utf-8")) % 50000)
+
+
+def _persona_from_preset_item(item: object) -> Persona:
+    if isinstance(item, dict):
+        key = str(item.get("id") or item.get("key") or item.get("name") or "").strip()
+        name = str(item.get("name") or key)
+        desc = str(item.get("description") or item.get("desc") or "")
+        effect_dsl = str(item.get("effect_dsl") or item.get("effects") or "")
+        tags = [str(tag) for tag in (item.get("tags", []) or []) if isinstance(tag, str)]
+        rarity_tag = next((tag for tag in tags if tag.upper() in {"N", "R", "SR", "SSR", "UR"}), "N")
+        exclusion_keys = [tag.split(":", 1)[1].upper() for tag in tags if tag.startswith("excludes:")]
+    else:
+        key = str(item).strip()
+        name = key
+        desc = ""
+        effect_dsl = ""
+        rarity_tag = "N"
+        exclusion_keys = []
+
+    key = key.upper()
+    for persona in personas_by_id.values():
+        if persona.key.upper() == key:
+            return persona
+
+    effects = load_effect_from_str(effect_dsl)
+    if not isinstance(effects, dict):
+        effects = {}
+    persona = Persona(
+        id=_scenario_persona_id(key),
+        key=key,
+        name=name,
+        desc=desc,
+        exclusion_keys=exclusion_keys,
+        rarity=get_rarity_from_str(rarity_tag),
+        condition="",
+        effects=effects,
+        effect_desc="",
+    )
+    from src.classes.effect import format_effects_to_text
+
+    persona.effect_desc = format_effects_to_text(effects)
+    personas_by_id[persona.id] = persona
+    personas_by_name[persona.name] = persona
+    return persona
+
+
+def _resolved_persona_candidates() -> list[Persona]:
+    from src.scenario.source_resolver import resolve_source
+
+    data = resolve_source("personas").data
+    raw_personas = data.get("personas")
+    if isinstance(raw_personas, (list, dict)) and raw_personas:
+        values = raw_personas.values() if isinstance(raw_personas, dict) else raw_personas
+        return [_persona_from_preset_item(item) for item in values]
+
+    keys = data.get("persona_keys")
+    if isinstance(keys, list) and keys:
+        return [_persona_from_preset_item(key) for key in keys]
+    return list(personas_by_id.values())
+
 def get_random_compatible_personas(num_personas: int = 2, avatar: Optional["Avatar"] = None) -> List[Persona]:
     """
     随机选择指定数量的互相不冲突的persona
@@ -141,7 +205,7 @@ def get_random_compatible_personas(num_personas: int = 2, avatar: Optional["Avat
         ValueError: 如果无法找到足够数量的兼容persona
     """
     # 初始候选：若提供 avatar，则先按条件过滤；否则全量
-    initial_ids = set(personas_by_id.keys())
+    initial_ids = {persona.id for persona in _resolved_persona_candidates()}
     if avatar is not None:
         initial_ids = {pid for pid in initial_ids if _is_persona_allowed(pid, set(), avatar)}
 

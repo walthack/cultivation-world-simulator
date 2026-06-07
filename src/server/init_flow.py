@@ -17,9 +17,10 @@ def _create_save_slot(*, config, get_events_db_path) -> tuple[Any, Any]:
 
 
 def _select_existed_sects(*, sects_by_id, needed_sects: int) -> list[Any]:
-    from src.config.presets import get_active_preset_id, get_preset_sect_ids
+    from src.scenario.source_resolver import resolve_source
 
-    preset_sect_ids = get_preset_sect_ids(get_active_preset_id())
+    data = resolve_source("sects").data
+    preset_sect_ids = [int(item) for item in data.get("sect_ids", []) if str(item).strip()]
     all_sects = [
         sects_by_id[sect_id]
         for sect_id in preset_sect_ids
@@ -287,6 +288,10 @@ async def perform_game_initialization(
     runtime.clear_roleplay_session()
 
     async def _do_init():
+        resolved_scenario = get_active_scenario() if get_active_scenario is not None else None
+        from src.scenario.source_resolver import set_active_scenario_source
+
+        set_active_scenario_source(resolved_scenario, explicit=resolved_scenario is not None)
         update_init_progress(0, "scanning_assets")
         print("Resetting world rule data...")
         reset_runtime_custom_content()
@@ -331,7 +336,6 @@ async def perform_game_initialization(
         sim = simulator_cls(world)
         sim.awakening_rate = run_config.npc_awakening_rate_per_month
         world.run_config_snapshot = model_to_dict(run_config)
-        resolved_scenario = get_active_scenario() if get_active_scenario is not None else None
         generation_counts = resolve_generation_counts(
             scenario=resolved_scenario,
             settings=run_config,

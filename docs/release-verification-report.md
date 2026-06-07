@@ -26,6 +26,17 @@
 | No-scenario server smoke | ⚠️ **blocked in sandbox** | `src/server/main.py --dev` reached startup, then macOS sandbox denied bind on `127.0.0.1:8002` |
 | Playwright Layer 4A v1.1 Step 9/10 | ⚠️ **not run in sandbox** | Requires a bindable backend and Vite server; spec updated with API assertions |
 
+## v1.2 Scenario Generation Source Control Update (2026-06-07)
+
+| Item | Result | Notes |
+|---|---|---|
+| Focused backend pytest | ✅ **26/26 PASS** in 0.98s | `tests/test_generation_source_control.py tests/test_scenario_generation_profile.py tests/test_scenario_avatar_fallback_position.py` |
+| Backend pytest full suite | 🟡 **1722 passed / 3 pre-existing failed / 2 skipped** in 61.54s | Remaining failures are the known sect-related `tests/test_game_init_integration.py` failures |
+| Phase A fail-fast | ✅ **load-time verified** | Negative test asserts scenario id, missing source kind, and expected preset path in `ScenarioValidationError` |
+| Layer 4A Step 11/12 | 🟡 **spec updated / manual run pending** | Step 11 asserts Liuchao random NPC name templates; Step 12 skipped because hot-swap does not regenerate random NPCs |
+| ADR-025 | ✅ **written** | `docs/adr/ADR-025-scenario-generation-source-control.md` |
+| Mod platform contract | ✅ **`test_mod_platform.py` 12/12 PASS** in 0.51s | v1.2 does not touch `src/mod_platform/*`; mod import contract unchanged. Boundary documented in spec §11 + ADR-025 Consequences. |
+
 Manual visual checklist is replaced by the **Release Screenshot Pack**
 (11 screenshots at `docs/release-artifacts/v1.0/screenshots/`,
 index + milestone mapping at `docs/release-artifacts/v1.0/index.md`).

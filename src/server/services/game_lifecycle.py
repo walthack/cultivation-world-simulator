@@ -23,6 +23,9 @@ async def start_game_lifecycle(
     def _prepare_start() -> None:
         runtime.active_scenario = active_scenario
         runtime.active_scenario_explicit = True
+        from src.scenario.source_resolver import set_active_scenario_source
+
+        set_active_scenario_source(active_scenario, explicit=active_scenario is not None)
         runtime.update({"run_config": run_config.model_dump()})
         runtime.mark_pending_initialization(clear_world=current_status == "ready")
 

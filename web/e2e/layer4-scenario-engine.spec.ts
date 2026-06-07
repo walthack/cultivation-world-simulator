@@ -15,6 +15,9 @@
  *   9.   liuchao scripted avatars have distinct non-origin positions
  *        and non-unknown born regions
  *   10.  liuchao total avatar count equals scripted + generation profile
+ *   11.  liuchao random NPC names use liuchao name_templates, not default
+ *   12.  sanguo hot-swap name flip is skipped because hot-swap does not
+ *        regenerate random NPCs in the current architecture
  *
  * Notes verified by screenshot iteration on 2026-06-05:
  *   - Tests must run serially because they share a single backend process.
@@ -447,4 +450,37 @@ test.describe.serial('Layer 4A — Scenario engine E2E happy path', () => {
 
     expect(overview.data.avatar_count).toBe(6)
   })
+
+  test('step 11: liuchao random NPC names use scenario name templates', async () => {
+    await startGameWithScenario('liuchao')
+
+    const overview = await api<{
+      ok: boolean
+      data: { avatars: AvatarOverviewDTO[] }
+    }>('/api/v1/query/avatars/overview')
+
+    const scriptedIds = new Set(['cheng-zongyang', 'wang-zhe', 'xiao-zi'])
+    const randomNames = overview.data.avatars
+      .filter((avatar) => !scriptedIds.has(avatar.id))
+      .map((avatar) => avatar.name)
+
+    expect(randomNames.length).toBeGreaterThan(0)
+    expect(
+      randomNames.some((name) => /^(程|王|紫|萧|秦)/.test(name)),
+      `random names should include liuchao surnames; got ${randomNames.join(', ')}`,
+    ).toBe(true)
+    expect(
+      randomNames.some((name) => /^(司马|慕容|上官|独孤|东方|南宫|西门|北冥|欧阳|夏侯|令狐|皇甫|公孙|轩辕)/.test(name)),
+      `random names should not use distinctive default surnames; got ${randomNames.join(', ')}`,
+    ).toBe(false)
+  })
+
+  test.skip(
+    'step 12: hot-swap to sanguo flips generated NPC names',
+    async () => {
+      // Skipped intentionally: hot-swap replaces scripted scenario runtime state
+      // but does not regenerate existing random NPCs, so there is no name pool
+      // transition to assert until NPC regeneration is supported.
+    },
+  )
 })

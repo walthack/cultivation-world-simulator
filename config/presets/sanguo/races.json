@@ -12,6 +12,30 @@
       "tags": [
         "sanguo"
       ]
+    },
+    {
+      "id": "river_spirit",
+      "name": "江灵",
+      "description": "大江水脉孕育的灵族，常与渡口、舟师和水府传闻相连。",
+      "behavior_description": "行动倾向沿水脉移动，重视地利、盟约与避险。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{}",
+      "tags": [
+        "sanguo"
+      ]
+    },
+    {
+      "id": "mountain_recluse",
+      "name": "山隐",
+      "description": "寄居山林的异族修士，少涉郡县纷争。",
+      "behavior_description": "行动倾向守静、择主观望，并在局势明朗后加入一方。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{}",
+      "tags": [
+        "sanguo"
+      ]
     }
   ]
 }

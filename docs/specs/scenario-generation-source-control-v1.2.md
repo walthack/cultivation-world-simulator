@@ -391,6 +391,18 @@ Above 3 negatives + the schema validations satisfy
   Optional follow-up.
 - Per-scenario / per-region NPC distribution (e.g. "liuchao NPCs in
   region X, sanguo NPCs in region Y") — out of scope; v1.3+ candidate.
+- **Mod-owned `generation_sources` overlay** — explicitly out of scope
+  for v1.2. The mod platform contract from v1.0 (PR #9, 5 extension
+  kinds: asset / llm_prompt / locale / predicate / effect) is
+  **unchanged** by v1.2. Mods cannot declare `generation_sources` or
+  override scenario source pools. Future support for mod-owned
+  generation sources requires a v1.3 spec defining: (a) the manifest
+  field structure for declaring mod-owned sources, (b)
+  mod × scenario priority resolution (which wins when both declare
+  the same source kind), (c) load-time validation that walks the
+  entire mod stack (not just the active scenario). v1.2 acceptance
+  criterion explicitly requires `test_mod_platform.py` to pass
+  unchanged, locking the boundary.
 
 ---
 

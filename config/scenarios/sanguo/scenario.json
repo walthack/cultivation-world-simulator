@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "scenario_id": "sanguo",
   "title": "三国仙纪",
   "version": "1.0",
@@ -7,6 +7,19 @@
   "description": "Stage 2d minimal 三国 scenario demo proving scenario engine generality.",
   "world_preset": {
     "preset_id": "sanguo"
+  },
+  "generation_sources": {
+    "regions": "scenario",
+    "dynasties": "scenario",
+    "sects": "scenario",
+    "npc_names": "scenario",
+    "personas": "scenario",
+    "weapons": "scenario",
+    "techniques": "scenario",
+    "roots": "scenario",
+    "relations": "scenario",
+    "initial_events": "scenario",
+    "fallback_to_default": false
   },
   "world_background": "汉末三分，龙气入鼎。刘备、曹操、孙权各据一方，诸侯争衡亦是修士争道。",
   "initial_state": {

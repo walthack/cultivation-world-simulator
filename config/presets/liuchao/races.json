@@ -1,0 +1,41 @@
+{
+  "preset_id": "liuchao",
+  "races": [
+    {
+      "id": "human",
+      "name": "人族",
+      "description": "六朝城邑与山野中的常见族类。",
+      "behavior_description": "行动主要由性格、目标、宗门、阵营与当前处境决定。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{}",
+      "tags": [
+        "liuchao"
+      ]
+    },
+    {
+      "id": "mountain_spirit",
+      "name": "山灵",
+      "description": "山泽灵气凝成的异族，性情多随栖居之地而变。",
+      "behavior_description": "行动倾向守护栖居之地、避开朝局锋芒，并在机缘靠近时试探接触。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{}",
+      "tags": [
+        "liuchao"
+      ]
+    },
+    {
+      "id": "wandering_shade",
+      "name": "游魂",
+      "description": "乱世余念依附灵气而存，形迹隐约。",
+      "behavior_description": "行动倾向回避正面争斗，围绕执念、旧地与因果线索活动。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{}",
+      "tags": [
+        "liuchao"
+      ]
+    }
+  ]
+}

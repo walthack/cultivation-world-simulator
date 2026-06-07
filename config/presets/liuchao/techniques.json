@@ -1,9 +1,9 @@
 {
-  "preset_id": "sanguo",
+  "preset_id": "liuchao",
   "techniques": [
     {
-      "id": "sanguo-basic-breath",
-      "name": "诸侯吐纳法",
+      "id": "liuchao-qingxu",
+      "name": "清虚导引法",
       "grade": "mortal",
       "attributes": [
         "WOOD"
@@ -13,8 +13,8 @@
       "source_sect_id": null
     },
     {
-      "id": "sanguo-river-cloud",
-      "name": "江云行气诀",
+      "id": "liuchao-xuanjiang",
+      "name": "玄江行气诀",
       "grade": "mortal",
       "attributes": [
         "WATER"
@@ -24,8 +24,8 @@
       "source_sect_id": null
     },
     {
-      "id": "sanguo-iron-command",
-      "name": "铁令护身功",
+      "id": "liuchao-zijin",
+      "name": "紫金护身功",
       "grade": "earth",
       "attributes": [
         "GOLD"

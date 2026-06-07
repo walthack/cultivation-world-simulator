@@ -1,69 +1,69 @@
 {
-  "preset_id": "sanguo",
+  "preset_id": "liuchao",
   "roots": [
     {
       "id": "GOLD",
       "name": "金灵根",
-      "description": "刚强果断，适合兵锋与法度。",
+      "description": "刚强肃杀，适合兵锋与护道。",
       "elements": [
         "GOLD"
       ],
       "stat_modifiers": {},
       "effect_dsl": "",
       "tags": [
-        "sanguo"
+        "liuchao"
       ]
     },
     {
       "id": "WOOD",
       "name": "木灵根",
-      "description": "仁厚坚韧，适合生息与联盟。",
+      "description": "生发绵长，适合养气与医药。",
       "elements": [
         "WOOD"
       ],
       "stat_modifiers": {},
       "effect_dsl": "",
       "tags": [
-        "sanguo"
+        "liuchao"
       ]
     },
     {
       "id": "WATER",
       "name": "水灵根",
-      "description": "圆融善变，适合水军与权衡。",
+      "description": "流转隐忍，适合遁行与谋断。",
       "elements": [
         "WATER"
       ],
       "stat_modifiers": {},
       "effect_dsl": "",
       "tags": [
-        "sanguo"
+        "liuchao"
       ]
     },
     {
       "id": "FIRE",
       "name": "火灵根",
-      "description": "迅烈明断，适合军势与攻伐。",
+      "description": "炽烈明快，适合攻伐与炼化。",
       "elements": [
         "FIRE"
       ],
       "stat_modifiers": {},
       "effect_dsl": "",
       "tags": [
-        "sanguo"
+        "liuchao"
       ]
     },
     {
       "id": "EARTH",
       "name": "土灵根",
-      "description": "厚重持久，适合据守与屯田。",
+      "description": "厚重安稳，适合守御与持久修行。",
       "elements": [
         "EARTH"
       ],
       "stat_modifiers": {},
       "effect_dsl": "",
       "tags": [
-        "sanguo"
+        "liuchao"
       ]
     }
   ]

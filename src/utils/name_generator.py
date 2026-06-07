@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from src.utils.df import game_configs, get_str, get_int
 from src.classes.core.avatar import Gender
 from src.i18n.locale_registry import uses_space_separated_names
-from src.config.presets import get_active_preset_id, get_preset_name_templates
+from src.scenario.source_resolver import resolve_source
 
 
 @dataclass
@@ -87,7 +87,7 @@ class NameManager:
         self._apply_preset_name_templates()
 
     def _apply_preset_name_templates(self):
-        templates = get_preset_name_templates(get_active_preset_id())
+        templates = resolve_source("npc_names").data
         if templates.get("mode") != "inline":
             return
 

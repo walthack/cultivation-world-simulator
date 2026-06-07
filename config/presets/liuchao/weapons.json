@@ -1,9 +1,9 @@
 {
-  "preset_id": "sanguo",
+  "preset_id": "liuchao",
   "weapons": [
     {
-      "id": "sanguo-training-sword",
-      "name": "练气佩剑",
+      "id": "liuchao-bamboo-sword",
+      "name": "青竹剑",
       "tier": 1,
       "attributes": [
         "SWORD"
@@ -14,8 +14,8 @@
       "required_realm": "QI_REFINEMENT"
     },
     {
-      "id": "sanguo-camp-saber",
-      "name": "营中短刀",
+      "id": "liuchao-river-saber",
+      "name": "江月刀",
       "tier": 1,
       "attributes": [
         "SABER"
@@ -26,11 +26,11 @@
       "required_realm": "QI_REFINEMENT"
     },
     {
-      "id": "sanguo-river-spear",
-      "name": "江口长枪",
+      "id": "liuchao-plain-fan",
+      "name": "素纨扇",
       "tier": 1,
       "attributes": [
-        "SPEAR"
+        "FAN"
       ],
       "effects": [
         "{extra_battle_strength_points: 1}"

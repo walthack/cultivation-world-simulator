@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,9 +25,23 @@ from src.config.presets import (
 
 
 SCHEMA_VERSION = "0.1"
-SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2", "1.1"}
+SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2", "1.0", "1.1", "1.2"}
 SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
+GENERATION_SOURCE_VALUES = {"scenario", "default"}
+# Scenario generation source control v1.2, spec §5.1.
+KIND_TO_PRESET_FILE = {
+    "regions": "regions.json",
+    "dynasties": "dynasties.json",
+    "sects": "sects.json",
+    "npc_names": "name_templates.json",
+    "personas": "personas.json",
+    "weapons": "weapons.json",
+    "techniques": "techniques.json",
+    "roots": "roots.json",
+    "relations": None,
+    "initial_events": None,
+}
 EVENT_TYPES = {
     "main",
     "world_event",
@@ -37,6 +52,7 @@ EVENT_TYPES = {
     "side_event",
     "ending",
 }
+LOGGER = logging.getLogger(__name__)
 
 
 class ScenarioValidationError(ValueError):
@@ -220,6 +236,50 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
             "boolean",
             value,
         )
+
+
+def _validate_generation_sources(data: dict[str, Any], *, preset_id: str) -> None:
+    sources = data.get("generation_sources")
+    if sources is None:
+        return
+    if not isinstance(sources, dict):
+        raise ScenarioValidationError("scenario.generation_sources", "object", sources)
+
+    fallback = sources.get("fallback_to_default", False)
+    if not isinstance(fallback, bool):
+        raise ScenarioValidationError(
+            "scenario.generation_sources.fallback_to_default",
+            "boolean",
+            fallback,
+        )
+
+    scenario_id = str(data.get("scenario_id") or "")
+    preset_root = get_presets_root() / preset_id
+    for key, value in sources.items():
+        if key == "fallback_to_default":
+            continue
+        if key not in KIND_TO_PRESET_FILE:
+            LOGGER.warning("Unknown scenario generation_sources key ignored: %s", key)
+            continue
+        if value not in GENERATION_SOURCE_VALUES:
+            raise ScenarioValidationError(
+                f"scenario.generation_sources.{key}",
+                "scenario or default",
+                value,
+            )
+        filename = KIND_TO_PRESET_FILE[key]
+        if value != "scenario" or filename is None:
+            continue
+        expected_path = preset_root / filename
+        if not expected_path.exists() and not fallback:
+            raise ScenarioValidationError(
+                f"scenario.generation_sources.{key}",
+                (
+                    f"existing preset file for scenario {scenario_id!r} "
+                    f"at {expected_path}"
+                ),
+                "missing",
+            )
 
 
 def _validate_optional_avatar_placement(avatar: dict[str, Any], path: str) -> None:
@@ -586,6 +646,7 @@ def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedSce
     scenario = _load_json(scenario_dir / "scenario.json", required=True)
     timeline_data = _load_json(scenario_dir / "timeline.json", required=False)
     preset_id = _validate_scenario_top_level(scenario)
+    _validate_generation_sources(scenario, preset_id=preset_id)
     _validate_initial_state(scenario, preset_id)
     timeline = _validate_timeline(timeline_data, preset_id=preset_id, scenario_schema_version=str(scenario["schema_version"]))
     return ResolvedScenario(
@@ -613,6 +674,7 @@ def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResu
             scenario["scenario_id"],
         )
 
+    _validate_generation_sources(scenario, preset_id=preset_id)
     _validate_initial_state(scenario, preset_id)
     _validate_timeline(
         timeline_data,
@@ -634,6 +696,7 @@ def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResu
         "engine",
         "fingerprint",
         "world_preset",
+        "generation_sources",
         "initial_state",
     }
     unknown_keys = sorted(str(key) for key in scenario if key not in known_keys)
