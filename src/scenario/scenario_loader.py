@@ -29,6 +29,9 @@ SUPPORTED_SCHEMA_VERSIONS = {"0.1", "0.2", "1.0", "1.1", "1.2"}
 SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
 GENERATION_SOURCE_VALUES = {"scenario", "default"}
+GENERATION_PROFILE_SOURCE_VALUES = {"scenario", "default", "mixed"}
+GENERATION_PROFILE_SOURCE_KEYS = ("npc_names", "sects", "regions")
+NARRATIVE_CONTEXT_KEYS = ("background", "style", "terminology")
 # Scenario generation source control v1.2, spec §5.1.
 KIND_TO_PRESET_FILE = {
     "regions": "regions.json",
@@ -82,6 +85,11 @@ class ResolvedScenario:
     scenario: dict[str, Any]
     timeline: list[dict[str, Any]] = field(default_factory=list)
     scenario_dir: Path | None = None
+
+    @property
+    def generation_profile(self) -> dict[str, Any]:
+        initial_state = self.scenario.get("initial_state", {}) or {}
+        return dict(initial_state.get("generation_profile", {}) or {})
 
 
 @dataclass(slots=True)
@@ -236,6 +244,40 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
             "boolean",
             value,
         )
+
+    generation_sources = profile.get("generation_sources")
+    if generation_sources is not None:
+        if not isinstance(generation_sources, dict):
+            raise ScenarioValidationError(
+                "scenario.initial_state.generation_profile.generation_sources",
+                "object",
+                generation_sources,
+            )
+        for key in GENERATION_PROFILE_SOURCE_KEYS:
+            source = generation_sources.get(key)
+            if source is not None and source not in GENERATION_PROFILE_SOURCE_VALUES:
+                raise ScenarioValidationError(
+                    f"scenario.initial_state.generation_profile.generation_sources.{key}",
+                    "scenario, default, or mixed",
+                    source,
+                )
+
+    narrative_context = profile.get("narrative_context")
+    if narrative_context is not None:
+        if not isinstance(narrative_context, dict):
+            raise ScenarioValidationError(
+                "scenario.initial_state.generation_profile.narrative_context",
+                "object",
+                narrative_context,
+            )
+        for key in NARRATIVE_CONTEXT_KEYS:
+            context_value = narrative_context.get(key)
+            if context_value is not None and not isinstance(context_value, str):
+                raise ScenarioValidationError(
+                    f"scenario.initial_state.generation_profile.narrative_context.{key}",
+                    "string",
+                    context_value,
+                )
 
 
 def _validate_generation_sources(data: dict[str, Any], *, preset_id: str) -> None:

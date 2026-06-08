@@ -11,7 +11,7 @@ from src.classes.environment.map import Map
 from src.classes.environment.region import CityRegion
 from src.classes.environment.tile import TileType
 from src.run.data_loader import reload_all_static_data
-from src.scenario.injector import inject_scenario_initial_state_into_world
+from src.scenario.injector import inject_scenario_initial_state_into_world, inject_scenario_into_world
 from src.scenario.scenario_loader import ScenarioValidationError, load
 from src.server.init_flow import (
     _generate_initial_avatars,
@@ -264,6 +264,153 @@ def test_loader_rejects_non_bool_use_scripted_only(tmp_path: Path):
 
     with pytest.raises(ScenarioValidationError, match="use_scripted_only"):
         load("profile_fixture", scenarios_root=root)
+
+
+@pytest.mark.parametrize(
+    "profile",
+    [
+        {
+            "generation_sources": {
+                "npc_names": "scenario",
+                "sects": "default",
+                "regions": "mixed",
+            }
+        },
+        {
+            "narrative_context": {
+                "background": "A historical setting.",
+                "style": "Chronicle prose.",
+                "terminology": "Use period offices.",
+            }
+        },
+        {
+            "generation_sources": {
+                "npc_names": "mixed",
+                "sects": "scenario",
+                "regions": "default",
+            },
+            "narrative_context": {
+                "background": "A historical setting.",
+                "style": "Chronicle prose.",
+                "terminology": "Use period offices.",
+            },
+        },
+        {"generation_sources": {}},
+        {"narrative_context": {}},
+        {},
+    ],
+)
+def test_loader_accepts_generation_profile_extensions(tmp_path: Path, profile: dict):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": profile,
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    assert load("profile_fixture", scenarios_root=root).generation_profile == profile
+
+
+def test_loader_rejects_unknown_generation_source(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {
+                    "generation_sources": {"npc_names": "custom"},
+                },
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(
+        ScenarioValidationError,
+        match=r"generation_sources\.npc_names: expected scenario, default, or mixed",
+    ):
+        load("profile_fixture", scenarios_root=root)
+
+
+def test_loader_rejects_non_string_narrative_context(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {
+                    "narrative_context": {"style": ["chronicle"]},
+                },
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(
+        ScenarioValidationError,
+        match=r"narrative_context\.style: expected string",
+    ):
+        load("profile_fixture", scenarios_root=root)
+
+
+def test_generation_profile_reaches_scripted_scenario(tmp_path: Path):
+    profile = {
+        "generation_sources": {
+            "npc_names": "scenario",
+            "sects": "mixed",
+            "regions": "default",
+        },
+        "narrative_context": {
+            "background": "A historical setting.",
+            "style": "Chronicle prose.",
+            "terminology": "Use period offices.",
+        },
+    }
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": profile,
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+    resolved = load("profile_fixture", scenarios_root=root)
+    world = _world()
+
+    inject_scenario_into_world(world, resolved)
+
+    assert world.scripted_scenario.generation_profile == profile
+    assert world.scripted_scenario.generation_profile is not profile
+
+
+def test_no_scenario_generation_profile_access_is_safe():
+    world = _world()
+
+    profile = getattr(getattr(world, "scripted_scenario", None), "generation_profile", None)
+
+    assert profile is None
 
 
 def test_loader_rejects_pos_and_region_id_together(tmp_path: Path):
