@@ -6,16 +6,20 @@ import pytest
 
 from src.classes.core.sect import sects_by_id
 from src.classes.gender import Gender
+from src.classes.race import get_race
 from src.classes.persona import _resolved_persona_candidates
 from src.config.presets import set_active_preset
 from src.run.data_loader import reload_all_static_data
 from src.run.load_map import load_cultivation_world_map
+from src.scenario.injector import inject_scenario_into_world
+from src.scenario.scenario_loader import load as load_scenario
 from src.scenario.source_resolver import (
     clear_active_scenario_source,
     resolve_source,
     set_active_scenario_source,
 )
 from src.server.init_flow import _select_existed_sects
+from src.sim.avatar_init import make_avatars
 from src.utils import name_generator
 
 
@@ -91,6 +95,13 @@ def _region_names() -> set[str]:
     }
 
 
+def _surname_for_name(name: str, candidates: set[str]) -> str | None:
+    for surname in sorted(candidates, key=len, reverse=True):
+        if name.startswith(surname):
+            return surname
+    return None
+
+
 def test_no_scenario_default_sandbox_generation_is_unchanged():
     default_names = _name_pool()
     default_personas = {persona.name for persona in _resolved_persona_candidates()}
@@ -124,6 +135,38 @@ def test_npc_name_source_switching(source: str):
         assert male_names[: len(LIUCHAO_MALE_NAMES)] == ["宗扬", "哲", "羽", "玄", "昭"]
         assert set(default_last_names) <= set(last_names)
         assert set(default_male_names) <= set(male_names)
+
+
+def test_liuchao_random_npc_names_use_generation_profile_pool(base_world, monkeypatch):
+    scenario = load_scenario("liuchao")
+    inject_scenario_into_world(base_world, scenario)
+    set_active_scenario_source(scenario)
+    monkeypatch.setattr("src.sim.avatar_init.roll_avatar_race", lambda: get_race("human"))
+
+    avatars = make_avatars(base_world, count=20, existed_sects=[])
+    surnames = {
+        _surname_for_name(avatar.name, LIUCHAO_LAST_NAMES)
+        for avatar in avatars.values()
+    }
+
+    assert surnames == LIUCHAO_LAST_NAMES
+
+
+def test_no_scenario_random_npc_names_are_not_sticky_after_scenario(base_world, monkeypatch):
+    default_last_names, _default_male_names = _name_pool()
+    scenario = load_scenario("liuchao")
+    set_active_scenario_source(scenario)
+    monkeypatch.setattr("src.sim.avatar_init.roll_avatar_race", lambda: get_race("human"))
+    make_avatars(base_world, count=3, existed_sects=[])
+
+    clear_active_scenario_source()
+    avatars = make_avatars(base_world, count=20, existed_sects=[])
+
+    assert _name_pool()[0] == default_last_names
+    assert all(
+        _surname_for_name(avatar.name, set(default_last_names)) in set(default_last_names)
+        for avatar in avatars.values()
+    )
 
 
 @pytest.mark.parametrize("source", ["scenario", "default", "mixed"])

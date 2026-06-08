@@ -26,8 +26,10 @@ class NameManager:
     """姓名管理器"""
     
     def __init__(self):
+        self._source_signature: tuple[str, str, str, str] | None = None
         # 散修通用姓氏
         self.common_last_names: list[str] = []
+        self.preferred_common_last_names: list[str] = []
         # 按宗门分类的姓氏 {宗门ID: [姓氏列表]}
         self.sect_last_names: dict[int, list[str]] = {}
         
@@ -36,17 +38,39 @@ class NameManager:
             Gender.MALE: [],
             Gender.FEMALE: []
         }
+        self.preferred_common_given_names: dict[Gender, list[str]] = {
+            Gender.MALE: [],
+            Gender.FEMALE: []
+        }
         # 按宗门和性别分类的名字 {宗门ID: {Gender: [名字列表]}}
         self.sect_given_names: dict[int, dict[Gender, list[str]]] = {}
         
         self._load_names()
     
-    def _load_names(self):
+    @staticmethod
+    def _signature_for_handle(handle) -> tuple[str, str, str, str]:
+        return (
+            str(handle.source),
+            str(handle.preset_id),
+            str(handle.provenance),
+            str(handle.path or ""),
+        )
+
+    def _ensure_generation_source_current(self) -> None:
+        handle = resolve_source("npc_names")
+        signature = self._signature_for_handle(handle)
+        if signature != self._source_signature:
+            self._load_names(handle)
+
+    def _load_names(self, handle=None):
         """从CSV加载姓名数据"""
         # 清空现有数据
         self.common_last_names.clear()
+        self.preferred_common_last_names.clear()
         self.sect_last_names.clear()
         for g_list in self.common_given_names.values():
+            g_list.clear()
+        for g_list in self.preferred_common_given_names.values():
             g_list.clear()
         self.sect_given_names.clear()
         
@@ -84,17 +108,20 @@ class NameManager:
                 else:
                     self.common_given_names[gender].append(name)
 
-        self._apply_preset_name_templates()
+        handle = self._apply_preset_name_templates(handle)
+        self._source_signature = self._signature_for_handle(handle)
 
-    def _apply_preset_name_templates(self):
-        handle = resolve_source("npc_names")
+    def _apply_preset_name_templates(self, handle=None):
+        if handle is None:
+            handle = resolve_source("npc_names")
         templates = handle.data
         if templates.get("mode") not in {"inline", "mixed"}:
-            return
+            return handle
 
         last_names = templates.get("common_last_names", [])
         if isinstance(last_names, list) and last_names:
             scenario_names = [str(item) for item in last_names if str(item)]
+            self.preferred_common_last_names = scenario_names
             self.common_last_names = (
                 scenario_names + self.common_last_names
                 if handle.source == "mixed"
@@ -103,11 +130,12 @@ class NameManager:
 
         given_names = templates.get("common_given_names", {})
         if not isinstance(given_names, dict):
-            return
+            return handle
         male_names = given_names.get("male", [])
         female_names = given_names.get("female", [])
         if isinstance(male_names, list) and male_names:
             scenario_names = [str(item) for item in male_names if str(item)]
+            self.preferred_common_given_names[Gender.MALE] = scenario_names
             self.common_given_names[Gender.MALE] = (
                 scenario_names + self.common_given_names[Gender.MALE]
                 if handle.source == "mixed"
@@ -115,16 +143,21 @@ class NameManager:
             )
         if isinstance(female_names, list) and female_names:
             scenario_names = [str(item) for item in female_names if str(item)]
+            self.preferred_common_given_names[Gender.FEMALE] = scenario_names
             self.common_given_names[Gender.FEMALE] = (
                 scenario_names + self.common_given_names[Gender.FEMALE]
                 if handle.source == "mixed"
                 else scenario_names
             )
+        return handle
     
     def get_random_last_name(self, sect_id: Optional[int] = None) -> str:
         """
         获取随机姓氏
         """
+        self._ensure_generation_source_current()
+        if self.preferred_common_last_names:
+            return random.choice(self.preferred_common_last_names)
         if sect_id and sect_id in self.sect_last_names:
             return random.choice(self.sect_last_names[sect_id])
         return random.choice(self.common_last_names)
@@ -133,6 +166,10 @@ class NameManager:
         """
         获取随机名字
         """
+        self._ensure_generation_source_current()
+        preferred_names = self.preferred_common_given_names[gender]
+        if preferred_names:
+            return random.choice(preferred_names)
         if sect_id and sect_id in self.sect_given_names:
             sect_names = self.sect_given_names[sect_id][gender]
             if sect_names:
