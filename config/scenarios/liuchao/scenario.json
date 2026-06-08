@@ -27,7 +27,13 @@
     "month": 1,
     "generation_profile": {
       "random_npc_count": 3,
-      "random_sect_count": 1
+      "random_sect_count": 1,
+      "generation_sources": {
+        "npc_names": "mixed",
+        "personas": "mixed",
+        "sects": "mixed",
+        "regions": "scenario"
+      }
     },
     "avatars": [
       {
