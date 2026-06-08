@@ -688,7 +688,93 @@ def _load_sects_data() -> tuple[dict[int, Sect], dict[str, Sect]]:
         new_by_id[sect.id] = sect
         new_by_name[sect.name] = sect
 
+    _apply_generation_source_overrides(new_by_id, new_by_name)
     return new_by_id, new_by_name
+
+
+def _apply_generation_source_overrides(
+    sects_by_id: dict[int, Sect],
+    sects_by_name: dict[str, Sect],
+) -> None:
+    from src.scenario.source_resolver import resolve_source
+
+    handle = resolve_source("sects")
+    if handle.source == "default":
+        return
+
+    raw_sects = handle.data.get("sects")
+    if not isinstance(raw_sects, list):
+        return
+
+    for item in raw_sects:
+        if not isinstance(item, dict):
+            continue
+        try:
+            sect_id = int(item.get("id"))
+        except (TypeError, ValueError):
+            continue
+        sect = sects_by_id.get(sect_id)
+        if sect is None:
+            continue
+
+        old_name = sect.name
+        name = str(item.get("name") or "").strip()
+        if name:
+            sect.name = name
+        desc = item.get("description", item.get("desc"))
+        if desc is not None:
+            sect.desc = str(desc)
+        member_act_style = item.get("member_act_style")
+        if member_act_style is not None:
+            sect.member_act_style = str(member_act_style)
+        alignment = item.get("alignment")
+        if alignment is not None:
+            sect.alignment = Alignment.from_str(str(alignment))
+        technique_names = item.get("technique_names", item.get("techniques"))
+        if isinstance(technique_names, list):
+            normalized_techniques: list[str] = []
+            for value in technique_names:
+                raw_name = value.get("name") or value.get("id") if isinstance(value, dict) else value
+                name = str(raw_name or "").strip()
+                if name:
+                    normalized_techniques.append(name)
+            sect.technique_names = normalized_techniques
+        headquarter = item.get("headquarter")
+        if not isinstance(headquarter, dict):
+            headquarter = {}
+        headquarter_name = item.get("headquarter_name", headquarter.get("name"))
+        if headquarter_name is not None:
+            sect.headquarter.name = str(headquarter_name)
+        headquarter_desc = item.get("headquarter_desc", headquarter.get("description", headquarter.get("desc")))
+        if headquarter_desc is not None:
+            sect.headquarter.desc = str(headquarter_desc)
+        if item.get("weight") is not None:
+            sect.weight = float(item["weight"])
+        if item.get("orthodoxy_id") is not None:
+            sect.orthodoxy_id = str(item["orthodoxy_id"])
+        if item.get("color") is not None:
+            sect.color = str(item["color"])
+        if item.get("rule_id") is not None:
+            sect.rule_id = str(item["rule_id"])
+        if item.get("rule_desc") is not None:
+            sect.rule_desc = str(item["rule_desc"])
+        if item.get("accept_yao") is not None:
+            sect.accept_yao = bool(item["accept_yao"])
+        preferred_weapon = item.get("preferred_weapon")
+        if preferred_weapon is not None:
+            from src.classes.weapon_type import WeaponType
+
+            sect.preferred_weapon = WeaponType.from_str(str(preferred_weapon))
+        effects = item.get("effects", item.get("effect_dsl"))
+        if effects is not None:
+            sect.effects = load_effect_from_str(effects)
+            from src.classes.effect import format_effects_to_text
+
+            sect.effect_desc = format_effects_to_text(sect.effects)
+
+        if old_name != sect.name:
+            sects_by_name.pop(old_name, None)
+        sects_by_name[sect.name] = sect
 
 # 全局容器（保持引用不变）
 sects_by_id: dict[int, Sect] = {}

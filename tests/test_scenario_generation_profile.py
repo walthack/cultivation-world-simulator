@@ -272,6 +272,7 @@ def test_loader_rejects_non_bool_use_scripted_only(tmp_path: Path):
         {
             "generation_sources": {
                 "npc_names": "scenario",
+                "personas": "mixed",
                 "sects": "default",
                 "regions": "mixed",
             }
@@ -286,6 +287,7 @@ def test_loader_rejects_non_bool_use_scripted_only(tmp_path: Path):
         {
             "generation_sources": {
                 "npc_names": "mixed",
+                "personas": "scenario",
                 "sects": "scenario",
                 "regions": "default",
             },
@@ -344,6 +346,31 @@ def test_loader_rejects_unknown_generation_source(tmp_path: Path):
         load("profile_fixture", scenarios_root=root)
 
 
+def test_loader_rejects_unknown_generation_source_key(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {
+                    "generation_sources": {"npc_name": "scenario"},
+                },
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(
+        ScenarioValidationError,
+        match=r"generation_sources\.npc_name: expected one of",
+    ):
+        load("profile_fixture", scenarios_root=root)
+
+
 def test_loader_rejects_non_string_narrative_context(tmp_path: Path):
     root = _write_scenario(
         tmp_path,
@@ -365,6 +392,31 @@ def test_loader_rejects_non_string_narrative_context(tmp_path: Path):
     with pytest.raises(
         ScenarioValidationError,
         match=r"narrative_context\.style: expected string",
+    ):
+        load("profile_fixture", scenarios_root=root)
+
+
+def test_loader_rejects_unknown_narrative_context_key(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {
+                    "narrative_context": {"tone": "chronicle"},
+                },
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(
+        ScenarioValidationError,
+        match=r"narrative_context\.tone: expected one of",
     ):
         load("profile_fixture", scenarios_root=root)
 

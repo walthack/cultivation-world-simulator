@@ -30,7 +30,7 @@ SCENARIO_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
 GENERATION_SOURCE_VALUES = {"scenario", "default"}
 GENERATION_PROFILE_SOURCE_VALUES = {"scenario", "default", "mixed"}
-GENERATION_PROFILE_SOURCE_KEYS = ("npc_names", "sects", "regions")
+GENERATION_PROFILE_SOURCE_KEYS = ("npc_names", "personas", "sects", "regions")
 NARRATIVE_CONTEXT_KEYS = ("background", "style", "terminology")
 # Scenario generation source control v1.2, spec §5.1.
 KIND_TO_PRESET_FILE = {
@@ -253,6 +253,14 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
                 "object",
                 generation_sources,
             )
+        unknown_keys = set(generation_sources) - set(GENERATION_PROFILE_SOURCE_KEYS)
+        if unknown_keys:
+            key = sorted(unknown_keys)[0]
+            raise ScenarioValidationError(
+                f"scenario.initial_state.generation_profile.generation_sources.{key}",
+                f"one of {sorted(GENERATION_PROFILE_SOURCE_KEYS)}",
+                generation_sources[key],
+            )
         for key in GENERATION_PROFILE_SOURCE_KEYS:
             source = generation_sources.get(key)
             if source is not None and source not in GENERATION_PROFILE_SOURCE_VALUES:
@@ -269,6 +277,14 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
                 "scenario.initial_state.generation_profile.narrative_context",
                 "object",
                 narrative_context,
+            )
+        unknown_keys = set(narrative_context) - set(NARRATIVE_CONTEXT_KEYS)
+        if unknown_keys:
+            key = sorted(unknown_keys)[0]
+            raise ScenarioValidationError(
+                f"scenario.initial_state.generation_profile.narrative_context.{key}",
+                f"one of {sorted(NARRATIVE_CONTEXT_KEYS)}",
+                narrative_context[key],
             )
         for key in NARRATIVE_CONTEXT_KEYS:
             context_value = narrative_context.get(key)

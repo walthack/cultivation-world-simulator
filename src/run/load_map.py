@@ -1,5 +1,7 @@
 import os
 import csv
+from collections import defaultdict
+from itertools import cycle
 from src.classes.environment.map import Map
 from src.classes.environment.tile import TileType
 from src.classes.environment.region import Region, NormalRegion, CultivateRegion, CityRegion
@@ -152,6 +154,41 @@ def _load_and_assign_regions(game_map: Map, region_coords: dict[int, list[tuple[
     process_region_config(game_configs["city_region"], CityRegion, "city")
     process_region_config(game_configs["cultivate_region"], CultivateRegion, "cultivate")
     process_region_config(game_configs["sect_region"], SectRegion, "sect")
+    _apply_generation_source_region_names(game_map)
+
+
+def _apply_generation_source_region_names(game_map: Map) -> None:
+    from src.scenario.source_resolver import resolve_source
+
+    handle = resolve_source("regions")
+    if handle.source == "default":
+        return
+
+    raw_regions = handle.data.get("regions")
+    if not isinstance(raw_regions, list):
+        return
+
+    source_by_type: dict[str, list[str]] = defaultdict(list)
+    for item in raw_regions:
+        if not isinstance(item, dict):
+            continue
+        region_type = str(item.get("type") or "")
+        name = str(item.get("name") or "").strip()
+        if region_type in {"normal", "city", "cultivate"} and name:
+            source_by_type[region_type].append(name)
+
+    targets_by_type: dict[str, list[Region]] = defaultdict(list)
+    for region in game_map.regions.values():
+        region_type = region.get_region_type()
+        if region_type in source_by_type:
+            targets_by_type[region_type].append(region)
+
+    for region_type, targets in targets_by_type.items():
+        names = source_by_type[region_type]
+        if not names:
+            continue
+        for region, name in zip(targets, cycle(names)):
+            region.name = name
 
 def _parse_list(s: str) -> list[int]:
     if not s: return []

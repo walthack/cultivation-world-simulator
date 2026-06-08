@@ -87,13 +87,19 @@ class NameManager:
         self._apply_preset_name_templates()
 
     def _apply_preset_name_templates(self):
-        templates = resolve_source("npc_names").data
-        if templates.get("mode") != "inline":
+        handle = resolve_source("npc_names")
+        templates = handle.data
+        if templates.get("mode") not in {"inline", "mixed"}:
             return
 
         last_names = templates.get("common_last_names", [])
         if isinstance(last_names, list) and last_names:
-            self.common_last_names = [str(item) for item in last_names if str(item)]
+            scenario_names = [str(item) for item in last_names if str(item)]
+            self.common_last_names = (
+                scenario_names + self.common_last_names
+                if handle.source == "mixed"
+                else scenario_names
+            )
 
         given_names = templates.get("common_given_names", {})
         if not isinstance(given_names, dict):
@@ -101,9 +107,19 @@ class NameManager:
         male_names = given_names.get("male", [])
         female_names = given_names.get("female", [])
         if isinstance(male_names, list) and male_names:
-            self.common_given_names[Gender.MALE] = [str(item) for item in male_names if str(item)]
+            scenario_names = [str(item) for item in male_names if str(item)]
+            self.common_given_names[Gender.MALE] = (
+                scenario_names + self.common_given_names[Gender.MALE]
+                if handle.source == "mixed"
+                else scenario_names
+            )
         if isinstance(female_names, list) and female_names:
-            self.common_given_names[Gender.FEMALE] = [str(item) for item in female_names if str(item)]
+            scenario_names = [str(item) for item in female_names if str(item)]
+            self.common_given_names[Gender.FEMALE] = (
+                scenario_names + self.common_given_names[Gender.FEMALE]
+                if handle.source == "mixed"
+                else scenario_names
+            )
     
     def get_random_last_name(self, sect_id: Optional[int] = None) -> str:
         """
