@@ -186,20 +186,46 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
     raise EffectError(f"Unhandled canonical effect type: {effect_type}")
 
 
+ROLLBACK_KEYS = (
+    "player",
+    "npcs",
+    "relations",
+    "world_flags",
+    "triggered_event_ids",
+    "blocked_event_ids",
+    "event_outcomes",
+    "scenario_runtime",
+    "scripted_scenario_state",
+    # "player" included on purpose: a plain-dict player (tests / scripted runs) deepcopies and
+    # rolls back normally, preserving effect atomicity. A live Avatar holding a world->sqlite3
+    # chain raises TypeError in the per-key deepcopy below and is skipped — so the game loop
+    # never crashes on the non-picklable case. Both paths are covered by tests.
+)
+
+
 def apply_effects(state: Any, effects: list[dict[str, Any]]) -> Any:
     if not isinstance(effects, list):
         raise EffectError("effects must be a list")
 
-    before = copy.deepcopy(state)
+    before = {}
+    for k in ROLLBACK_KEYS:
+        if k not in state:
+            continue
+        try:
+            before[k] = copy.deepcopy(state[k])
+        except TypeError:
+            # Non-picklable embedded ref (e.g. live object holding sqlite3.Connection)
+            # - skip rollback for this key rather than crashing the game loop.
+            continue
     try:
         for effect in effects:
             if not isinstance(effect, dict):
                 raise EffectError(f"effect must be an object: {effect!r}")
             _apply_one(state, effect)
     except Exception:
-        if isinstance(state, dict) and isinstance(before, dict):
-            state.clear()
-            state.update(before)
+        if isinstance(state, dict):
+            for k, snapshot in before.items():
+                state[k] = snapshot
         raise
     return state
 
