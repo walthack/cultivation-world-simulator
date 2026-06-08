@@ -12,6 +12,7 @@ from src.utils.config import CONFIG
 from src.utils.llm import call_llm_with_task_name
 from src.i18n import t
 from src.i18n.locale_registry import get_project_root
+from src.scenario.narrative_context import prepend_scenario_context
 
 
 def _load_story_style_msgids() -> tuple[str, ...]:
@@ -63,7 +64,8 @@ class StoryTeller:
         avatar_name_1 = ""
         avatar_name_2 = ""
         
-        world_info = actors[0].world.static_info
+        world = actors[0].world
+        world_info = world.static_info
         
         # 如果有两个有效角色，计算可能的关系
         non_null = [a for a in actors if a is not None]
@@ -73,14 +75,14 @@ class StoryTeller:
 
         return {
             "world_info": world_info,
-            "world_lore": actors[0].world.world_lore.text if actors else "",
+            "world_lore": world.world_lore.text if actors else "",
             "avatar_infos": avatar_infos,
             "avatar_name_1": avatar_name_1,
             "avatar_name_2": avatar_name_2,
             "event": event,
             "res": res,
             "style": t(random.choice(STORY_STYLE_MSGIDS)),
-            "story_prompt": prompt,
+            "story_prompt": prepend_scenario_context(prompt, world),
         }
 
     @staticmethod
@@ -149,16 +151,17 @@ class StoryTeller:
             return events_text
 
         # 使用第一个角色的世界信息
-        world_info = related_avatars[0].world.static_info
+        world = related_avatars[0].world
+        world_info = world.static_info
             
         infos = {
             "world_info": world_info,
-            "world_lore": related_avatars[0].world.world_lore.text,
+            "world_lore": world.world_lore.text,
             "gathering_info": gathering_info,
             "events": events_text,
             "details": details_text,
             "style": t(random.choice(STORY_STYLE_MSGIDS)),
-            "story_prompt": prompt
+            "story_prompt": prepend_scenario_context(prompt, world)
         }
         
         # 增加 token 上限以支持长故事

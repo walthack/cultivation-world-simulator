@@ -33,6 +33,11 @@
         "personas": "mixed",
         "sects": "mixed",
         "regions": "scenario"
+      },
+      "narrative_context": {
+        "background": "六朝并立的架空乱世，皇权、士族、军镇与隐世仙门互相牵制，人物在朝局与江湖之间求生取势。",
+        "style": "半文半白，取史笔纪事之风，叙事克制而有兴亡感。",
+        "terminology": "优先使用王朝、州郡、官职、士族、军府、诏令、兵变等历史事件词汇，区别于泛修真宗门秘境术语。"
       }
     },
     "avatars": [

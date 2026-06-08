@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from src.classes.event import Event
 from src.classes.goldfinger import merge_story_prompt_with_goldfinger
 from src.classes.story_teller import StoryTeller
+from src.scenario.narrative_context import prepend_scenario_context
 from src.utils.config import CONFIG
 
 if TYPE_CHECKING:
@@ -103,7 +104,8 @@ class StoryEventService:
         final_result_text = (result_text or "").strip() or final_start_text
         if not final_result_text:
             return None
-        enriched_prompt = merge_story_prompt_with_goldfinger(prompt, *filtered_actors)
+        scenario_prompt = prepend_scenario_context(prompt, filtered_actors[0].world)
+        enriched_prompt = merge_story_prompt_with_goldfinger(scenario_prompt, *filtered_actors)
 
         story = await StoryTeller.tell_story(
             final_start_text,
@@ -134,7 +136,8 @@ class StoryEventService:
             return None
         if not related_avatars:
             return None
-        enriched_prompt = merge_story_prompt_with_goldfinger(prompt, *related_avatars)
+        scenario_prompt = prepend_scenario_context(prompt, related_avatars[0].world)
+        enriched_prompt = merge_story_prompt_with_goldfinger(scenario_prompt, *related_avatars)
 
         story = await StoryTeller.tell_gathering_story(
             gathering_info=gathering_info,
