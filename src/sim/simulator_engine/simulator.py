@@ -37,6 +37,7 @@ class Simulator:
         11. 身世背景生成
         12. 被动效果与世界性随机事件
         12.5 剧本场景事件
+        12.75 剧本自动社交
         13. 小型随机事件 + 宗门随机事件
         14. 外号生成
         15. 天象（大环境气候）更新
@@ -90,6 +91,9 @@ class Simulator:
 
         # 12.5 Scripted scenario tick
         ctx.add_events(await scripted_scenario.phase_scripted_scenario_tick(self.world, ctx))
+
+        # 12.75 剧本自动社交（无剧本时严格禁用）
+        ctx.add_events(await social.phase_automatic_social(self.world, ctx))
 
         # 13. 角色自主创作 + 小型随机事件 + 宗门随机事件
         ctx.add_events(await world_phases.phase_autonomous_custom_creation(self.world, ctx.living_avatars))
