@@ -8,6 +8,7 @@ from src.classes.event import Event
 from src.classes.action_runtime import ActionResult, ActionStatus
 from src.utils.distance import manhattan_distance
 from src.classes.environment.region import Region
+from src.scenario.narrative_context import apply_scenario_term_map
 
 class Direction:
     """
@@ -118,8 +119,14 @@ class MoveToDirection(DefineAction, ActualActionMixin):
         self.start_monthstamp = self.world.month_stamp
         self.direction = direction
         direction_translated = t(Direction.get_msgid(direction))
-        content = t("{avatar} begins moving toward {direction}",
-                   avatar=self.avatar.name, direction=direction_translated)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} begins moving toward {direction}",
+                avatar=self.avatar.name,
+                direction=direction_translated,
+            ),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])
 
     def step(self, direction: str) -> ActionResult:
@@ -146,8 +153,14 @@ class MoveToDirection(DefineAction, ActualActionMixin):
 
     async def finish(self, direction: str) -> list[Event]:
         direction_translated = t(Direction.get_msgid(direction))
-        content = t("{avatar} finished moving toward {direction}",
-                   avatar=self.avatar.name, direction=direction_translated)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} finished moving toward {direction}",
+                avatar=self.avatar.name,
+                direction=direction_translated,
+            ),
+            self.world,
+        )
         return [Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])]
 
     def _execute(self, *args, **kwargs):

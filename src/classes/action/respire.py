@@ -6,6 +6,7 @@ from src.classes.event import Event
 from src.classes.root import get_essence_types_for_root
 from src.classes.environment.region import CultivateRegion
 from src.classes.environment.sect_region import SectRegion
+from src.scenario.narrative_context import apply_scenario_term_map
 
 
 class Respire(TimedAction):
@@ -148,8 +149,15 @@ class Respire(TimedAction):
             else:
                 efficiency = t("slow progress (sparse essence)")
 
-        content = t("{avatar} begins respiring at {location}, {efficiency}",
-                   avatar=self.avatar.name, location=self.avatar.tile.location_name, efficiency=efficiency)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} begins respiring at {location}, {efficiency}",
+                avatar=self.avatar.name,
+                location=self.avatar.tile.location_name,
+                efficiency=efficiency,
+            ),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])
 
     async def finish(self) -> list[Event]:

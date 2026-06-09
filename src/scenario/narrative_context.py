@@ -29,7 +29,7 @@ def _get_narrative_context(world: Any) -> dict[str, Any]:
     return narrative_context
 
 
-def _apply_term_map(text: str, world: Any) -> str:
+def apply_scenario_term_map(text: str, world: Any) -> str:
     term_map = _get_generation_profile(world).get("term_map")
     if not isinstance(term_map, dict):
         return text
@@ -61,7 +61,7 @@ def build_scenario_context_block(world: Any) -> str:
     for key, label in _FIELD_LABELS:
         value = str(narrative_context.get(key) or "").strip()
         if value:
-            lines.append(f"- {label}: {_apply_term_map(value, world)}")
+            lines.append(f"- {label}: {apply_scenario_term_map(value, world)}")
 
     if not lines:
         return ""
@@ -97,7 +97,10 @@ def prepend_scenario_context(base_text: str, world: Any) -> str:
 def build_prompt_world_lore(base_text: str, world: Any) -> str:
     narrative_context = _get_narrative_context(world)
     mode = _get_world_lore_mode(world)
-    scenario_world_lore = _apply_term_map(str(narrative_context.get("world_lore") or "").strip(), world)
+    scenario_world_lore = apply_scenario_term_map(
+        str(narrative_context.get("world_lore") or "").strip(),
+        world,
+    )
     block = build_scenario_context_block(world)
     scenario_text = "\n\n".join(section for section in (block, scenario_world_lore) if section)
 

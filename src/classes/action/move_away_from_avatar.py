@@ -6,6 +6,7 @@ from src.classes.action.param_options import ParamOptionSource
 from src.classes.event import Event
 from src.classes.action.move_helper import clamp_manhattan_with_diagonal_priority
 from src.utils.resolution import resolve_query
+from src.scenario.narrative_context import apply_scenario_term_map
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -68,13 +69,18 @@ class MoveAwayFromAvatar(TimedAction):
                 rel_ids.append(target.id)
         except Exception:
             pass
-        content = t("{avatar} begins moving away from {target}",
-                   avatar=self.avatar.name, target=target_name)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} begins moving away from {target}",
+                avatar=self.avatar.name,
+                target=target_name,
+            ),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=rel_ids)
 
     # TimedAction 已统一 step 逻辑
 
     async def finish(self, avatar_name: str) -> list[Event]:
         return []
-
 

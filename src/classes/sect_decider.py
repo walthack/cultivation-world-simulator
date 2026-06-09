@@ -11,6 +11,7 @@ from src.config import get_settings_service
 from src.i18n import t
 from src.i18n.template_resolver import resolve_locale_template_path
 from src.run.log import get_logger
+from src.scenario.narrative_context import apply_scenario_term_map, build_prompt_world_lore
 from src.classes.technique import (
     Technique,
     TechniqueAttribute,
@@ -102,7 +103,7 @@ class SectDecider:
             support_ids=set(plan.support_avatar_ids) if plan is not None else None,
         )
 
-        result.summary_text = cls._build_summary(sect, result)
+        result.summary_text = apply_scenario_term_map(cls._build_summary(sect, result), world)
         return result
 
     @classmethod
@@ -122,7 +123,7 @@ class SectDecider:
         infos = {
             "sect_name": sect.name,
             "world_info": to_json_str_with_intent(cls._serialize_world_info(world)),
-            "world_lore": world.world_lore.text,
+            "world_lore": build_prompt_world_lore(world.world_lore.text, world),
             "decision_context_info": to_json_str_with_intent(cls._serialize_context(decision_context)),
             "decision_interval_years": int(getattr(CONFIG.sect, "decision_interval_years", 5)),
             "recruit_cost": recruit_cost,
@@ -352,7 +353,7 @@ class SectDecider:
             result.events.append(
                 Event(
                     month_stamp=world.month_stamp,
-                    content=outcome.result_text,
+                    content=apply_scenario_term_map(outcome.result_text, world),
                     related_avatars=[avatar.id],
                     related_sects=[int(sect.id)],
                     is_major=False,
@@ -370,11 +371,14 @@ class SectDecider:
             result.events.append(
                 Event(
                     month_stamp=world.month_stamp,
-                    content=t(
-                        "{sect_name} spent {cost} spirit stones to recruit {avatar_name}; {avatar_name} officially became a disciple of the sect.",
-                        sect_name=sect.name,
-                        cost=recruit_cost,
-                        avatar_name=avatar.name,
+                    content=apply_scenario_term_map(
+                        t(
+                            "{sect_name} spent {cost} spirit stones to recruit {avatar_name}; {avatar_name} officially became a disciple of the sect.",
+                            sect_name=sect.name,
+                            cost=recruit_cost,
+                            avatar_name=avatar.name,
+                        ),
+                        world,
                     ),
                     related_avatars=[avatar.id],
                     related_sects=[int(sect.id)],

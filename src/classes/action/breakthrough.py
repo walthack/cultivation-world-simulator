@@ -12,6 +12,7 @@ from src.systems.cultivation import Realm
 from src.systems.tribulation import TribulationSelector
 from src.classes.hp import HP_MAX_BY_REALM
 from src.classes.effect import _merge_effects
+from src.scenario.narrative_context import apply_scenario_term_map
 
 # —— 配置：哪些"出发境界"会生成突破小故事（global var）——
 ALLOW_STORY_FROM_REALMS: list[Realm] = [
@@ -129,7 +130,10 @@ class Breakthrough(TimedAction):
         else:
             self._calamity = None
             self._calamity_other = None
-        content = t("{avatar} begins attempting breakthrough", avatar=self.avatar.name)
+        content = apply_scenario_term_map(
+            t("{avatar} begins attempting breakthrough", avatar=self.avatar.name),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id], is_major=True)
 
     # TimedAction 已统一 step 逻辑
@@ -141,15 +145,28 @@ class Breakthrough(TimedAction):
         if not self._gen_story:
             # 不生成故事：不出现劫难，仅简单结果
             result_text = t("Breakthrough succeeded") if result_ok else t("Breakthrough failed")
-            core_text = t("{avatar} breakthrough result: {result}", 
-                         avatar=self.avatar.name, result=result_text)
+            core_text = apply_scenario_term_map(
+                t(
+                    "{avatar} breakthrough result: {result}",
+                    avatar=self.avatar.name,
+                    result=result_text,
+                ),
+                self.world,
+            )
             return [Event(self.world.month_stamp, core_text, related_avatars=[self.avatar.id], is_major=True)]
 
         calamity = self._calamity
         calamity_display = TribulationSelector.get_display_name(str(calamity))
         result_text = t("succeeded") if result_ok else t("failed")
-        core_text = t("{avatar} encountered {calamity} tribulation, breakthrough {result}",
-                     avatar=self.avatar.name, calamity=calamity_display, result=result_text)
+        core_text = apply_scenario_term_map(
+            t(
+                "{avatar} encountered {calamity} tribulation, breakthrough {result}",
+                avatar=self.avatar.name,
+                calamity=calamity_display,
+                result=result_text,
+            ),
+            self.world,
+        )
         rel_ids = [self.avatar.id]
         if self._calamity_other is not None:
             try:
@@ -161,7 +178,10 @@ class Breakthrough(TimedAction):
         # 故事参与者：本体 +（可选）相关角色
         prompt = TribulationSelector.get_story_prompt(str(calamity))
         # 突破强制单人模式，不改变关系（因为没有双修/战斗那样的互动）
-        story_result = t("Breakthrough succeeded") if result_ok else t("Breakthrough failed")
+        story_result = apply_scenario_term_map(
+            t("Breakthrough succeeded") if result_ok else t("Breakthrough failed"),
+            self.world,
+        )
         story_event = await StoryEventService.maybe_create_story(
             kind=StoryEventKind.CULTIVATION_MAJOR,
             month_stamp=self.world.month_stamp,

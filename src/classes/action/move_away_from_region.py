@@ -8,6 +8,7 @@ from src.classes.action.move_helper import clamp_manhattan_with_diagonal_priorit
 from src.classes.environment.region import Region
 from src.utils.distance import euclidean_distance
 from src.utils.resolution import resolve_query
+from src.scenario.narrative_context import apply_scenario_term_map
 
 
 class MoveAwayFromRegion(InstantAction):
@@ -52,8 +53,14 @@ class MoveAwayFromRegion(InstantAction):
     def start(self, region: str) -> Event:
         r = resolve_query(region, self.world, expected_types=[Region]).obj
         region_name = r.name if r else region
-        content = t("{avatar} begins leaving {region}",
-                   avatar=self.avatar.name, region=region_name)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} begins leaving {region}",
+                avatar=self.avatar.name,
+                region=region_name,
+            ),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])
 
     # InstantAction 已实现 step 完成

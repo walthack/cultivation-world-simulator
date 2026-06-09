@@ -8,6 +8,7 @@ from src.classes.action import Move
 from src.classes.action_runtime import ActionResult, ActionStatus
 from src.classes.action.move_helper import clamp_manhattan_with_diagonal_priority
 from src.utils.resolution import resolve_query
+from src.scenario.narrative_context import apply_scenario_term_map
 
 
 class MoveToAvatar(DefineAction, ActualActionMixin):
@@ -54,8 +55,14 @@ class MoveToAvatar(DefineAction, ActualActionMixin):
         rel_ids = [self.avatar.id]
         if target is not None:
             rel_ids.append(target.id)
-        content = t("{avatar} begins moving toward {target}",
-                   avatar=self.avatar.name, target=target_name)
+        content = apply_scenario_term_map(
+            t(
+                "{avatar} begins moving toward {target}",
+                avatar=self.avatar.name,
+                target=target_name,
+            ),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=rel_ids)
 
     def step(self, avatar_name: str) -> ActionResult:
@@ -68,5 +75,4 @@ class MoveToAvatar(DefineAction, ActualActionMixin):
 
     async def finish(self, avatar_name: str) -> list[Event]:
         return []
-
 

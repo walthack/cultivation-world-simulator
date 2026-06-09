@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple
 
 from src.classes.event import Event
+from src.scenario.narrative_context import apply_scenario_term_map
 from src.systems.battle import get_base_strength
 from src.utils.config import CONFIG
 
@@ -415,7 +416,7 @@ class SectManager:
                 active_war_count=active_war_count,
                 weariness_before=weariness_before,
             )
-            content = f"{content} {weariness_text}"
+            content = apply_scenario_term_map(f"{content} {weariness_text}", self.world)
 
             event = Event(
                 month_stamp=self.world.month_stamp,

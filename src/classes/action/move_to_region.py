@@ -11,6 +11,7 @@ from src.classes.action import Move
 from src.classes.action_runtime import ActionResult, ActionStatus
 from src.classes.action.move_helper import clamp_manhattan_with_diagonal_priority
 from src.utils.resolution import resolve_query
+from src.scenario.narrative_context import apply_scenario_term_map
 
 
 class MoveToRegion(DefineAction, ActualActionMixin):
@@ -86,10 +87,19 @@ class MoveToRegion(DefineAction, ActualActionMixin):
             region_name = r.name
             # 在开始时就确定目标点
             self._get_target_loc(r)
-            content = t("{avatar} begins moving toward {region}",
-                       avatar=self.avatar.name, region=region_name)
+            content = apply_scenario_term_map(
+                t(
+                    "{avatar} begins moving toward {region}",
+                    avatar=self.avatar.name,
+                    region=region_name,
+                ),
+                self.world,
+            )
             return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])
-        content = t("{avatar} attempted to move but target is invalid", avatar=self.avatar.name)
+        content = apply_scenario_term_map(
+            t("{avatar} attempted to move but target is invalid", avatar=self.avatar.name),
+            self.world,
+        )
         return Event(self.world.month_stamp, content, related_avatars=[self.avatar.id])
 
     def step(self, region: Region | str) -> ActionResult:
