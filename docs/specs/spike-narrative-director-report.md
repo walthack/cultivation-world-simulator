@@ -106,3 +106,24 @@ python3 tools/spike_narrative_director.py
 - [ ] **Scheduling semantics:** How are due anchors, pending choices, mechanical crises, and Director beats deferred or cancelled without contradictory same-month outcomes?
 - [ ] **Persistence/replay:** Which Director ledger/plan fields are saved, and can a save replay deterministically when the original model response is unavailable or the model version changes?
 - [ ] **Operational budget:** What cadence, timeout, retry, fallback, and token budget keeps month advancement responsive while still giving the Director enough context to be coherent?
+
+---
+
+## 6. CLI 补跑验证结果（2026-06-09，Hassan）
+
+codex sandbox 的 DNS 挡了 live 调用(§4),Hassan CLI(网络通)补跑确证。修复脚本两处:`MAX_TOKENS 400→3000`(minimax M2.7 是 thinking 模型,400 被 think 块吃光、JSON 被截断)、`parse_event` 剥 `<think>...</think>` + 提取 ```json``` fence。
+
+**4 轮滚动生成,真实结果(非编造):**
+- Turn 3「商帮内部分裂」:程宗扬入临安商帮,仙门背景引发赵三爷(拓西北军镇贸易)vs 陈掌柜(联建康士族)两派角力,被密报建康,小紫暗察。
+- Turn 4「小紫现身」:小紫以**商帮侍女**身份接近,以建康情报换九阳传承用途,王哲远处留意。trigger_conditions 引用「陈掌柜已密报→建康已知程宗扬存在」。
+
+**连贯性观察(强正面):**
+- **跨轮记忆成立**:Turn 4 承接 Turn 3(程宗扬入商帮 → 小紫以商帮侍女接近;密报 → 建康已知),非孤立生成。
+- **顺剧本脉络**:商帮/士族/军镇/粮道博弈,符合「六朝权力冲突逐步交汇」backbone。
+- **纯六朝政治语境**:商帮/士族/军镇/情报网/密报,零修真术语。
+- **结构化 JSON 全可解析**,self-check 全 `parseable=yes / follows_backbone=yes / contradicts_previous=no`。
+- reasoning_tokens 300-489/轮,thinking 在真推演。
+
+**结论:v1.9 核心可行性确证** —— LLM(minimax M2.7-highspeed)能连贯、顺剧本、六朝语境地生成结构化剧情事件,跨轮连贯/记忆成立。架构(§1-3)+ LLM 能力均验证,v1.9 不再是纯未知。
+
+**v1.9 实现注意**:① thinking 模型需留足 token(think+输出)或禁 thinking;② parse 须剥 think 块;③ 本次仅 4 轮短验,长程(几十年)漂移仍需 §5 的自动化 benchmark(未验)。

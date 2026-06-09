@@ -16,7 +16,7 @@ from typing import Any
 BASE_URL = "https://api.minimaxi.com/v1"
 MODEL = "MiniMax-M2.7-highspeed"
 TURN_COUNT = 4
-MAX_TOKENS = 400
+MAX_TOKENS = 3000
 ENV_PATH = Path.home() / ".openclaw" / ".env"
 
 BACKBONE = (
@@ -139,9 +139,18 @@ def call_chat(api_key: str, messages: list[dict[str, str]]) -> tuple[str, dict[s
 
 def parse_event(content: str) -> dict[str, Any]:
     cleaned = content.strip()
-    if cleaned.startswith("```"):
+    # MiniMax M2.7 is a thinking model: strip <think>...</think> first
+    cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.S).strip()
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", cleaned, re.S)
+    if fence:
+        cleaned = fence.group(1)
+    elif cleaned.startswith("```"):
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
         cleaned = re.sub(r"\s*```$", "", cleaned)
+    elif not cleaned.startswith("{"):
+        obj = re.search(r"\{.*\}", cleaned, re.S)
+        if obj:
+            cleaned = obj.group(0)
     event = json.loads(cleaned)
     if not isinstance(event, dict):
         raise ValueError("response is not a JSON object")
