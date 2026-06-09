@@ -7,7 +7,11 @@ import pytest
 from src.classes.long_term_objective import generate_long_term_objective
 from src.classes.story_event_service import StoryEventKind, StoryEventService
 from src.classes.story_teller import StoryTeller
-from src.scenario.narrative_context import build_scenario_context_block
+from src.scenario.narrative_context import (
+    SCENARIO_NARRATIVE_INSTRUCTION,
+    build_prompt_world_lore,
+    build_scenario_context_block,
+)
 from src.scenario.state import ScriptedScenarioState
 
 
@@ -33,7 +37,16 @@ def _assert_liuchao_context_present(text: str, context: dict) -> None:
     assert "Scenario narrative context:" in text
     assert context["background"] in text
     assert context["style"] in text
-    assert context["terminology"] in text
+    assert "门阀/势力" in text
+    assert "禁地/险境" in text
+
+
+def _assert_liuchao_m2_world_lore(text: str, context: dict) -> None:
+    assert text.startswith(SCENARIO_NARRATIVE_INSTRUCTION)
+    assert "六朝并立于架空乱世" in text
+    assert "门阀/势力" in text
+    assert "禁地/险境" in text
+    assert "默认修仙世界观" not in text
 
 
 def test_build_scenario_context_block_empty_without_scenario(base_world):
@@ -54,9 +67,31 @@ def test_build_scenario_context_block_empty_without_narrative_context(base_world
     assert build_scenario_context_block(base_world) == ""
 
 
+def test_term_map_applies_to_injected_prompt_text_only(base_world):
+    source_terms = "灵石 宗门 突破 修为 境界 炼丹 灵气 秘境 丹药 功法"
+    replacements = "钱粮/资财 门阀/势力 晋阶/进境 功业 品阶 炼药/制剂 气运/地气 禁地/险境 药石 心法/武艺"
+    base_world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="term_map",
+        timeline=[],
+        generation_profile={
+            "term_map": dict(zip(source_terms.split(), replacements.split(), strict=True)),
+            "narrative_context": {
+                "world_lore_mode": "replace",
+                "world_lore": source_terms,
+            },
+        },
+    )
+
+    prompt_lore = build_prompt_world_lore("默认世界观保留灵石原词", base_world)
+
+    assert replacements in prompt_lore
+    assert "默认世界观" not in prompt_lore
+
+
 @pytest.mark.asyncio
 async def test_liuchao_long_term_objective_prompt_contains_narrative_context(dummy_avatar):
     context = _attach_liuchao_scenario(dummy_avatar.world)
+    dummy_avatar.world.set_world_lore("默认修仙世界观：宗门以灵石争夺秘境。")
 
     with patch(
         "src.classes.long_term_objective.call_llm_with_task_name",
@@ -65,12 +100,13 @@ async def test_liuchao_long_term_objective_prompt_contains_narrative_context(dum
         await generate_long_term_objective(dummy_avatar)
 
     infos = mock_llm.await_args.args[2]
-    _assert_liuchao_context_present(infos["world_lore"], context)
+    _assert_liuchao_m2_world_lore(infos["world_lore"], context)
 
 
 @pytest.mark.asyncio
 async def test_liuchao_story_teller_prompt_contains_narrative_context(dummy_avatar):
     context = _attach_liuchao_scenario(dummy_avatar.world)
+    dummy_avatar.world.set_world_lore("默认修仙世界观：宗门以灵石争夺秘境。")
 
     with patch(
         "src.classes.story_teller.call_llm_with_task_name",
@@ -79,7 +115,10 @@ async def test_liuchao_story_teller_prompt_contains_narrative_context(dummy_avat
         await StoryTeller.tell_story("州郡起事", "众人退守城中", dummy_avatar, prompt="保留原始提示")
 
     infos = mock_llm.await_args.args[2]
-    _assert_liuchao_context_present(infos["story_prompt"], context)
+    _assert_liuchao_m2_world_lore(infos["world_lore"], context)
+    assert infos["story_prompt"].startswith(SCENARIO_NARRATIVE_INSTRUCTION)
+    assert "门阀/势力" in infos["story_prompt"]
+    assert "禁地/险境" in infos["story_prompt"]
     assert "保留原始提示" in infos["story_prompt"]
 
 
@@ -109,6 +148,7 @@ async def test_liuchao_story_event_service_passes_narrative_context_to_teller(du
 @pytest.mark.asyncio
 async def test_no_scenario_prompts_do_not_contain_scenario_block(dummy_avatar):
     dummy_avatar.world.scripted_scenario = None
+    dummy_avatar.world.set_world_lore("原始世界观")
 
     with patch(
         "src.classes.long_term_objective.call_llm_with_task_name",
@@ -124,5 +164,36 @@ async def test_no_scenario_prompts_do_not_contain_scenario_block(dummy_avatar):
 
     objective_infos = objective_llm.await_args.args[2]
     story_infos = story_llm.await_args.args[2]
+    assert objective_infos["world_lore"] == "原始世界观"
+    assert story_infos["world_lore"] == "原始世界观"
     assert "Scenario narrative context:" not in objective_infos["world_lore"]
     assert "Scenario narrative context:" not in story_infos["story_prompt"]
+
+
+@pytest.mark.asyncio
+async def test_default_append_mode_preserves_v13_prompt_shape(dummy_avatar):
+    context = {
+        "background": "旧版背景",
+        "style": "旧版风格",
+        "terminology": "旧版术语",
+    }
+    dummy_avatar.world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="append_default",
+        timeline=[],
+        generation_profile={"narrative_context": context},
+    )
+    dummy_avatar.world.set_world_lore("原始世界观")
+
+    with patch(
+        "src.classes.long_term_objective.call_llm_with_task_name",
+        new=AsyncMock(return_value={"long_term_objective": "守住道心"}),
+    ) as mock_llm:
+        await generate_long_term_objective(dummy_avatar)
+
+    expected_block = (
+        "Scenario narrative context:\n"
+        "- Background: 旧版背景\n"
+        "- Style: 旧版风格\n"
+        "- Terminology: 旧版术语"
+    )
+    assert mock_llm.await_args.args[2]["world_lore"] == f"原始世界观\n\n{expected_block}"

@@ -282,8 +282,11 @@ def test_loader_rejects_non_bool_use_scripted_only(tmp_path: Path):
                 "background": "A historical setting.",
                 "style": "Chronicle prose.",
                 "terminology": "Use period offices.",
+                "world_lore": "Six rival dynasties divide the realm.",
+                "world_lore_mode": "replace",
             }
         },
+        {"term_map": {"sect": "clan", "realm": "rank"}},
         {
             "generation_sources": {
                 "npc_names": "mixed",
@@ -418,6 +421,48 @@ def test_loader_rejects_unknown_narrative_context_key(tmp_path: Path):
         ScenarioValidationError,
         match=r"narrative_context\.tone: expected one of",
     ):
+        load("profile_fixture", scenarios_root=root)
+
+
+def test_loader_rejects_unknown_world_lore_mode(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {
+                    "narrative_context": {"world_lore_mode": "merge"},
+                },
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(ScenarioValidationError, match=r"world_lore_mode: expected append, prepend, or replace"):
+        load("profile_fixture", scenarios_root=root)
+
+
+def test_loader_rejects_non_string_term_map_value(tmp_path: Path):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {"term_map": {"sect": ["clan"]}},
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(ScenarioValidationError, match=r"term_map\.sect: expected string"):
         load("profile_fixture", scenarios_root=root)
 
 

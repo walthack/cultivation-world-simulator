@@ -31,7 +31,8 @@ SEMVER_RE = re.compile(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$")
 GENERATION_SOURCE_VALUES = {"scenario", "default"}
 GENERATION_PROFILE_SOURCE_VALUES = {"scenario", "default", "mixed"}
 GENERATION_PROFILE_SOURCE_KEYS = ("npc_names", "personas", "sects", "regions")
-NARRATIVE_CONTEXT_KEYS = ("background", "style", "terminology")
+NARRATIVE_CONTEXT_KEYS = ("background", "style", "terminology", "world_lore", "world_lore_mode")
+WORLD_LORE_MODES = {"append", "prepend", "replace"}
 # Scenario generation source control v1.2, spec §5.1.
 KIND_TO_PRESET_FILE = {
     "regions": "regions.json",
@@ -286,13 +287,45 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
                 f"one of {sorted(NARRATIVE_CONTEXT_KEYS)}",
                 narrative_context[key],
             )
-        for key in NARRATIVE_CONTEXT_KEYS:
+        for key in ("background", "style", "terminology", "world_lore"):
             context_value = narrative_context.get(key)
             if context_value is not None and not isinstance(context_value, str):
                 raise ScenarioValidationError(
                     f"scenario.initial_state.generation_profile.narrative_context.{key}",
                     "string",
                     context_value,
+                )
+
+        world_lore_mode = narrative_context.get("world_lore_mode")
+        if world_lore_mode is not None and (
+            not isinstance(world_lore_mode, str) or world_lore_mode not in WORLD_LORE_MODES
+        ):
+            raise ScenarioValidationError(
+                "scenario.initial_state.generation_profile.narrative_context.world_lore_mode",
+                "append, prepend, or replace",
+                world_lore_mode,
+            )
+
+    term_map = profile.get("term_map")
+    if term_map is not None:
+        if not isinstance(term_map, dict):
+            raise ScenarioValidationError(
+                "scenario.initial_state.generation_profile.term_map",
+                "object",
+                term_map,
+            )
+        for source_term, replacement in term_map.items():
+            if not isinstance(source_term, str) or not source_term:
+                raise ScenarioValidationError(
+                    "scenario.initial_state.generation_profile.term_map",
+                    "non-empty string keys",
+                    source_term,
+                )
+            if not isinstance(replacement, str):
+                raise ScenarioValidationError(
+                    f"scenario.initial_state.generation_profile.term_map.{source_term}",
+                    "string",
+                    replacement,
                 )
 
 

@@ -12,7 +12,7 @@ from src.utils.config import CONFIG
 from src.utils.llm import call_llm_with_task_name
 from src.i18n import t
 from src.i18n.locale_registry import get_project_root
-from src.scenario.narrative_context import prepend_scenario_context
+from src.scenario.narrative_context import build_prompt_world_lore, prepend_scenario_context
 
 
 def _load_story_style_msgids() -> tuple[str, ...]:
@@ -75,7 +75,7 @@ class StoryTeller:
 
         return {
             "world_info": world_info,
-            "world_lore": world.world_lore.text if actors else "",
+            "world_lore": build_prompt_world_lore(world.world_lore.text, world) if actors else "",
             "avatar_infos": avatar_infos,
             "avatar_name_1": avatar_name_1,
             "avatar_name_2": avatar_name_2,
@@ -156,7 +156,7 @@ class StoryTeller:
             
         infos = {
             "world_info": world_info,
-            "world_lore": world.world_lore.text,
+            "world_lore": build_prompt_world_lore(world.world_lore.text, world),
             "gathering_info": gathering_info,
             "events": events_text,
             "details": details_text,
