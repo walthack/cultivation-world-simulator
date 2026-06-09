@@ -175,7 +175,11 @@ def resolve_source(kind: str, *, scenario: Any | None = None) -> SourceHandle:
         return _default_handle(kind, provenance="default:invalid-scenario")
 
     preset_id = _scenario_preset_id(active_scenario, scenario_data)
+    sources = scenario_data.get("generation_sources") if isinstance(scenario_data, dict) else None
     profile_source = _profile_source(scenario_data, kind)
+    # Persona sampling keeps the schema-v1.2 top-level source contract authoritative.
+    if kind == "personas" and isinstance(sources, dict) and kind in sources:
+        profile_source = None
     if profile_source == "default":
         return _default_handle(kind, provenance=f"default:profile-{kind}")
     if profile_source == "scenario":
@@ -183,7 +187,6 @@ def resolve_source(kind: str, *, scenario: Any | None = None) -> SourceHandle:
     if profile_source == "mixed":
         return _mixed_handle(kind, preset_id)
 
-    sources = scenario_data.get("generation_sources") if isinstance(scenario_data, dict) else None
     if not isinstance(sources, dict):
         return _default_handle(kind, provenance="default:v1.1-implicit")
 

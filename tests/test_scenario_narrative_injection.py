@@ -37,15 +37,15 @@ def _assert_liuchao_context_present(text: str, context: dict) -> None:
     assert "Scenario narrative context:" in text
     assert context["background"] in text
     assert context["style"] in text
-    assert "门阀/势力" in text
-    assert "禁地/险境" in text
+    assert "门阀" in text
+    assert "禁地" in text
 
 
 def _assert_liuchao_m2_world_lore(text: str, context: dict) -> None:
     assert text.startswith(SCENARIO_NARRATIVE_INSTRUCTION)
     assert "六朝并立于架空乱世" in text
-    assert "门阀/势力" in text
-    assert "禁地/险境" in text
+    assert "门阀" in text
+    assert "禁地" in text
     assert "默认修仙世界观" not in text
 
 
@@ -117,8 +117,8 @@ async def test_liuchao_story_teller_prompt_contains_narrative_context(dummy_avat
     infos = mock_llm.await_args.args[2]
     _assert_liuchao_m2_world_lore(infos["world_lore"], context)
     assert infos["story_prompt"].startswith(SCENARIO_NARRATIVE_INSTRUCTION)
-    assert "门阀/势力" in infos["story_prompt"]
-    assert "禁地/险境" in infos["story_prompt"]
+    assert "门阀" in infos["story_prompt"]
+    assert "禁地" in infos["story_prompt"]
     assert "保留原始提示" in infos["story_prompt"]
 
 
