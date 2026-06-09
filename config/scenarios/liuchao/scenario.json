@@ -44,7 +44,15 @@
         "灵气": "气运/地气",
         "秘境": "禁地/险境",
         "丹药": "药石",
-        "功法": "心法/武艺"
+        "功法": "心法/武艺",
+        "金丹": "还丹",
+        "筑基": "炼形",
+        "元婴": "元神",
+        "化神": "炼神",
+        "证道": "得道",
+        "洞府": "福地",
+        "灵脉": "地脉",
+        "飞升": "羽化"
       },
       "narrative_context": {
         "world_lore_mode": "replace",
@@ -66,7 +74,12 @@
         "stage": "LATE_STAGE",
         "level": 30,
         "backstory": "来自异世的程宗扬卷入六朝风云。",
-        "persona_traits": ["谋略", "现代知识", "野心", "灰色道德"],
+        "persona_traits": [
+          "谋略",
+          "现代知识",
+          "野心",
+          "灰色道德"
+        ],
         "goldfinger_id": "SHENGSI-GEN",
         "long_term_objective": "在六朝乱世中活下去并掌握主动权。"
       },
@@ -82,7 +95,9 @@
         "stage": "LATE_STAGE",
         "level": 90,
         "backstory": "太乙真宗高人，持有九阳传承。",
-        "persona_traits": ["忠义"],
+        "persona_traits": [
+          "忠义"
+        ],
         "goldfinger_id": "TAIYI-JIUYANG",
         "long_term_objective": "寻找可托付传承之人。"
       },
@@ -97,7 +112,9 @@
         "stage": "MIDDLE_STAGE",
         "level": 12,
         "backstory": "神秘少女，来历不明。",
-        "persona_traits": ["神秘"],
+        "persona_traits": [
+          "神秘"
+        ],
         "goldfinger_id": "ZI-MYSTERY",
         "long_term_objective": "观察程宗扬的选择。"
       }
@@ -106,7 +123,9 @@
       {
         "id": 1,
         "leader_avatar_id": "wang-zhe",
-        "member_avatar_ids": ["wang-zhe"]
+        "member_avatar_ids": [
+          "wang-zhe"
+        ]
       }
     ],
     "relationships": [
