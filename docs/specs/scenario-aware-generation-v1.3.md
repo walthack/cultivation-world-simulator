@@ -116,3 +116,33 @@ generation_profile:
 ## 验收前提
 - sweep 脚本固化为可复跑的量化工具(基线 vs v1.3 对比),含 terms ratio / sect-source / dialogue-relationship 计数。
 - LLM 用 minimax M2.7-highspeed(与 v1.2.3 验收一致)。
+
+---
+
+## v1.3 Closeout（2026-06-09，御主定性）
+
+**定性:成功完成 Source Control,部分完成 Narrative Injection。** 不为追原定 ≥40% terms ratio 继续在 v1.3 扩 scope —— 注入强化 + 机械事件 localization 归 v1.4。
+
+### ✅ Done — Generation Source Control（端到端验证）
+NPC Names / Sects / Regions / No-scenario fallback 全生效。liuchao init + 18 月 sweep 端到端证据:
+- **NPC**:柳芳心(default) → **程绾 / 萧哲**(scenario 姓名池)
+- **Sect**:凌霄剑宗(default) → **太乙真宗 / 富春山隐宗**(scenario)
+- **Region**:默认地图 → **临安 / 建康 / 洛阳 / 长安**（10/10 六朝地名）
+- 玩家第一眼即可感知的变化。
+
+### ⚠️ Partial — Narrative Context Injection
+- 技术路径打通:`Scenario → generation_profile → prompt → LLM`(单元测试证 prompt 含六朝 background/style/terms)。
+- **Prompt reached model ✅ / Model obeyed prompt ❌。**
+- 根因 = **prompt hierarchy**:当前 prompt ≈ 90% 修仙世界观(world_lore + 境界/灵石/宗门 game context)+ 10% 六朝提示(block append 在 world_lore 末尾),LLM 自然选修仙风格。
+- **质量问题,非功能缺失。** 注入点(NPC 目标)实测 terms 0% 六朝:「萧哲 销毁万魂幡证道明心」「程绾 占洞府寻秘境」「紫羽 突破筑基」。
+
+### 📝 Known Gaps — 未覆盖 event types（归 v1.4）
+Sect Thought(`sect_decider`)/ Settlement / Recruitment / Movement / Breakthrough —— 占事件池 >50%(18 月 sweep 机械事件 35/68 ≈ 51%)。
+原 Phase 4 的 dialogues/relationships 诊断(无自动社交 phase)亦并入 v1.4。
+
+### terms ratio 复盘（18 月 sweep,68 events）
+- 整体 **13%**(基线 7%,微升)
+- 注入点(NPC 目标)单独 **0%** 六朝 —— 故非纯稀释,注入强度本身不足
+- 机械事件占 **51%**,全用修真术语、不受 narrative 影响
+- **13% = Narrative Injection(部分) + 大量未覆盖机械事件**,不是 narrative injection 单独成绩
+- **原 ≥40% RC target 在 v1.3 scope 下不可达**:需 v1.4 的机械事件 localization + 注入强化(scenario-aware world_lore 替换 / 术语映射 灵石→资财·宗门→门阀 / prompt 权重位置)才合理。**不算 v1.3 失败 —— 发现了下一层问题。**
