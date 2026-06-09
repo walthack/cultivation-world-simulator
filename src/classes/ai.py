@@ -13,6 +13,7 @@ from src.utils.llm import call_llm_with_task_name
 from src.classes.typings import ACTION_NAME_PARAMS_PAIRS
 from src.classes.actions import get_action_infos_str
 from src.utils.config import CONFIG
+from src.classes.relation.relationship_summary import build_avatar_relationship_summary
 
 if TYPE_CHECKING:
     from src.classes.core.avatar import Avatar
@@ -60,6 +61,12 @@ class LLMAI(AI):
             # 在提示中包含处于角色观测范围内的其他角色
             observed = world.get_observable_avatars(avatar)
             avatar_info = avatar.get_expanded_info(co_region_avatars=observed, detailed=True)
+            relationship_summary = build_avatar_relationship_summary(avatar)
+            if relationship_summary:
+                avatar_info = {
+                    "角色资料": avatar_info,
+                    "关系网摘要": relationship_summary,
+                }
             from src.classes.core.avatar.info_presenter import get_avatar_ai_context
             avatar_ai_context = get_avatar_ai_context(avatar, co_region_avatars=observed)
             

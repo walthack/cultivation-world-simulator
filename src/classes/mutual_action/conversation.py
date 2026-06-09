@@ -10,6 +10,8 @@ from src.utils.config import CONFIG
 from src.classes.action_runtime import ActionResult, ActionStatus
 from src.classes.relation.relation_delta_service import RelationDeltaService
 from src.classes.story_event_service import StoryEventKind, StoryEventService
+from src.classes.relation.relationship_summary import build_avatar_relationship_summary
+from src.scenario.narrative_context import build_prompt_world_lore
 
 if TYPE_CHECKING:
     from src.classes.core.avatar import Avatar
@@ -46,10 +48,32 @@ class Conversation(MutualAction):
         # avatar1 使用 expanded_info（包含详细信息和共同事件），避免重复
         expanded_info = self.avatar.get_expanded_info(other_avatar=target_avatar, detailed=True)
         
+        avatar_info_1 = expanded_info
+        relationship_summary_1 = build_avatar_relationship_summary(self.avatar)
+        if relationship_summary_1:
+            avatar_info_1 = {
+                "角色资料": avatar_info_1,
+                "关系网摘要": relationship_summary_1,
+            }
+
+        avatar_info_2 = target_avatar.get_info(detailed=True)
+        relationship_summary_2 = build_avatar_relationship_summary(target_avatar)
+        if relationship_summary_2:
+            avatar_info_2 = {
+                "角色资料": avatar_info_2,
+                "关系网摘要": relationship_summary_2,
+            }
+
         avatar_infos = {
-            avatar_name_1: expanded_info,
-            avatar_name_2: target_avatar.get_info(detailed=True),
+            avatar_name_1: avatar_info_1,
+            avatar_name_2: avatar_info_2,
         }
+        narrative_context = build_prompt_world_lore("", self.world)
+        if narrative_context:
+            avatar_infos = {
+                "剧本叙事上下文": narrative_context,
+                **avatar_infos,
+            }
         
         # 获取后续计划
         p1 = self.avatar.get_planned_actions_str()
