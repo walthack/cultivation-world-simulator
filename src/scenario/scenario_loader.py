@@ -219,7 +219,7 @@ def _validate_optional_metadata(data: dict[str, Any]) -> None:
 
 
 def _is_v02(data: dict[str, Any]) -> bool:
-    return str(data.get("schema_version")) in {"0.2", "1.1"}
+    return str(data.get("schema_version")) in {"0.2", "1.1", "1.2"}
 
 
 def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None:

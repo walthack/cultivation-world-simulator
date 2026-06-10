@@ -17,7 +17,8 @@ import pytest
 from src.scenario.event_dispatcher import EventDispatcher
 from src.scenario.event_handlers.main_event_handler import handle_main_event
 from src.scenario.event_handlers.side_event_handler import handle_side_event
-from src.scenario.scenario_loader import load
+from src.scenario.scenario_loader import EVENT_TYPES, _is_v02, load
+from src.sim.simulator_engine.phases.scripted_scenario import _HANDLERS
 
 
 INSTALLED_SCENARIOS = ("sample", "liuchao", "sanguo")
@@ -80,3 +81,20 @@ async def test_installed_scenario_opening_event_takes_effect(scenario_id):
     assert opening["id"] in state["scenario_runtime"]["triggered_event_ids"]
     # ...and its effect actually landed in world state.
     assert state["world"]["world_flags"].get(flag) is True
+
+
+def test_every_recognized_event_type_has_a_production_handler():
+    """An event type the loader accepts but the dispatcher has no handler for
+    would dispatch silently without applying effects (see EventDispatcher: a
+    missing handler still marks the event fired). Guard the loader↔dispatcher
+    contract so a recognized type can never become a silent no-op."""
+    unhandled = EVENT_TYPES - set(_HANDLERS)
+
+    assert not unhandled, f"recognized event types with no production handler: {sorted(unhandled)}"
+
+
+def test_v1_2_schema_runs_reference_validation():
+    """schema 1.2 is the newest version and must get the v0.2-family reference
+    validation (race_id/root_id/region/etc.); regression guard for the
+    _is_v02 gap that previously let 1.2 import unvalidated."""
+    assert _is_v02({"schema_version": "1.2"}) is True

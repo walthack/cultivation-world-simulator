@@ -17,6 +17,7 @@ from src.scenario.event_handlers import (
 _HANDLERS = {
     "main": handle_main_event,
     "side_event": handle_side_event,
+    "sect_event": handle_side_event,
     "world_event": handle_world_event,
     "character_introduction": handle_character_introduction,
     "relation_change": handle_relation_change,
