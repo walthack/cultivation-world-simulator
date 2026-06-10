@@ -27,7 +27,42 @@
     "month": 1,
     "generation_profile": {
       "random_npc_count": 5,
-      "random_sect_count": 2
+      "random_sect_count": 2,
+      "progression_profile": {
+        "id": "sanguo_merit_office_reputation",
+        "label": "三国功业进身",
+        "guidance": "目标与行动应优先围绕建立军功、晋升官职、经营声望和安定一方展开，仙门修行仅作为低权重的共存路径。",
+        "axes": [
+          {
+            "id": "military_merit",
+            "label": "军功",
+            "description": "通过征战、守土、练兵与谋略建立可被阵营和天下认可的战功。",
+            "tiers": ["从军", "破阵", "镇军", "定鼎"],
+            "optional": false
+          },
+          {
+            "id": "official_rank",
+            "label": "官职",
+            "description": "在州郡、幕府与朝廷体系中承担更高职任，扩大治理和军政权责。",
+            "tiers": ["白身", "属吏", "郡守", "州牧", "公卿"],
+            "optional": false
+          },
+          {
+            "id": "reputation",
+            "label": "声望",
+            "description": "在士民、军中、诸侯与天下舆论间积累信用、威名和号召力。",
+            "tiers": ["乡里有闻", "州郡知名", "诸侯敬重", "天下归心"],
+            "optional": false
+          },
+          {
+            "id": "immortal_path",
+            "label": "仙门",
+            "description": "在龙气与仙道并存的世界中修习术法，但不取代军政功业主轴。",
+            "tiers": ["入门", "通法", "真人", "宗师"],
+            "optional": true
+          }
+        ]
+      }
     },
     "avatars": [
       {

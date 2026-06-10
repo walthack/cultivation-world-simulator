@@ -12,6 +12,8 @@ from src.classes.relation.relation_delta_service import RelationDeltaService
 from src.classes.story_event_service import StoryEventKind, StoryEventService
 from src.classes.relation.relationship_summary import build_avatar_relationship_summary
 from src.scenario.narrative_context import build_prompt_world_lore
+from src.scenario.progression_profile import build_progression_context
+from src.scenario.progression_metrics import record_progression_metrics
 
 if TYPE_CHECKING:
     from src.classes.core.avatar import Avatar
@@ -48,21 +50,22 @@ class Conversation(MutualAction):
         # avatar1 使用 expanded_info（包含详细信息和共同事件），避免重复
         expanded_info = self.avatar.get_expanded_info(other_avatar=target_avatar, detailed=True)
         
-        avatar_info_1 = expanded_info
+        progression_context = build_progression_context(self.world)
+        avatar_info_1 = {
+            "角色资料": expanded_info,
+            "成长体系": progression_context,
+        }
         relationship_summary_1 = build_avatar_relationship_summary(self.avatar)
         if relationship_summary_1:
-            avatar_info_1 = {
-                "角色资料": avatar_info_1,
-                "关系网摘要": relationship_summary_1,
-            }
+            avatar_info_1["关系网摘要"] = relationship_summary_1
 
-        avatar_info_2 = target_avatar.get_info(detailed=True)
+        avatar_info_2 = {
+            "角色资料": target_avatar.get_info(detailed=True),
+            "成长体系": progression_context,
+        }
         relationship_summary_2 = build_avatar_relationship_summary(target_avatar)
         if relationship_summary_2:
-            avatar_info_2 = {
-                "角色资料": avatar_info_2,
-                "关系网摘要": relationship_summary_2,
-            }
+            avatar_info_2["关系网摘要"] = relationship_summary_2
 
         avatar_infos = {
             avatar_name_1: avatar_info_1,
@@ -111,6 +114,7 @@ class Conversation(MutualAction):
         thinking = str(result.get("thinking", "")).strip()
         conversation_content = str(result.get("conversation_content", "")).strip()
         target.thinking = thinking
+        record_progression_metrics(self.world, f"{thinking} {conversation_content}")
 
         # 使用开始时间戳
         month_stamp = self._start_month_stamp if self._start_month_stamp is not None else self.world.month_stamp

@@ -14,6 +14,8 @@ from src.classes.typings import ACTION_NAME_PARAMS_PAIRS
 from src.classes.actions import get_action_infos_str
 from src.utils.config import CONFIG
 from src.classes.relation.relationship_summary import build_avatar_relationship_summary
+from src.scenario.progression_profile import build_progression_context
+from src.scenario.progression_metrics import record_progression_metrics
 
 if TYPE_CHECKING:
     from src.classes.core.avatar import Avatar
@@ -62,11 +64,12 @@ class LLMAI(AI):
             observed = world.get_observable_avatars(avatar)
             avatar_info = avatar.get_expanded_info(co_region_avatars=observed, detailed=True)
             relationship_summary = build_avatar_relationship_summary(avatar)
+            avatar_info = {
+                "角色资料": avatar_info,
+                "成长体系": build_progression_context(world),
+            }
             if relationship_summary:
-                avatar_info = {
-                    "角色资料": avatar_info,
-                    "关系网摘要": relationship_summary,
-                }
+                avatar_info["关系网摘要"] = relationship_summary
             from src.classes.core.avatar.info_presenter import get_avatar_ai_context
             avatar_ai_context = get_avatar_ai_context(avatar, co_region_avatars=observed)
             
@@ -112,6 +115,13 @@ class LLMAI(AI):
 
             avatar_thinking = r.get("avatar_thinking", r.get("thinking", ""))
             short_term_objective = r.get("short_term_objective", "")
+            behavior_text = f"{avatar_thinking} {raw_pairs}"
+            record_progression_metrics(
+                world,
+                f"{short_term_objective} {behavior_text}",
+                goal_text=short_term_objective,
+                behavior_text=behavior_text,
+            )
             
             # 更新情绪
             from src.classes.emotions import EmotionType

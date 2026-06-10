@@ -3,6 +3,11 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from src.run.log import get_logger
+
+
+logger = get_logger().logger
+
 
 DEFAULT_PROGRESSION_PROFILE: dict[str, Any] = {
     "id": "cultivation",
@@ -30,8 +35,43 @@ def resolve_progression_profile(world: Any) -> dict[str, Any]:
     return deepcopy(DEFAULT_PROGRESSION_PROFILE)
 
 
+def _is_non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_valid_profile(profile: Any) -> bool:
+    if not isinstance(profile, dict):
+        return False
+    if not _is_non_empty_string(profile.get("id")) or not _is_non_empty_string(profile.get("label")):
+        return False
+    guidance = profile.get("guidance")
+    if guidance is not None and not _is_non_empty_string(guidance):
+        return False
+    axes = profile.get("axes")
+    if not isinstance(axes, list) or not axes:
+        return False
+    for axis in axes:
+        if not isinstance(axis, dict):
+            return False
+        if not all(_is_non_empty_string(axis.get(key)) for key in ("id", "label", "description")):
+            return False
+        tiers = axis.get("tiers")
+        if not isinstance(tiers, list) or not tiers or not all(_is_non_empty_string(tier) for tier in tiers):
+            return False
+        if "optional" in axis and not isinstance(axis["optional"], bool):
+            return False
+    return True
+
+
 def build_progression_context(world: Any) -> str:
     profile = resolve_progression_profile(world)
+    if not _is_valid_profile(profile):
+        scenario_id = getattr(getattr(world, "scripted_scenario", None), "scenario_id", "unknown")
+        logger.warning(
+            "Scenario %s has a malformed progression_profile; using default cultivation progression context",
+            scenario_id,
+        )
+        profile = deepcopy(DEFAULT_PROGRESSION_PROFILE)
     lines = [f"成长体系：{profile['label']}（{profile['id']}）"]
     guidance = str(profile.get("guidance") or "").strip()
     if guidance:

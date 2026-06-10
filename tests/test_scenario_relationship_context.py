@@ -94,6 +94,9 @@ def test_conversation_prompt_contains_relationship_and_liuchao_narrative_context
     assert "与王哲" in prompt_payload
     assert "六朝并立于架空乱世" in prompt_payload
     assert "门阀" in prompt_payload
+    assert "成长体系" in prompt_payload
+    assert "六朝功业进身" in prompt_payload
+    assert "官阶 [主要成长轴]" in prompt_payload
     assert "太一山洞府" not in prompt_payload
     assert "金精之气" not in prompt_payload
 
@@ -126,6 +129,8 @@ async def test_action_decision_prompt_contains_npc_relationship_summary(dummy_av
     assert "关系网摘要" in avatar_info
     assert "与狼羽" in avatar_info["关系网摘要"]
     assert "敌对" in avatar_info["关系网摘要"]
+    assert "成长体系" in avatar_info
+    assert "修真境界（cultivation）" in avatar_info["成长体系"]
 
 
 def test_conversation_no_scenario_no_relations_preserves_prompt_shape(dummy_avatar):
@@ -139,5 +144,7 @@ def test_conversation_no_scenario_no_relations_preserves_prompt_shape(dummy_avat
     infos = Conversation(dummy_avatar, dummy_avatar.world)._build_prompt_infos(target)
 
     assert set(infos["avatar_infos"]) == {dummy_avatar.name, target.name}
-    assert infos["avatar_infos"][dummy_avatar.name] == {"name": dummy_avatar.name}
-    assert infos["avatar_infos"][target.name] == {"name": target.name}
+    assert infos["avatar_infos"][dummy_avatar.name]["角色资料"] == {"name": dummy_avatar.name}
+    assert "修真境界（cultivation）" in infos["avatar_infos"][dummy_avatar.name]["成长体系"]
+    assert infos["avatar_infos"][target.name]["角色资料"] == {"name": target.name}
+    assert "修真境界（cultivation）" in infos["avatar_infos"][target.name]["成长体系"]

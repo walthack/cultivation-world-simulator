@@ -159,7 +159,8 @@ class Logger:
                 "total_duration": 0,
                 "total_prompt_length": 0,
                 "total_response_length": 0,
-                "errors": 0
+                "errors": 0,
+                "progression": {},
             }
         
         stats = {
@@ -167,7 +168,8 @@ class Logger:
             "total_duration": 0,
             "total_prompt_length": 0,
             "total_response_length": 0,
-            "errors": 0
+            "errors": 0,
+            "progression": {},
         }
         
         with open(self.log_file_path, 'r', encoding='utf-8') as f:
@@ -184,8 +186,28 @@ class Logger:
                         pass
                 elif "LLM_ERROR:" in line:
                     stats["errors"] += 1
+                elif "PROGRESSION_METRICS:" in line:
+                    try:
+                        json_str = line.split("PROGRESSION_METRICS: ", 1)[1]
+                        data = json.loads(json_str)
+                        for key, value in data.items():
+                            if not key.startswith("progression.") or value is None:
+                                continue
+                            metric_key = key.removeprefix("progression.")
+                            if isinstance(value, bool):
+                                stats["progression"][metric_key] = value
+                            elif isinstance(value, (int, float)):
+                                stats["progression"][metric_key] = stats["progression"].get(metric_key, 0) + value
+                    except (json.JSONDecodeError, IndexError):
+                        pass
         
+        output_count = stats["progression"].get("output_count", 0)
+        if output_count:
+            stats["progression"]["default_residual_rate"] /= output_count
         return stats
+
+    def log_progression_metrics(self, metrics: dict) -> None:
+        self.logger.info("PROGRESSION_METRICS: %s", json.dumps(metrics, ensure_ascii=False))
 
 
 # 全局日志记录器实例

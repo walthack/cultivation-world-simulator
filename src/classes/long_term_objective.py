@@ -18,6 +18,7 @@ from src.classes.actions import get_action_infos_str
 from src.i18n import t
 from src.scenario.narrative_context import build_prompt_world_lore
 from src.scenario.progression_profile import build_progression_context
+from src.scenario.progression_metrics import record_progression_metrics
 from src.classes.relation.relationship_summary import build_avatar_relationship_summary
 
 logger = get_logger().logger
@@ -112,6 +113,8 @@ async def generate_long_term_objective(avatar: "Avatar") -> Optional[LongTermObj
     if not content:
         logger.warning(f"为角色 {avatar.name} 生成长期目标失败：返回空内容")
         return None
+
+    record_progression_metrics(avatar.world, content, goal_text=content)
     
     current_year = avatar.world.month_stamp.get_year()
     objective = LongTermObjective(
