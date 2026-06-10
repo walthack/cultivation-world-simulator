@@ -190,3 +190,5 @@ web/coverage/
 desktop/node_modules/
 desktop/build/
 desktop/release/
+test-results/
+tmp/v1.2.2-narrative/
