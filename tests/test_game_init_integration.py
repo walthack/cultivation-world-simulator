@@ -463,9 +463,9 @@ class TestInitGameAsyncWithSects:
              patch("src.server.main.Simulator", return_value=mock_sim), \
              patch("src.server.main.CONFIG") as mock_config, \
              patch("src.server.main.sects_by_id", {
-                 "s1": mock_sect1,
-                 "s2": mock_sect2,
-                 "s3": mock_sect3,
+                 1: mock_sect1,
+                 2: mock_sect2,
+                 3: mock_sect3,
              }):
 
             mock_config.paths.saves = temp_saves_dir
@@ -500,7 +500,7 @@ class TestInitGameAsyncWithSects:
              patch("src.server.main.World") as mock_world_class, \
              patch("src.server.main.Simulator", return_value=mock_sim), \
              patch("src.server.main.CONFIG") as mock_config, \
-             patch("src.server.main.sects_by_id", {"s1": mock_sect1, "s2": mock_sect2}):
+             patch("src.server.main.sects_by_id", {1: mock_sect1, 2: mock_sect2}):
 
             mock_config.paths.saves = temp_saves_dir
             set_runtime_run_config(sect_num=2)
@@ -574,7 +574,7 @@ class TestInitGameAsyncEdgeCases:
              patch("src.server.main.World") as mock_world_class, \
              patch("src.server.main.Simulator", return_value=mock_sim), \
              patch("src.server.main.CONFIG") as mock_config, \
-             patch("src.server.main.sects_by_id", {"s1": mock_sect1, "s2": mock_sect2}):
+             patch("src.server.main.sects_by_id", {1: mock_sect1, 2: mock_sect2}):
 
             mock_config.paths.saves = temp_saves_dir
             set_runtime_run_config(sect_num=10, init_npc_num=3)
@@ -848,4 +848,3 @@ class TestInitPhaseNames:
         for name in INIT_PHASE_NAMES.values():
             assert name == name.lower()
             assert " " not in name
-
