@@ -34,6 +34,41 @@
         "sects": "mixed",
         "regions": "scenario"
       },
+      "progression_profile": {
+        "id": "liuchao_historical_mixed",
+        "label": "六朝功业进身",
+        "guidance": "长期目标应优先围绕晋升官阶、积累功业、经营名望等历史成长；仙门进境只在角色身份或处境明确相关时作为可选目标。",
+        "axes": [
+          {
+            "id": "merit",
+            "label": "功业",
+            "description": "通过治政、军功、谋略与济世之举积累可被朝廷和世人认可的功绩。",
+            "tiers": ["立身", "建功", "柱石", "定鼎"],
+            "optional": false
+          },
+          {
+            "id": "office_rank",
+            "label": "官阶",
+            "description": "沿州郡、台省与军府仕途晋升，扩大实际权责与政治影响。",
+            "tiers": ["布衣", "掾属", "郡守", "台省重臣", "公卿"],
+            "optional": false
+          },
+          {
+            "id": "reputation",
+            "label": "名望",
+            "description": "在乡里、士林、军中与天下清议中建立声誉和人脉。",
+            "tiers": ["乡里有闻", "州郡知名", "士林推重", "天下仰望"],
+            "optional": false
+          },
+          {
+            "id": "immortal_path",
+            "label": "仙门进境",
+            "description": "保留修为、心法与境界突破，作为混合世界观中的共存成长路径。",
+            "tiers": ["炼气", "筑基", "结丹", "元婴", "化神"],
+            "optional": true
+          }
+        ]
+      },
       "term_map": {
         "灵石": "钱粮",
         "宗门": "门阀",

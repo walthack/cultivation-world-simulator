@@ -466,6 +466,91 @@ def test_loader_rejects_non_string_term_map_value(tmp_path: Path):
         load("profile_fixture", scenarios_root=root)
 
 
+def test_loader_accepts_progression_profile_schema(tmp_path: Path):
+    progression_profile = {
+        "id": "historical",
+        "label": "Historical advancement",
+        "guidance": "Prioritize public office and merit.",
+        "axes": [
+            {
+                "id": "office_rank",
+                "label": "Office rank",
+                "description": "Advance through public office.",
+                "tiers": ["commoner", "magistrate", "minister"],
+                "optional": False,
+            },
+            {
+                "id": "immortal_path",
+                "label": "Immortal path",
+                "description": "Optional cultivation advancement.",
+                "tiers": ["qi refinement", "foundation establishment"],
+                "optional": True,
+            },
+        ],
+    }
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {"progression_profile": progression_profile},
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    assert load("profile_fixture", scenarios_root=root).generation_profile["progression_profile"] == progression_profile
+
+
+@pytest.mark.parametrize(
+    ("progression_profile", "error_path"),
+    [
+        ({"id": "empty", "label": "Empty", "axes": []}, r"progression_profile\.axes"),
+        (
+            {
+                "id": "bad-tier",
+                "label": "Bad tier",
+                "axes": [
+                    {
+                        "id": "office",
+                        "label": "Office",
+                        "description": "Public office.",
+                        "tiers": ["clerk", 2],
+                    }
+                ],
+            },
+            r"progression_profile\.axes\[0\]\.tiers\[1\]",
+        ),
+    ],
+)
+def test_loader_rejects_invalid_progression_profile_schema(
+    tmp_path: Path,
+    progression_profile: dict,
+    error_path: str,
+):
+    root = _write_scenario(
+        tmp_path,
+        scenario_patch={
+            "initial_state": {
+                "year": 1,
+                "month": 1,
+                "generation_profile": {"progression_profile": progression_profile},
+                "avatars": [_scenario_avatar()],
+                "sects": [],
+                "relationships": [],
+                "world_flags": {},
+            }
+        },
+    )
+
+    with pytest.raises(ScenarioValidationError, match=error_path):
+        load("profile_fixture", scenarios_root=root)
+
+
 def test_generation_profile_reaches_scripted_scenario(tmp_path: Path):
     profile = {
         "generation_sources": {

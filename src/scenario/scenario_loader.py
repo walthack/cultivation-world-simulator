@@ -33,6 +33,8 @@ GENERATION_PROFILE_SOURCE_VALUES = {"scenario", "default", "mixed"}
 GENERATION_PROFILE_SOURCE_KEYS = ("npc_names", "personas", "sects", "regions")
 NARRATIVE_CONTEXT_KEYS = ("background", "style", "terminology", "world_lore", "world_lore_mode")
 WORLD_LORE_MODES = {"append", "prepend", "replace"}
+PROGRESSION_PROFILE_KEYS = {"id", "label", "guidance", "axes"}
+PROGRESSION_AXIS_KEYS = {"id", "label", "description", "tiers", "optional"}
 # Scenario generation source control v1.2, spec §5.1.
 KIND_TO_PRESET_FILE = {
     "regions": "regions.json",
@@ -327,6 +329,73 @@ def _validate_optional_generation_profile(initial_state: dict[str, Any]) -> None
                     "string",
                     replacement,
                 )
+
+    progression_profile = profile.get("progression_profile")
+    if progression_profile is not None:
+        _validate_progression_profile(
+            progression_profile,
+            path="scenario.initial_state.generation_profile.progression_profile",
+        )
+
+
+def _validate_progression_profile(profile: Any, *, path: str) -> None:
+    if not isinstance(profile, dict):
+        raise ScenarioValidationError(path, "object", profile)
+
+    unknown_keys = set(profile) - PROGRESSION_PROFILE_KEYS
+    if unknown_keys:
+        key = sorted(unknown_keys)[0]
+        raise ScenarioValidationError(f"{path}.{key}", f"one of {sorted(PROGRESSION_PROFILE_KEYS)}", profile[key])
+
+    for key in ("id", "label"):
+        value = profile.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise ScenarioValidationError(f"{path}.{key}", "non-empty string", value)
+
+    guidance = profile.get("guidance")
+    if guidance is not None and (not isinstance(guidance, str) or not guidance.strip()):
+        raise ScenarioValidationError(f"{path}.guidance", "non-empty string", guidance)
+
+    axes = profile.get("axes")
+    if not isinstance(axes, list) or not axes:
+        raise ScenarioValidationError(f"{path}.axes", "non-empty list", axes)
+
+    axis_ids: set[str] = set()
+    for index, axis in enumerate(axes):
+        axis_path = f"{path}.axes[{index}]"
+        if not isinstance(axis, dict):
+            raise ScenarioValidationError(axis_path, "object", axis)
+        unknown_axis_keys = set(axis) - PROGRESSION_AXIS_KEYS
+        if unknown_axis_keys:
+            key = sorted(unknown_axis_keys)[0]
+            raise ScenarioValidationError(
+                f"{axis_path}.{key}",
+                f"one of {sorted(PROGRESSION_AXIS_KEYS)}",
+                axis[key],
+            )
+        for key in ("id", "label", "description"):
+            value = axis.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ScenarioValidationError(f"{axis_path}.{key}", "non-empty string", value)
+        axis_id = axis["id"]
+        if axis_id in axis_ids:
+            raise ScenarioValidationError(f"{axis_path}.id", "unique axis id", axis_id)
+        axis_ids.add(axis_id)
+
+        tiers = axis.get("tiers")
+        if not isinstance(tiers, list) or not tiers:
+            raise ScenarioValidationError(f"{axis_path}.tiers", "non-empty list of strings", tiers)
+        for tier_index, tier in enumerate(tiers):
+            if not isinstance(tier, str) or not tier.strip():
+                raise ScenarioValidationError(
+                    f"{axis_path}.tiers[{tier_index}]",
+                    "non-empty string",
+                    tier,
+                )
+
+        optional = axis.get("optional")
+        if optional is not None and not isinstance(optional, bool):
+            raise ScenarioValidationError(f"{axis_path}.optional", "boolean", optional)
 
 
 def _validate_generation_sources(data: dict[str, Any], *, preset_id: str) -> None:

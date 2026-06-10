@@ -101,6 +101,13 @@ async def test_liuchao_long_term_objective_prompt_contains_narrative_context(dum
 
     infos = mock_llm.await_args.args[2]
     _assert_liuchao_m2_world_lore(infos["world_lore"], context)
+    progression = infos["avatar_info"]["成长体系"]
+    assert "六朝功业进身" in progression
+    assert "官阶 [主要成长轴]" in progression
+    assert "功业 [主要成长轴]" in progression
+    assert "名望 [主要成长轴]" in progression
+    assert "仙门进境 [可选共存轴]" in progression
+    assert "优先围绕晋升官阶、积累功业" in progression
 
 
 @pytest.mark.asyncio
@@ -168,6 +175,29 @@ async def test_no_scenario_prompts_do_not_contain_scenario_block(dummy_avatar):
     assert story_infos["world_lore"] == "原始世界观"
     assert "Scenario narrative context:" not in objective_infos["world_lore"]
     assert "Scenario narrative context:" not in story_infos["story_prompt"]
+    progression = objective_infos["avatar_info"]["成长体系"]
+    assert "修真境界（cultivation）" in progression
+    assert "练气 → 筑基 → 金丹 → 元婴" in progression
+    assert "可选共存轴" not in progression
+
+
+@pytest.mark.asyncio
+async def test_scenario_without_progression_profile_uses_default_cultivation(dummy_avatar):
+    dummy_avatar.world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="legacy_scenario",
+        timeline=[],
+        generation_profile={"narrative_context": {"background": "Legacy scenario"}},
+    )
+
+    with patch(
+        "src.classes.long_term_objective.call_llm_with_task_name",
+        new=AsyncMock(return_value={"long_term_objective": "突破金丹"}),
+    ) as mock_llm:
+        await generate_long_term_objective(dummy_avatar)
+
+    progression = mock_llm.await_args.args[2]["avatar_info"]["成长体系"]
+    assert "修真境界（cultivation）" in progression
+    assert "金丹" in progression
 
 
 @pytest.mark.asyncio

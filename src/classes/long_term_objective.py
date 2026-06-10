@@ -17,6 +17,7 @@ from src.run.log import get_logger
 from src.classes.actions import get_action_infos_str
 from src.i18n import t
 from src.scenario.narrative_context import build_prompt_world_lore
+from src.scenario.progression_profile import build_progression_context
 from src.classes.relation.relationship_summary import build_avatar_relationship_summary
 
 logger = get_logger().logger
@@ -86,12 +87,13 @@ async def generate_long_term_objective(avatar: "Avatar") -> Optional[LongTermObj
     
     # 获取 expanded_info（包含详细信息和事件历史）
     expanded_info = avatar.get_expanded_info(detailed=True)
+    expanded_info = {
+        "角色资料": expanded_info,
+        "成长体系": build_progression_context(avatar.world),
+    }
     relationship_summary = build_avatar_relationship_summary(avatar)
     if relationship_summary:
-        expanded_info = {
-            "角色资料": expanded_info,
-            "关系网摘要": relationship_summary,
-        }
+        expanded_info["关系网摘要"] = relationship_summary
     
     # 准备模板参数
     template_path = CONFIG.paths.templates / "long_term_objective.txt"

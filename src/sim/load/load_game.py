@@ -140,6 +140,7 @@ def load_game(
             world.scripted_scenario = ScriptedScenarioState(
                 scenario_id=saved_id,
                 timeline=list(resolved.timeline or []),
+                generation_profile=resolved.generation_profile,
                 state=dict(saved_sc.get("state", {}) or {}),
                 triggered_events=set(saved_sc.get("triggered_events", []) or []),
             )
