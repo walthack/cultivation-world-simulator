@@ -17,6 +17,7 @@ def test_start_uses_default_host_and_port():
     from src.server import main
 
     with patch.dict(os.environ, {}, clear=True), \
+         patch("src.server.bootstrap.get_free_port", return_value=8002), \
          patch.object(main, "uvicorn") as mock_uvicorn, \
          patch("webbrowser.open"), \
          patch("os.kill"):
