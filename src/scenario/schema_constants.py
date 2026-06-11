@@ -41,6 +41,7 @@ class ScenarioEffectType(StrEnum):
     WORLD_EVENT_TRIGGER = "world_event_trigger"
     ECONOMY_EVENT = "economy_event"
     SET_VAR = "set_var"
+    ACTIVATE_STORYLINE = "activate_storyline"
 
 
 CANONICAL_PREDICATES = frozenset(item.value for item in ScenarioPredicate)

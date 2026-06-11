@@ -17,6 +17,7 @@ from .state_access import (
     get_relation,
     get_scenario_runtime,
     get_scenario_vars,
+    get_active_storylines,
     get_value,
     get_world_flags,
     set_relation,
@@ -173,6 +174,13 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
         return
     if effect_type == "set_var":
         get_scenario_vars(state)[str(_require(effect, "name"))] = _require(effect, "value")
+        return
+
+    if effect_type == "activate_storyline":
+        storyline = str(_require(effect, "storyline"))
+        active = get_active_storylines(state)
+        if storyline not in active:
+            active.append(storyline)
         return
 
     registered = _EFFECT_REGISTRY.get(effect_type)

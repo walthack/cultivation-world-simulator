@@ -863,7 +863,42 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
             for ref in event.get(field_name, []) or []:
                 if ref not in event_ids:
                     raise MissingReferenceError(f"{path}.{field_name}", ref, "timeline.events[].id")
+
+    _validate_storyline_reachability(events)
     return events
+
+
+def _activated_storylines(events: list[dict[str, Any]]) -> set[str]:
+    """Storyline ids that some `activate_storyline` effect can produce, scanning
+    top-level effects, choice effects, and branch effects."""
+    produced: set[str] = set()
+
+    def scan(effects: Any) -> None:
+        for effect in effects or []:
+            if isinstance(effect, dict) and effect.get("type") == "activate_storyline" and effect.get("storyline"):
+                produced.add(str(effect["storyline"]))
+
+    for event in events:
+        scan(event.get("effects"))
+        for choice in event.get("choices", []) or []:
+            scan(choice.get("effects"))
+        for branch in event.get("branches", []) or []:
+            scan(branch.get("effects"))
+    return produced
+
+
+def _validate_storyline_reachability(events: list[dict[str, Any]]) -> None:
+    """v1.6 step B: an event tagged with a `storyline` that no `activate_storyline`
+    effect can produce is unreachable — a structural authoring error."""
+    produced = _activated_storylines(events)
+    for idx, event in enumerate(events):
+        storyline = event.get("storyline")
+        if storyline is not None and str(storyline) not in produced:
+            raise ScenarioValidationError(
+                f"timeline.events[{idx}].storyline",
+                "a storyline activatable by some activate_storyline effect",
+                storyline,
+            )
 
 
 def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedScenario:
