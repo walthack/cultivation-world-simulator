@@ -15,12 +15,13 @@ def _load_progression_context(base_world, scenario_id: str) -> str:
 def test_liuchao_progression_prompt_uses_scenario_profile(base_world):
     context = _load_progression_context(base_world, "liuchao")
 
-    assert "六朝功业进身" in context
-    assert "功业 [主要成长轴]" in context
-    assert "立身 → 建功 → 柱石 → 定鼎" in context
-    assert "官阶 [主要成长轴]" in context
-    assert "名望 [主要成长轴]" in context
-    assert "优先围绕晋升官阶、积累功业" in context
+    assert "六朝生存、修行与立业" in context
+    assert "太乙九境 [主要成长轴]" in context
+    assert "第一境·筑基 → 第二境·内视" in context
+    assert "身份与官职 [主要成长轴]" in context
+    assert "奴隶 → 平民 → 商人" in context
+    assert "名望与势力 [主要成长轴]" in context
+    assert "同时尊重太乙九境" in context
     assert "成长体系：修真境界（cultivation）" not in context
 
 

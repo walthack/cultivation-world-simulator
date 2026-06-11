@@ -23,32 +23,44 @@ from src.sim.avatar_init import make_avatars
 from src.utils import name_generator
 
 
-LIUCHAO_LAST_NAMES = {"程", "王", "紫", "萧", "秦"}
-LIUCHAO_MALE_NAMES = {"宗扬", "哲", "羽", "玄", "昭"}
-LIUCHAO_PERSONAS = {"谋略", "现代知识", "野心", "灰色道德", "忠义", "神秘"}
+LIUCHAO_LAST_NAMES = {"程", "王", "秦", "吴", "赵", "林", "李", "萧", "云", "郭", "孟", "阮"}
+LIUCHAO_MALE_NAMES = {"宗扬", "哲", "会之", "三桂", "充国", "子元", "非卿", "清浦", "苍峰", "遥逸"}
+LIUCHAO_PERSONAS = {
+    "现代知识",
+    "商业谈判",
+    "临机权变",
+    "忠义守诺",
+    "军伍果断",
+    "医者仁心",
+    "情报谋算",
+    "巫毒秘术",
+    "朝堂权术",
+    "江湖侠义",
+}
 LIUCHAO_SECTS = {
     "太乙真宗",
-    "王氏玄门",
-    "谢氏清府",
-    "兰亭清谈社",
-    "栖霞禅院",
-    "茅山道观",
-    "北府流亡盟",
-    "富春山隐宗",
-    "竹林玄社",
-    "秦淮江左会",
+    "光明观堂",
+    "殇侯门",
+    "巫宗",
+    "毒宗",
+    "星月湖大营",
+    "大孚灵鹫寺",
+    "影月宗",
+    "瑶池宗",
+    "神霄宗",
 }
 LIUCHAO_REGIONS = {
-    "临安",
-    "江南",
-    "洛阳",
-    "北境",
-    "建康",
-    "成都",
-    "巴蜀群山",
-    "长安",
-    "关中",
+    "大草原战场",
     "太一山",
+    "五原城",
+    "南荒",
+    "碧鲮海湾",
+    "晴州",
+    "星月湖",
+    "江州",
+    "临安",
+    "洛都",
+    "龙阙山",
 }
 
 
@@ -131,8 +143,12 @@ def test_npc_name_source_switching(source: str):
         assert last_names == default_last_names
         assert male_names == default_male_names
     else:
-        assert last_names[: len(LIUCHAO_LAST_NAMES)] == ["程", "王", "紫", "萧", "秦"]
-        assert male_names[: len(LIUCHAO_MALE_NAMES)] == ["宗扬", "哲", "羽", "玄", "昭"]
+        assert last_names[: len(LIUCHAO_LAST_NAMES)] == [
+            "程", "王", "秦", "吴", "赵", "林", "李", "萧", "云", "郭", "孟", "阮"
+        ]
+        assert male_names[: len(LIUCHAO_MALE_NAMES)] == [
+            "宗扬", "哲", "会之", "三桂", "充国", "子元", "非卿", "清浦", "苍峰", "遥逸"
+        ]
         assert set(default_last_names) <= set(last_names)
         assert set(default_male_names) <= set(male_names)
 
@@ -149,7 +165,8 @@ def test_liuchao_random_npc_names_use_generation_profile_pool(base_world, monkey
         for avatar in avatars.values()
     }
 
-    assert surnames == LIUCHAO_LAST_NAMES
+    assert surnames <= LIUCHAO_LAST_NAMES
+    assert len(surnames) >= 8
 
 
 def test_no_scenario_random_npc_names_are_not_sticky_after_scenario(base_world, monkeypatch):

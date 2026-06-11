@@ -132,7 +132,7 @@ async def test_server_scenario_world_uses_initial_state_start_time_without_manua
 
 
 @pytest.mark.asyncio
-async def test_cheng_zongyang_perspective_filters_month_2_events(mock_llm_managers):
+async def test_cheng_zongyang_perspective_receives_month_2_origin_event(mock_llm_managers):
     world = _scenario_world(controlled_avatar="cheng-zongyang")
     sim = Simulator(world)
 
@@ -140,13 +140,11 @@ async def test_cheng_zongyang_perspective_filters_month_2_events(mock_llm_manage
     events = await sim.step()
 
     ids = [event.id for event in events]
-    assert "cheng-zongyang-arrives-at-linan-gate" in ids
-    assert "wang-zhe-arrives-at-linan-gate" not in ids
-    assert "xiao-zi-arrives-at-linan-gate" not in ids
+    assert ids == ["duan-qiang-falls"]
 
 
 @pytest.mark.asyncio
-async def test_wang_zhe_roleplay_bridge_filters_month_2_event(mock_llm_managers):
+async def test_wang_zhe_roleplay_bridge_keeps_controlled_avatar_for_origin_event(mock_llm_managers):
     world = _scenario_world(controlled_avatar="wang-zhe")
     sim = Simulator(world)
 
@@ -155,9 +153,7 @@ async def test_wang_zhe_roleplay_bridge_filters_month_2_event(mock_llm_managers)
 
     ids = [event.id for event in events]
     assert world.scripted_scenario.state["controlled_avatar"] == "wang-zhe"
-    assert "wang-zhe-arrives-at-linan-gate" in ids
-    assert "cheng-zongyang-arrives-at-linan-gate" not in ids
-    assert "xiao-zi-arrives-at-linan-gate" not in ids
+    assert ids == ["duan-qiang-falls"]
 
 
 def test_unknown_scenario_id_fails_before_server_boot():

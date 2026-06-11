@@ -26,7 +26,7 @@ def test_realm_alias_round_trip():
 
 def test_realm_canonical_name_lookup():
     assert get_preset_realm_by_canonical_name("default", "foundation_establishment") == "FOUNDATION_ESTABLISHMENT"
-    assert get_preset_realm_by_canonical_name("liuchao", "HE_TI") == "HE_Ti"
+    assert get_preset_realm_by_canonical_name("liuchao", "tong_you") == "TONG_YOU"
 
 
 def test_dsl_canonical_predicates_are_frozen():
