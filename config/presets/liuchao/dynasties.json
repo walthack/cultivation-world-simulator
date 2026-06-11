@@ -2,85 +2,74 @@
   "preset_id": "liuchao",
   "dynasties": [
     {
+      "id": "qin",
+      "name": "秦军",
+      "description": "开篇草原战场上的尚黑军队，以严整步阵、长兵与弩机对抗半兽人。更完整的朝廷结构原文未载。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "grassland_battlefield"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "taiyi",
+          "type": "ally",
+          "value": 25
+        }
+      ],
+      "orthodoxy_ids": [
+        "military_order"
+      ],
+      "tags": [
+        "catalog-anchored",
+        "opening",
+        "liuchao"
+      ]
+    },
+    {
       "id": "song",
-      "name": "宋",
-      "description": "临安一带的南朝政权，重文治与商业网络，是六朝局势的重要中枢。",
+      "name": "宋国朝廷",
+      "description": "以临安为都的朝廷，内有太师、太尉、皇城司与宫廷诸势力，程宗扬曾任工部屯田司员外郎、宝钞局主事。",
       "capital_region_id": "linan",
       "ruler_avatar_id": null,
       "territory_region_ids": [
-        "linan",
-        "jiangnan"
+        "linan"
       ],
       "status": "active",
       "founding_year": 1,
       "relations": [
         {
           "other_dynasty_id": "han",
-          "type": "rival",
-          "value": -30
-        },
-        {
-          "other_dynasty_id": "jin",
           "type": "neutral",
           "value": 0
         },
         {
-          "other_dynasty_id": "xishu",
-          "type": "neutral",
-          "value": 10
+          "other_dynasty_id": "wumu",
+          "type": "rival",
+          "value": -20
         }
       ],
       "orthodoxy_ids": [
-        "confucianism"
+        "court_order"
       ],
       "tags": [
-        "confirmed",
+        "catalog-anchored",
+        "yunlongyin",
         "liuchao"
       ]
     },
     {
       "id": "han",
-      "name": "汉",
-      "description": "北地汉统势力，强调正朔名分与边地军政。",
-      "capital_region_id": "luoyang",
+      "name": "汉国朝廷",
+      "description": "以洛都为都的汉室政权，外戚、权臣与军府彼此牵制，程宗扬后任鸿胪寺大行令。",
+      "capital_region_id": "luodu",
       "ruler_avatar_id": null,
       "territory_region_ids": [
-        "luoyang",
-        "north_border"
+        "luodu"
       ],
       "status": "active",
-      "founding_year": 1,
-      "relations": [
-        {
-          "other_dynasty_id": "song",
-          "type": "rival",
-          "value": -30
-        },
-        {
-          "other_dynasty_id": "jin",
-          "type": "rival",
-          "value": -20
-        }
-      ],
-      "orthodoxy_ids": [
-        "confucianism"
-      ],
-      "tags": [
-        "confirmed",
-        "liuchao"
-      ]
-    },
-    {
-      "id": "jin",
-      "name": "晋",
-      "description": "门阀与玄学风气浓厚的旧族政权，士族影响深重。",
-      "capital_region_id": "jiankang",
-      "ruler_avatar_id": null,
-      "territory_region_ids": [
-        "jiankang",
-        "jiangnan"
-      ],
-      "status": "declining",
       "founding_year": 1,
       "relations": [
         {
@@ -89,92 +78,241 @@
           "value": 0
         },
         {
-          "other_dynasty_id": "han",
+          "other_dynasty_id": "panjiang",
+          "type": "ally",
+          "value": 30
+        }
+      ],
+      "orthodoxy_ids": [
+        "court_order"
+      ],
+      "tags": [
+        "catalog-anchored",
+        "yangehang",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "taiyi",
+      "name": "太乙真宗",
+      "description": "天下第一宗门，王哲曾任掌教，以九阳神功与九境修行体系影响六朝格局。",
+      "capital_region_id": "longque_mountain",
+      "ruler_avatar_id": "wang-zhe",
+      "territory_region_ids": [
+        "taiyi_mountain",
+        "longque_mountain"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "guangming",
+          "type": "ally",
+          "value": 25
+        },
+        {
+          "other_dynasty_id": "black_sea",
+          "type": "rival",
+          "value": -35
+        }
+      ],
+      "orthodoxy_ids": [
+        "taiyi_dao"
+      ],
+      "tags": [
+        "catalog-anchored",
+        "sect",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "guangming",
+      "name": "光明观堂",
+      "description": "以医术传世的门派，乐明珠、李师师皆与其有关，最高传承为光明三绝。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "black_sea",
+          "type": "enemy",
+          "value": -70
+        },
+        {
+          "other_dynasty_id": "taiyi",
+          "type": "ally",
+          "value": 25
+        }
+      ],
+      "orthodoxy_ids": [
+        "healing_path"
+      ],
+      "tags": [
+        "catalog-anchored",
+        "medical",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "wumu",
+      "name": "岳家军与星月湖",
+      "description": "岳鹏举留下的武穆势力网络，以星月湖大营、八骏、鹏翼社与旧部为骨干。",
+      "capital_region_id": "xingyue_lake",
+      "ruler_avatar_id": null,
+      "territory_region_ids": [
+        "xingyue_lake",
+        "jiangzhou"
+      ],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "panjiang",
+          "type": "ally",
+          "value": 75
+        },
+        {
+          "other_dynasty_id": "song",
           "type": "rival",
           "value": -20
         }
       ],
       "orthodoxy_ids": [
-        "confucianism",
-        "dao"
+        "military_order"
       ],
       "tags": [
-        "confirmed",
+        "catalog-anchored",
+        "wumu",
         "liuchao"
       ]
     },
     {
-      "id": "xishu",
-      "name": "西蜀",
-      "description": "蜀地山川险阻中的割据政权，倚重关隘、商路与地方豪族。",
-      "capital_region_id": "chengdu",
+      "id": "shanghou",
+      "name": "殇侯门",
+      "description": "与秦桧、吴三桂等人背景相关的门下网络，擅长情报、谋略与武力行动。总部位置原文未载。",
+      "capital_region_id": null,
+      "ruler_avatar_id": null,
+      "territory_region_ids": [],
+      "status": "active",
+      "founding_year": 1,
+      "relations": [
+        {
+          "other_dynasty_id": "black_sea",
+          "type": "enemy",
+          "value": -60
+        },
+        {
+          "other_dynasty_id": "panjiang",
+          "type": "ally",
+          "value": 70
+        }
+      ],
+      "orthodoxy_ids": [
+        "pragmatic_path"
+      ],
+      "tags": [
+        "catalog-anchored",
+        "intelligence",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "black_sea",
+      "name": "黑魔海巫毒二宗",
+      "description": "包含巫宗、毒宗等相关宗脉的隐秘势力，小紫与其背景相连，剑玉姬等人长期布局六朝。",
+      "capital_region_id": null,
       "ruler_avatar_id": null,
       "territory_region_ids": [
-        "chengdu",
-        "bashu_mountains"
+        "nanhuang"
       ],
       "status": "active",
       "founding_year": 1,
       "relations": [
         {
-          "other_dynasty_id": "song",
-          "type": "neutral",
-          "value": 10
+          "other_dynasty_id": "guangming",
+          "type": "enemy",
+          "value": -70
         },
         {
-          "other_dynasty_id": "qin",
+          "other_dynasty_id": "shanghou",
           "type": "enemy",
           "value": -60
         }
       ],
       "orthodoxy_ids": [
-        "dao"
+        "secret_arts"
       ],
       "tags": [
-        "confirmed",
+        "catalog-anchored",
+        "wuzong",
+        "duzong",
         "liuchao"
       ]
     },
     {
-      "id": "qin",
-      "name": "秦",
-      "description": "TODO: 秦的六朝细节待 Stage 2c content pass 补全；暂按西北尚法重军势力占位。",
-      "capital_region_id": "chang_an",
+      "id": "qingzhou_network",
+      "name": "晴州商佣网络",
+      "description": "中立商业与佣兵网络，以交易和受雇行动维系，各组织之间并无原文明载的统一首领。",
+      "capital_region_id": "qingzhou",
       "ruler_avatar_id": null,
       "territory_region_ids": [
-        "chang_an",
-        "guanzhong"
+        "qingzhou"
       ],
       "status": "active",
       "founding_year": 1,
       "relations": [
         {
-          "other_dynasty_id": "xishu",
-          "type": "enemy",
-          "value": -60
+          "other_dynasty_id": "panjiang",
+          "type": "ally",
+          "value": 20
         }
       ],
-      "orthodoxy_ids": [],
+      "orthodoxy_ids": [
+        "merchant_compact"
+      ],
       "tags": [
-        "todo",
-        "placeholder",
+        "catalog-anchored",
+        "neutral",
         "liuchao"
       ]
     },
     {
-      "id": "placeholder-sixth",
-      "name": "第六势力占位",
-      "description": "TODO: 六朝第六势力待 Hassan 确认后替换；当前只为 schema graph 验证保留。",
-      "capital_region_id": null,
-      "ruler_avatar_id": null,
-      "territory_region_ids": [],
-      "status": "declining",
+      "id": "panjiang",
+      "name": "盘江程氏",
+      "description": "程宗扬逐步建立的商政势力，连接星月湖、云氏商会、殇侯门人与诸国官场。",
+      "capital_region_id": "wuyuan_city",
+      "ruler_avatar_id": "cheng-zongyang",
+      "territory_region_ids": [
+        "wuyuan_city"
+      ],
+      "status": "active",
       "founding_year": 1,
-      "relations": [],
-      "orthodoxy_ids": [],
+      "relations": [
+        {
+          "other_dynasty_id": "wumu",
+          "type": "ally",
+          "value": 75
+        },
+        {
+          "other_dynasty_id": "shanghou",
+          "type": "ally",
+          "value": 70
+        },
+        {
+          "other_dynasty_id": "qingzhou_network",
+          "type": "ally",
+          "value": 20
+        }
+      ],
+      "orthodoxy_ids": [
+        "merchant_compact",
+        "pragmatic_path"
+      ],
       "tags": [
-        "todo",
-        "placeholder",
+        "catalog-anchored",
+        "cheng-zongyang",
         "liuchao"
       ]
     }

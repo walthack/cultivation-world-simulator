@@ -3,118 +3,85 @@
   "races": [
     {
       "id": "human",
-      "name": "人族",
-      "description": "六朝城邑与山野中的常见族类，既有江左士人，也有乱世流民。门阀、清谈、寺观与乡野都能塑造他们的去向。",
-      "behavior_description": "行动主要由性格、目标、宗门、阵营与当前处境决定，常在门第声望、避乱谋生与山水修行之间权衡。",
-      "weight": 3,
+      "name": "人",
+      "description": "六朝世界最常见的族类，分属诸国、军伍、商旅与宗门。",
+      "behavior_description": "依身份、阵营与现实利益行动，既可能投身朝局，也可能行商、从军或修行。",
+      "weight": 5,
       "stat_modifiers": {},
       "effect_dsl": "{extra_item_sell_price_multiplier: 0.03}",
       "tags": [
         "liuchao",
-        "menfa",
-        "jiangzuo"
+        "catalog-anchored"
       ]
     },
     {
-      "id": "mountain_spirit",
-      "name": "山灵",
-      "description": "山泽灵气凝成的异族，常被山水诗人与寺观隐者视作幽栖之兆。它们受清泉竹影滋养，心性清远而不喜尘争。",
-      "behavior_description": "行动倾向守护栖居之地、避开朝局锋芒，并在机缘靠近时试探接触。",
+      "id": "beastfolk",
+      "name": "半兽人",
+      "description": "与秦军长期交战的智慧族群，体格高大、力量与速度远胜常人，惯用重型兵器。",
+      "behavior_description": "重视族群生存与战场力量，在草原冲突中常以强悍体魄突破军阵。",
       "weight": 2,
-      "stat_modifiers": {
-        "wisdom": 1
-      },
-      "effect_dsl": "{extra_harvest_materials: 1, extra_retreat_success_rate: 0.05}",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_battle_strength_points: 2, extra_max_hp: 30}",
       "tags": [
         "liuchao",
-        "shanshui",
-        "siguan"
+        "catalog-anchored",
+        "frontier"
       ]
     },
     {
-      "id": "wandering_shade",
-      "name": "游魂",
-      "description": "乱世余念依附灵气而存，形迹隐约，常出没于旧都废苑与江畔荒村。志怪小说中多记其守着未了的姓名与归路。",
-      "behavior_description": "行动倾向回避正面争斗，围绕执念、旧地与因果线索活动。",
+      "id": "sharkfolk",
+      "name": "鲛人",
+      "description": "出没于碧鲮海湾及周边水域的异族，擅长在海湾与水下环境活动。",
+      "behavior_description": "以海域、潮汐和族群安全为先，对陆上势力保持谨慎。",
       "weight": 1,
       "stat_modifiers": {},
-      "effect_dsl": "{extra_escape_success_rate: 0.1, extra_luck: -2}",
+      "effect_dsl": "{extra_escape_success_rate: 0.08, extra_harvest_materials: 1}",
       "tags": [
         "liuchao",
-        "zhiguai",
-        "luanshi"
+        "catalog-anchored",
+        "biling-bay"
       ]
     },
     {
-      "id": "liuchao-menfa-scattered",
-      "name": "寒门旧裔",
-      "description": "出自衰落门第，仍记得族谱礼法，却已难靠门望立足。乱世使他们更会经营人情，也更怕被卷入豪族争斗。",
-      "behavior_description": "行动倾向寻找庇护、修补声望、结交可依靠的势力，并避免无谓的正面冲突。",
-      "weight": 2,
-      "stat_modifiers": {},
-      "effect_dsl": "{extra_item_sell_price_multiplier: 0.05, extra_retreat_success_rate: 0.05}",
-      "tags": [
-        "liuchao",
-        "menfa",
-        "luanshi"
-      ]
-    },
-    {
-      "id": "liuchao-qingtan-scholar",
-      "name": "清谈士",
-      "description": "仿效王羲之、谢安一类风流名士，以言辞、仪态与玄理周旋世局。其修行不重蛮力，更重识人和避祸。",
-      "behavior_description": "行动倾向结社论道、以言辞化解冲突、评量人物名声，并在危险逼近时保全体面。",
-      "weight": 2,
-      "stat_modifiers": {
-        "wisdom": 1
-      },
-      "effect_dsl": "{extra_appearance: 1, extra_retreat_success_rate: 0.05}",
-      "tags": [
-        "liuchao",
-        "qingtan",
-        "xuanxue"
-      ]
-    },
-    {
-      "id": "liuchao-river-exile",
-      "name": "江畔流亡者",
-      "description": "因兵乱或朝局漂泊江左，熟悉渡口、客舟与寄居寺观。漂泊削弱了根基，却也练就了脱身的本事。",
-      "behavior_description": "行动倾向迁徙避险、依附临时盟友、寻找安身之地，并珍惜可携带的资源。",
+      "id": "tianzhu",
+      "name": "天竺人",
+      "description": "来自六朝以外天竺地域的异域人群，经商路与海路进入南荒及沿海地区。",
+      "behavior_description": "重视同乡联系与旅途安全，常依托商旅和港湾谋生。",
       "weight": 1,
       "stat_modifiers": {},
-      "effect_dsl": "{extra_escape_success_rate: 0.15, extra_item_sell_price_multiplier: -0.03}",
+      "effect_dsl": "{extra_item_sell_price_multiplier: 0.05}",
       "tags": [
         "liuchao",
-        "liuwang",
-        "jiangzuo"
+        "catalog-anchored",
+        "foreign"
       ]
     },
     {
-      "id": "liuchao-siguan-attendant",
-      "name": "寺观行者",
-      "description": "往来佛寺道观之间，听过慧远讲法，也见过山门外的乱离。其性情多谨慎，修行偏向疗养与守心。",
-      "behavior_description": "行动倾向护持寺观、收容流亡者、回避杀伐，并优先选择可安定身心的修行。",
-      "weight": 2,
-      "stat_modifiers": {},
-      "effect_dsl": "{extra_rest_hp_recovery_rate: 0.1, extra_retreat_success_rate: 0.05}",
-      "tags": [
-        "liuchao",
-        "siguan",
-        "liuwang"
-      ]
-    },
-    {
-      "id": "liuchao-zhiguai-born",
-      "name": "志怪异民",
-      "description": "身世近于志怪小说所记的异人，或生于古墓边，或闻夜雨而知祸福。旁人畏其不祥，它们却常在险处得见机缘。",
-      "behavior_description": "行动倾向追索怪异传闻、避开人群猜忌，并在危险地域寻找被忽略的线索。",
+      "id": "huamiao",
+      "name": "花苗",
+      "description": "南荒族群之一，有自身的聚落传统与异族修炼传承。",
+      "behavior_description": "优先维护聚落、习俗与南荒生存秩序，对外来者先观察后接纳。",
       "weight": 1,
       "stat_modifiers": {},
-      "effect_dsl": "{extra_fortune_probability: 0.002, extra_hidden_domain_danger_prob: -0.02}",
+      "effect_dsl": "{extra_harvest_materials: 1, extra_hidden_domain_danger_prob: -0.02}",
       "tags": [
         "liuchao",
-        "zhiguai",
-        "luanshi"
+        "catalog-anchored",
+        "nanhuang"
+      ]
+    },
+    {
+      "id": "beastman",
+      "name": "兽蛮人",
+      "description": "金兀术、青面兽等人所属的异族群体，拥有强健体魄，也可融入佣兵与护卫队伍。",
+      "behavior_description": "重视实力与同伴承诺，常以护卫、佣兵或武人的身份参与各方行动。",
+      "weight": 1,
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_battle_strength_points: 2, extra_rest_hp_recovery_rate: 0.05}",
+      "tags": [
+        "liuchao",
+        "catalog-anchored",
+        "mercenary"
       ]
     }
   ]

@@ -1,6 +1,17 @@
 {
   "preset_id": "liuchao",
-  "sect_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "sect_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
   "sects": [
     {
       "id": 1,
@@ -9,48 +20,48 @@
     },
     {
       "id": 2,
-      "scenario_id": "liuchao-menfa-wangshi",
-      "name": "王氏玄门"
+      "scenario_id": "guangming-guantang",
+      "name": "光明观堂"
     },
     {
       "id": 3,
-      "scenario_id": "liuchao-menfa-xieshi",
-      "name": "谢氏清府"
+      "scenario_id": "shanghou-men",
+      "name": "殇侯门"
     },
     {
       "id": 4,
-      "scenario_id": "liuchao-qingtan-lanting",
-      "name": "兰亭清谈社"
+      "scenario_id": "wu-zong",
+      "name": "巫宗"
     },
     {
       "id": 5,
-      "scenario_id": "liuchao-siguan-qixia",
-      "name": "栖霞禅院"
+      "scenario_id": "du-zong",
+      "name": "毒宗"
     },
     {
       "id": 6,
-      "scenario_id": "liuchao-siguan-maoshan",
-      "name": "茅山道观"
+      "scenario_id": "xingyuehu-daying",
+      "name": "星月湖大营"
     },
     {
       "id": 7,
-      "scenario_id": "liuchao-liuwang-beifu",
-      "name": "北府流亡盟"
+      "scenario_id": "dafu-lingjiusi",
+      "name": "大孚灵鹫寺"
     },
     {
       "id": 8,
-      "scenario_id": "liuchao-shanshui-fuchun",
-      "name": "富春山隐宗"
+      "scenario_id": "yingyue-zong",
+      "name": "影月宗"
     },
     {
       "id": 9,
-      "scenario_id": "liuchao-xuanxue-zhulin",
-      "name": "竹林玄社"
+      "scenario_id": "yaochi-zong",
+      "name": "瑶池宗"
     },
     {
       "id": 10,
-      "scenario_id": "liuchao-jiangzuo-qinhuai",
-      "name": "秦淮江左会"
+      "scenario_id": "shenxiao-zong",
+      "name": "神霄宗"
     }
   ]
 }
