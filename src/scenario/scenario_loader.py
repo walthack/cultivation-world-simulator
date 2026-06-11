@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from src.config.data_paths import get_data_paths
 from src.config.presets import (
     get_preset_dynasty_ids,
     get_preset_goldfinger_keys,
@@ -836,8 +837,22 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
     return events
 
 
+def _resolve_scenario_root(scenario_id: str) -> Path:
+    """Locate a scenario across both roots: bundled (config/scenarios) takes
+    precedence; imported scenarios installed under the user data root are the
+    fallback. Returns the bundled root when neither has it, so the downstream
+    "missing scenario.json" error is unchanged."""
+    bundled = get_project_root() / "config" / "scenarios"
+    if (bundled / scenario_id / "scenario.json").exists():
+        return bundled
+    installed = get_data_paths().root / "scenarios"
+    if (installed / scenario_id / "scenario.json").exists():
+        return installed
+    return bundled
+
+
 def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedScenario:
-    root = scenarios_root or (get_project_root() / "config" / "scenarios")
+    root = scenarios_root or _resolve_scenario_root(scenario_id)
     scenario_dir = root / scenario_id
     scenario = _load_json(scenario_dir / "scenario.json", required=True)
     timeline_data = _load_json(scenario_dir / "timeline.json", required=False)
