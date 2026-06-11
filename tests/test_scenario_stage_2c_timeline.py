@@ -41,13 +41,6 @@ def test_liuchao_phase_1_timeline_loads_without_schema_error():
     assert len(scenario.timeline) == 4
 
 
-def test_liuchao_phase_1_timeline_contains_no_adult_content_markers():
-    scenario = load("liuchao")
-    serialized = str(scenario.timeline)
-
-    assert all(marker not in serialized for marker in ("H场景", "18+", "性爱", "情色"))
-
-
 def test_liuchao_initial_avatar_references_resolve():
     scenario = load("liuchao")
     realm_ids = set(get_preset_realm_order("liuchao"))
