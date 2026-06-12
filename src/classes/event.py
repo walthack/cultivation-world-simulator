@@ -33,6 +33,9 @@ class Event:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     # 创建时间戳 (Unix timestamp float)
     created_at: float = field(default_factory=time.time)
+    # v1.7 render-only: LLM 生成的叙事文本。仅供前端展示——机制层（AI 记忆/condition/
+    # relation 结算）一律读 content，绝不读 narration。这是 v1.7 隔离边界的载体。
+    narration: Optional[str] = None
     # 运行时挂载的 observation，统一由 EventManager 持久化
     observations: List["EventObservation"] = field(default_factory=list, repr=False, compare=False)
 
@@ -52,7 +55,8 @@ class Event:
             "render_key": self.render_key,
             "render_params": self.render_params,
             "id": self.id,
-            "created_at": self.created_at
+            "created_at": self.created_at,
+            "narration": self.narration,
         }
     
     @classmethod
@@ -69,7 +73,8 @@ class Event:
             render_key=data.get("render_key"),
             render_params=data.get("render_params"),
             id=data.get("id", str(uuid.uuid4())),
-            created_at=data.get("created_at", time.time())
+            created_at=data.get("created_at", time.time()),
+            narration=data.get("narration"),
         )
 
 class NullEvent:

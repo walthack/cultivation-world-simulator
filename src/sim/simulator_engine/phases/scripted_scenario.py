@@ -111,4 +111,18 @@ async def phase_scripted_scenario_tick(world: Any, ctx: Any) -> list[Event]:
         month=int(month_stamp.get_month().value),
     )
     _sync_dispatch_state(sc, dispatch_state)
-    return [_to_event(world, event) for event in dispatched]
+    return [_fill_narration(world, _to_event(world, scenario_event), scenario_event) for scenario_event in dispatched]
+
+
+def _fill_narration(world: Any, event: Event, scenario_event: dict[str, Any]) -> Event:
+    """v1.7 render-only fill (M0 boundary). Writes ONLY event.narration — never
+    touches content, world state, effects, flags, or branch outcome. Opt-in via
+    the scenario event's `narrative_fill: true`; no-op unless an injectable
+    `world.narrative_filler` is set (None by default → zero behaviour change)."""
+    if not scenario_event.get("narrative_fill"):
+        return event
+    filler = getattr(world, "narrative_filler", None)
+    if filler is None:
+        return event
+    event.narration = filler(scenario_event, world)
+    return event
