@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Awaitable, Callable
 
 from .condition_evaluator import evaluate_condition
-from .state_access import ensure_list, get_scenario_runtime, get_value
+from .state_access import ensure_list, get_active_storylines, get_scenario_runtime, get_value
 
 
 Handler = Callable[[Any, dict[str, Any]], Any | Awaitable[Any]]
@@ -85,6 +85,16 @@ class EventDispatcher:
                     event_id=event_id,
                     fired=False,
                     reason="required event not triggered",
+                )
+                continue
+            storyline = event.get("storyline")
+            if storyline is not None and storyline not in get_active_storylines(state):
+                self._append_dispatch_log(
+                    runtime,
+                    month_stamp=month_stamp,
+                    event_id=event_id,
+                    fired=False,
+                    reason="storyline inactive",
                 )
                 continue
             if not evaluate_condition(state, trigger.get("condition")):

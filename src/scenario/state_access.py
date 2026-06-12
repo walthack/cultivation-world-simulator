@@ -95,3 +95,9 @@ def get_scenario_vars(state: Any) -> dict[str, Any]:
         return scripted_state
 
     return get_scenario_runtime(state)
+
+
+def get_active_storylines(state: Any) -> list[Any]:
+    """v1.6 step B: storyline ids currently active. An event tagged with a
+    `storyline` only dispatches while that id is in this set."""
+    return ensure_list(get_scenario_runtime(state), "active_storylines")

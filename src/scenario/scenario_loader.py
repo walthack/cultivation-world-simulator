@@ -51,6 +51,7 @@ KIND_TO_PRESET_FILE = {
 }
 EVENT_TYPES = {
     "main",
+    "branch",
     "world_event",
     "character_introduction",
     "relation_change",
@@ -790,6 +791,33 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         )
 
 
+def _validate_branch_event(event: dict[str, Any], path: str) -> None:
+    """v1.6 M1: a `branch` event is a selector node — non-empty `branches`,
+    each with a unique id + condition + effects; `default_branch` (if set) must
+    reference one of those branch ids."""
+    branches = event.get("branches")
+    if not isinstance(branches, list) or not branches:
+        raise ScenarioValidationError(f"{path}.branches", "non-empty list", branches)
+    branch_ids: set[str] = set()
+    for b_idx, branch in enumerate(branches):
+        b_path = f"{path}.branches[{b_idx}]"
+        if not isinstance(branch, dict):
+            raise ScenarioValidationError(b_path, "object", branch)
+        branch_id = _require(branch, "id", b_path)
+        if not isinstance(branch_id, str) or not branch_id.strip():
+            raise ScenarioValidationError(f"{b_path}.id", "non-empty string", branch_id)
+        if branch_id in branch_ids:
+            raise ScenarioValidationError(f"{b_path}.id", "unique branch id", branch_id)
+        branch_ids.add(branch_id)
+        if not isinstance(_require(branch, "condition", b_path), dict):
+            raise ScenarioValidationError(f"{b_path}.condition", "object", branch.get("condition"))
+        if not isinstance(_require(branch, "effects", b_path), list):
+            raise ScenarioValidationError(f"{b_path}.effects", "list", branch.get("effects"))
+    default_branch = event.get("default_branch")
+    if default_branch is not None and default_branch not in branch_ids:
+        raise MissingReferenceError(f"{path}.default_branch", default_branch, "branches[].id")
+
+
 def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenario_schema_version: str) -> list[dict[str, Any]]:
     if not timeline_data:
         return []
@@ -814,6 +842,8 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
         event_type = _require(event, "type", path)
         if event_type not in EVENT_TYPES:
             raise ScenarioValidationError(f"{path}.type", f"one of {sorted(EVENT_TYPES)}", event_type)
+        if event_type == "branch":
+            _validate_branch_event(event, path)
         dynasty_id = event.get("dynasty_id")
         if uses_v02_timeline and dynasty_id is not None and str(dynasty_id) not in dynasty_ids:
             raise MissingReferenceError(f"{path}.dynasty_id", dynasty_id, "preset dynasties.json")
@@ -834,6 +864,8 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
             for ref in event.get(field_name, []) or []:
                 if ref not in event_ids:
                     raise MissingReferenceError(f"{path}.{field_name}", ref, "timeline.events[].id")
+
+    _validate_storyline_reachability(events)
     return events
 
 
@@ -849,6 +881,39 @@ def _resolve_scenario_root(scenario_id: str) -> Path:
     if (installed / scenario_id / "scenario.json").exists():
         return installed
     return bundled
+
+
+def _activated_storylines(events: list[dict[str, Any]]) -> set[str]:
+    """Storyline ids that some `activate_storyline` effect can produce, scanning
+    top-level effects, choice effects, and branch effects."""
+    produced: set[str] = set()
+
+    def scan(effects: Any) -> None:
+        for effect in effects or []:
+            if isinstance(effect, dict) and effect.get("type") == "activate_storyline" and effect.get("storyline"):
+                produced.add(str(effect["storyline"]))
+
+    for event in events:
+        scan(event.get("effects"))
+        for choice in event.get("choices", []) or []:
+            scan(choice.get("effects"))
+        for branch in event.get("branches", []) or []:
+            scan(branch.get("effects"))
+    return produced
+
+
+def _validate_storyline_reachability(events: list[dict[str, Any]]) -> None:
+    """v1.6 step B: an event tagged with a `storyline` that no `activate_storyline`
+    effect can produce is unreachable — a structural authoring error."""
+    produced = _activated_storylines(events)
+    for idx, event in enumerate(events):
+        storyline = event.get("storyline")
+        if storyline is not None and str(storyline) not in produced:
+            raise ScenarioValidationError(
+                f"timeline.events[{idx}].storyline",
+                "a storyline activatable by some activate_storyline effect",
+                storyline,
+            )
 
 
 def load(scenario_id: str, *, scenarios_root: Path | None = None) -> ResolvedScenario:

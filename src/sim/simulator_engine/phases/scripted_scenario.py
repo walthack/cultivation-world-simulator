@@ -5,6 +5,7 @@ from typing import Any
 from src.classes.event import Event
 from src.scenario.event_dispatcher import EventDispatcher
 from src.scenario.event_handlers import (
+    handle_branch,
     handle_character_introduction,
     handle_ending,
     handle_main_event,
@@ -19,6 +20,7 @@ _HANDLERS = {
     "side_event": handle_side_event,
     "sect_event": handle_side_event,
     "world_event": handle_world_event,
+    "branch": handle_branch,
     "character_introduction": handle_character_introduction,
     "relation_change": handle_relation_change,
     "relationship_event": handle_relation_change,
