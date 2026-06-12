@@ -791,6 +791,26 @@ def _validate_initial_state(data: dict[str, Any], preset_id: str) -> None:
         )
 
 
+def _validate_narrative_fill(event: dict[str, Any], path: str) -> None:
+    """v1.7 (Q6+Q2): `narrative_fill` is an explicit boolean opt-in; when true the
+    event must carry a non-empty authored `narration_fallback` (the permanent
+    fallback on LLM failure / cache miss). Co-validated in one loader pass."""
+    if "narrative_fill" not in event:
+        return
+    flag = event["narrative_fill"]
+    if not isinstance(flag, bool):
+        raise ScenarioValidationError(f"{path}.narrative_fill", "boolean", flag)
+    if not flag:
+        return
+    fallback = event.get("narration_fallback")
+    if not isinstance(fallback, str) or not fallback.strip():
+        raise ScenarioValidationError(
+            f"{path}.narration_fallback",
+            "non-empty authored fallback string (required when narrative_fill is true)",
+            fallback,
+        )
+
+
 def _validate_branch_event(event: dict[str, Any], path: str) -> None:
     """v1.6 M1: a `branch` event is a selector node — non-empty `branches`,
     each with a unique id + condition + effects; `default_branch` (if set) must
@@ -844,6 +864,7 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
             raise ScenarioValidationError(f"{path}.type", f"one of {sorted(EVENT_TYPES)}", event_type)
         if event_type == "branch":
             _validate_branch_event(event, path)
+        _validate_narrative_fill(event, path)
         dynasty_id = event.get("dynasty_id")
         if uses_v02_timeline and dynasty_id is not None and str(dynasty_id) not in dynasty_ids:
             raise MissingReferenceError(f"{path}.dynasty_id", dynasty_id, "preset dynasties.json")

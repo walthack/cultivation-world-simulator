@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from src.classes.event import Event
@@ -115,14 +116,26 @@ async def phase_scripted_scenario_tick(world: Any, ctx: Any) -> list[Event]:
 
 
 def _fill_narration(world: Any, event: Event, scenario_event: dict[str, Any]) -> Event:
-    """v1.7 render-only fill (M0 boundary). Writes ONLY event.narration — never
-    touches content, world state, effects, flags, or branch outcome. Opt-in via
-    the scenario event's `narrative_fill: true`; no-op unless an injectable
-    `world.narrative_filler` is set (None by default → zero behaviour change)."""
+    """v1.7 render-only fill. Writes ONLY event.narration — never touches content,
+    world state, effects, flags, or branch outcome. Opt-in via the scenario event's
+    `narrative_fill: true`. narration = LLM text when an injectable
+    `world.narrative_filler` yields a non-empty string, else the authored
+    `narration_fallback` (Q2/Q9 — permanent fallback on no-filler / failure / miss;
+    no-LLM environments stay playable). Default (no filler) → fallback."""
     if not scenario_event.get("narrative_fill"):
         return event
+    fallback = scenario_event.get("narration_fallback")
+    text: Any = None
     filler = getattr(world, "narrative_filler", None)
-    if filler is None:
-        return event
-    event.narration = filler(scenario_event, world)
+    if filler is not None:
+        try:
+            text = filler(scenario_event, world)
+        except Exception:  # noqa: BLE001 — a filler failure must never break the tick
+            logging.getLogger(__name__).warning(
+                "narrative_filler failed for event %s; using authored fallback",
+                scenario_event.get("id"),
+                exc_info=True,
+            )
+            text = None
+    event.narration = text if isinstance(text, str) and text.strip() else fallback
     return event
