@@ -144,6 +144,9 @@ def load_game(
                 state=dict(saved_sc.get("state", {}) or {}),
                 triggered_events=set(saved_sc.get("triggered_events", []) or []),
             )
+            from src.scenario.narrative_fill import attach_default_narrative_filler
+
+            attach_default_narrative_filler(world)
         CustomContentRegistry.load_from_dict(save_data.get("custom_content"))
         dynasty_data = world_data.get("dynasty")
         if dynasty_data is not None:

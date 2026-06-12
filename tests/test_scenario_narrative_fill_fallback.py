@@ -48,19 +48,19 @@ async def test_no_filler_uses_authored_fallback(base_world):
 
 @pytest.mark.asyncio
 async def test_filler_success_uses_generated_text(base_world):
-    assert await _narration(base_world, lambda ev, w: "草原风卷尘沙，他第一次看清这世界的凶险。") \
-        == "草原风卷尘沙，他第一次看清这世界的凶险。"
+    text = "草原风卷尘沙，他第一次看清这世界的凶险。"
+    assert await _narration(base_world, lambda reqs, w: {"e1": text}) == text
 
 
 @pytest.mark.asyncio
 async def test_filler_returning_empty_uses_fallback(base_world):
-    assert await _narration(base_world, lambda ev, w: "   ") == FALLBACK
-    assert await _narration(base_world, lambda ev, w: None) == FALLBACK
+    assert await _narration(base_world, lambda reqs, w: {"e1": "   "}) == FALLBACK
+    assert await _narration(base_world, lambda reqs, w: {}) == FALLBACK  # omitted → fallback
 
 
 @pytest.mark.asyncio
 async def test_filler_exception_falls_back_without_breaking_tick(base_world):
-    def boom(ev, w):
+    def boom(reqs, w):
         raise RuntimeError("llm down")
 
     assert await _narration(base_world, boom) == FALLBACK

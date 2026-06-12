@@ -58,6 +58,9 @@ def inject_scenario_into_world(world: Any, resolved: ResolvedScenario) -> None:
         generation_profile=resolved.generation_profile,
         state=_build_initial_scenario_state(resolved),
     )
+    from src.scenario.narrative_fill import attach_default_narrative_filler
+
+    attach_default_narrative_filler(world)
 
 
 def inject_scenario_initial_state_into_world(world: Any, resolved: ResolvedScenario) -> None:

@@ -43,8 +43,8 @@ def _timeline():
     ]
 
 
-def _stub_filler(scenario_event, world):
-    return f"[fill:{scenario_event.get('id')}]"
+def _stub_filler(requests, world):
+    return {str(se.get("id")): f"[fill:{se.get('id')}]" for se in requests}
 
 
 async def _run(base_world, *, filler):
@@ -92,3 +92,29 @@ async def test_no_filler_means_no_narration(base_world):
     _, fired = await _run(base_world, filler=None)
 
     assert all(e.narration is None for e in fired)
+
+
+def test_ai_roleplay_prompt_context_reads_content_not_narration():
+    """The render-only boundary across the AI-memory path: the roleplay/AI prompt
+    context builder consumes Event.content and never Event.narration."""
+    from src.classes.event import Event
+    from src.server.services.roleplay_service import _build_prompt_context
+
+    ev = Event(
+        month_stamp=create_month_stamp(Year(1), Month.JANUARY),
+        content="MECH-CONTENT",
+        narration="LLM-NARRATION",
+    )
+    em = SimpleNamespace(
+        get_major_events_by_avatar=lambda aid, limit: [ev],
+        get_minor_events_by_avatar=lambda aid, limit: [ev],
+    )
+    avatar = SimpleNamespace(
+        id="a1", name="A", current_action_name="", short_term_objective="", thinking="",
+        world=SimpleNamespace(get_observable_avatars=lambda a: [], event_manager=em),
+    )
+
+    flat = str(_build_prompt_context(avatar))
+
+    assert "MECH-CONTENT" in flat       # authored/mechanical text feeds the AI
+    assert "LLM-NARRATION" not in flat  # generated narration never does
