@@ -2,167 +2,202 @@
   "preset_id": "liuchao",
   "regions": [
     {
-      "id": "linan",
-      "name": "临安",
-      "type": "city",
-      "description": "宋地都城与江南商贸中枢。",
-      "dynasty_id": "song",
-      "climate": "humid",
-      "economic_focus": "commerce",
-      "key_landmarks": [
-        "临安城",
-        "江南水网"
-      ],
-      "tags": [
-        "liuchao",
-        "capital"
-      ]
-    },
-    {
-      "id": "jiangnan",
-      "name": "江南",
+      "id": "grassland_battlefield",
+      "name": "大草原战场",
       "type": "normal",
-      "description": "水网、书院与士族庄园交错的富庶地域。",
-      "dynasty_id": "song",
-      "climate": "humid",
-      "economic_focus": "agriculture-commerce",
-      "key_landmarks": [
-        "书院",
-        "水路"
-      ],
-      "tags": [
-        "liuchao"
-      ]
-    },
-    {
-      "id": "luoyang",
-      "name": "洛阳",
-      "type": "city",
-      "description": "汉统名分的重要旧都与北地交通节点。",
-      "dynasty_id": "han",
-      "climate": "temperate",
-      "economic_focus": "administration",
-      "key_landmarks": [
-        "旧都宫城"
-      ],
-      "tags": [
-        "liuchao",
-        "capital"
-      ]
-    },
-    {
-      "id": "north_border",
-      "name": "北境",
-      "type": "normal",
-      "description": "边地军镇与胡汉杂处之地。",
-      "dynasty_id": "han",
-      "climate": "cold",
+      "description": "程宗扬与段强穿越落地之处，秦军方阵正在与半兽人大军交战。",
+      "dynasty_id": "qin",
+      "climate": "continental-grassland",
       "economic_focus": "military",
       "key_landmarks": [
-        "边镇",
-        "关塞"
+        "秦军营垒",
+        "半兽人战线"
       ],
       "tags": [
         "liuchao",
-        "frontier"
-      ]
-    },
-    {
-      "id": "jiankang",
-      "name": "建康",
-      "type": "city",
-      "description": "晋地士族与清谈风气聚集的都邑。",
-      "dynasty_id": "jin",
-      "climate": "humid",
-      "economic_focus": "administration-culture",
-      "key_landmarks": [
-        "士族府邸"
-      ],
-      "tags": [
-        "liuchao",
-        "capital"
-      ]
-    },
-    {
-      "id": "chengdu",
-      "name": "成都",
-      "type": "city",
-      "description": "西蜀盆地中心，商路与地方豪族交会。",
-      "dynasty_id": "xishu",
-      "climate": "basin",
-      "economic_focus": "commerce-agriculture",
-      "key_landmarks": [
-        "蜀道",
-        "锦官城"
-      ],
-      "tags": [
-        "liuchao",
-        "capital"
-      ]
-    },
-    {
-      "id": "bashu_mountains",
-      "name": "巴蜀群山",
-      "type": "normal",
-      "description": "蜀地山岭与关隘，易守难攻。",
-      "dynasty_id": "xishu",
-      "climate": "mountain",
-      "economic_focus": "passes",
-      "key_landmarks": [
-        "蜀道关隘"
-      ],
-      "tags": [
-        "liuchao",
-        "mountain"
-      ]
-    },
-    {
-      "id": "chang_an",
-      "name": "长安",
-      "type": "city",
-      "description": "TODO: 秦势力都城占位，待 Stage 2c content pass 补细节。",
-      "dynasty_id": "qin",
-      "climate": "dry",
-      "economic_focus": "administration-military",
-      "key_landmarks": [
-        "关中旧城"
-      ],
-      "tags": [
-        "liuchao",
-        "capital",
-        "todo"
-      ]
-    },
-    {
-      "id": "guanzhong",
-      "name": "关中",
-      "type": "normal",
-      "description": "TODO: 秦势力核心地带占位。",
-      "dynasty_id": "qin",
-      "climate": "dry",
-      "economic_focus": "military-agriculture",
-      "key_landmarks": [
-        "关隘"
-      ],
-      "tags": [
-        "liuchao",
-        "todo"
+        "opening",
+        "catalog-anchored"
       ]
     },
     {
       "id": "taiyi_mountain",
       "name": "太一山",
       "type": "cultivate",
-      "description": "太乙真宗所在的山门灵地。",
-      "dynasty_id": null,
+      "description": "清羽记开篇太乙真宗线的重要山地锚点，王哲及其门人活动于此。",
+      "dynasty_id": "taiyi",
       "climate": "mountain",
       "economic_focus": "cultivation",
       "key_landmarks": [
-        "太乙真宗"
+        "太乙真宗驻地"
       ],
       "tags": [
         "liuchao",
-        "sect"
+        "taiyi",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "wuyuan_city",
+      "name": "五原城",
+      "type": "city",
+      "description": "程宗扬摆脱底层身份、以商人立足的重要起点。",
+      "dynasty_id": "panjiang",
+      "climate": "dry-temperate",
+      "economic_focus": "commerce",
+      "key_landmarks": [
+        "商栈",
+        "城门市集"
+      ],
+      "tags": [
+        "liuchao",
+        "commerce",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "nanhuang",
+      "name": "南荒",
+      "type": "normal",
+      "description": "花苗等族群聚居的南方荒野，小紫、凝羽等人的线索在此展开。",
+      "dynasty_id": "black_sea",
+      "climate": "tropical",
+      "economic_focus": "trade-gathering",
+      "key_landmarks": [
+        "花苗聚落",
+        "南荒商路"
+      ],
+      "tags": [
+        "liuchao",
+        "nanhuang",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "biling_bay",
+      "name": "碧鲮海湾",
+      "type": "normal",
+      "description": "南荒以南的海湾地域，鲛人及海路势力在此活动。",
+      "dynasty_id": null,
+      "climate": "coastal-tropical",
+      "economic_focus": "maritime-trade",
+      "key_landmarks": [
+        "海湾港口",
+        "鲛人水域"
+      ],
+      "tags": [
+        "liuchao",
+        "coast",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "qingzhou",
+      "name": "晴州",
+      "type": "city",
+      "description": "中立商业与佣兵网络汇聚之地，各方在此交易、雇佣与刺探消息。",
+      "dynasty_id": "qingzhou_network",
+      "climate": "temperate",
+      "economic_focus": "commerce-mercenary",
+      "key_landmarks": [
+        "佣兵行会",
+        "商会据点"
+      ],
+      "tags": [
+        "liuchao",
+        "neutral",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "xingyue_lake",
+      "name": "星月湖",
+      "type": "normal",
+      "description": "岳鹏举遗留势力与星月湖大营的根基，汇聚八骏、鹏翼社与退役军士。",
+      "dynasty_id": "wumu",
+      "climate": "temperate-lake",
+      "economic_focus": "military",
+      "key_landmarks": [
+        "星月湖大营",
+        "岳家军旧部营地"
+      ],
+      "tags": [
+        "liuchao",
+        "wumu",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "jiangzhou",
+      "name": "江州",
+      "type": "city",
+      "description": "萧遥逸任刺史、星月湖势力经营的军政据点。",
+      "dynasty_id": "wumu",
+      "climate": "humid",
+      "economic_focus": "military-commerce",
+      "key_landmarks": [
+        "江州城",
+        "太乙宫旧址"
+      ],
+      "tags": [
+        "liuchao",
+        "xingyuehu",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "linan",
+      "name": "临安",
+      "type": "city",
+      "description": "宋国都城，朝廷、皇城司、太尉府、商会与各宗门道观交错。",
+      "dynasty_id": "song",
+      "climate": "humid",
+      "economic_focus": "administration-commerce",
+      "key_landmarks": [
+        "武穆王府旧址",
+        "太一观",
+        "西湖"
+      ],
+      "tags": [
+        "liuchao",
+        "song-capital",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "luodu",
+      "name": "洛都",
+      "type": "city",
+      "description": "汉国都城，北宫与南宫构成宫廷政治核心。",
+      "dynasty_id": "han",
+      "climate": "temperate",
+      "economic_focus": "administration",
+      "key_landmarks": [
+        "北宫",
+        "南宫",
+        "鸿胪寺"
+      ],
+      "tags": [
+        "liuchao",
+        "han-capital",
+        "catalog-anchored"
+      ]
+    },
+    {
+      "id": "longque_mountain",
+      "name": "龙阙山",
+      "type": "cultivate",
+      "description": "太乙真宗祖庭，诸位教御与宗门支脉共同承认的传承中心。",
+      "dynasty_id": "taiyi",
+      "climate": "mountain",
+      "economic_focus": "cultivation",
+      "key_landmarks": [
+        "太乙真宗祖庭",
+        "龙池"
+      ],
+      "tags": [
+        "liuchao",
+        "taiyi",
+        "catalog-anchored"
       ]
     }
   ]

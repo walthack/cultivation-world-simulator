@@ -2,159 +2,124 @@
   "preset_id": "liuchao",
   "roots": [
     {
-      "id": "GOLD",
-      "name": "金灵根",
-      "description": "刚强肃杀，适合兵锋与护道。六朝乱世中，此根常被门阀部曲与守城修士看重。",
+      "id": "ordinary-meridians",
+      "name": "寻常经脉",
+      "description": "原文未载特殊体质者的最小默认资质，修行进境主要取决于师承、勤勉与机缘。",
       "elements": [
-        "GOLD"
+        "NONE"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_battle_strength_points: 1}",
+      "effect_dsl": "{}",
       "tags": [
         "liuchao",
-        "menfa",
-        "luanshi"
+        "original-unspecified"
       ]
     },
     {
-      "id": "WOOD",
-      "name": "木灵根",
-      "description": "生发绵长，适合养气与医药。山林隐者常以此根调息草木，远离州郡兵尘。",
+      "id": "shengsi-root",
+      "name": "生死根",
+      "description": "程宗扬独有的罕见体质，可感应并吸收死气，再转化为生机与真阳；杂质积累会带来失衡风险。",
       "elements": [
-        "WOOD"
+        "LIFE",
+        "DEATH"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_harvest_materials: 1}",
+      "effect_dsl": "{extra_respire_exp: 30, extra_fortune_probability: 0.002}",
       "tags": [
         "liuchao",
-        "shanshui"
+        "catalog-anchored",
+        "unique"
       ]
     },
     {
-      "id": "WATER",
-      "name": "水灵根",
-      "description": "流转隐忍，适合遁行与谋断。江左渡口与寒雨夜航，使此根更适合漂泊者。",
-      "elements": [
-        "WATER"
-      ],
-      "stat_modifiers": {},
-      "effect_dsl": "{extra_escape_success_rate: 0.08}",
-      "tags": [
-        "liuchao",
-        "jiangzuo",
-        "liuwang"
-      ]
-    },
-    {
-      "id": "FIRE",
-      "name": "火灵根",
-      "description": "炽烈明快，适合攻伐与炼化。桓玄旧事与鼎革兵火，使此根常带急进之气。",
-      "elements": [
-        "FIRE"
-      ],
-      "stat_modifiers": {},
-      "effect_dsl": "{extra_cast_success_rate: 0.03}",
-      "tags": [
-        "liuchao",
-        "luanshi"
-      ]
-    },
-    {
-      "id": "EARTH",
-      "name": "土灵根",
-      "description": "厚重安稳，适合守御与持久修行。流亡者在坞壁、山寺和田园间求一处可守之地。",
+      "id": "beastfolk-physique",
+      "name": "兽蛮体魄",
+      "description": "金兀术、青面兽等兽蛮人展现的强健体魄，适合近身战斗与重兵器。",
       "elements": [
         "EARTH"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_max_hp: 30}",
+      "effect_dsl": "{extra_battle_strength_points: 2, extra_max_hp: 40}",
       "tags": [
         "liuchao",
-        "liuwang",
-        "siguan"
+        "catalog-anchored",
+        "beastman"
       ]
     },
     {
-      "id": "liuchao-shanshui-root",
-      "name": "山水灵根",
-      "description": "受山水诗意浸润，近陶渊明式的归隐气象。修行者更擅在溪山间观物养神，而非争一时胜负。",
+      "id": "night-eyes",
+      "name": "夜眼",
+      "description": "夏用和赖以成名的锐利目力；其来源、传承方式与代价原文未载。",
       "elements": [
-        "WOOD",
         "WATER"
       ],
-      "stat_modifiers": {
-        "wisdom": 1
-      },
-      "effect_dsl": "{extra_respire_exp: 15, extra_retreat_success_rate: 0.05}",
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_observation_radius: 1}",
       "tags": [
         "liuchao",
-        "shanshui",
-        "xuanxue"
+        "catalog-anchored",
+        "original-unspecified"
       ]
     },
     {
-      "id": "liuchao-river-mist-root",
-      "name": "江雾灵根",
-      "description": "生于江左烟水与寒潮之间，气机善藏。适合流亡修士沿水路遁行，也适合在雾中观势。",
+      "id": "cold-poison-mark",
+      "name": "寒毒体征",
+      "description": "月霜、薛延山等人承受的经络寒毒，是危及身体的伤患而非修炼优势。",
       "elements": [
-        "WATER",
-        "GOLD"
+        "WATER"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_escape_success_rate: 0.1, extra_observation_radius: 1}",
+      "effect_dsl": "{extra_max_hp: -20, extra_rest_hp_recovery_rate: -0.05}",
       "tags": [
         "liuchao",
-        "jiangzuo",
-        "liuwang"
+        "catalog-anchored",
+        "affliction"
       ]
     },
     {
-      "id": "liuchao-siguan-incense-root",
-      "name": "香火灵根",
-      "description": "受寺观钟磬与香火熏养，气息平缓而能护心。此根不以斗胜见长，更适合疗养、守戒与收束杂念。",
+      "id": "sharkfolk-waterborn",
+      "name": "鲛人水性",
+      "description": "鲛人在碧鲮海湾水域生存的族群天赋；更具体的修炼机制原文未载。",
+      "elements": [
+        "WATER"
+      ],
+      "stat_modifiers": {},
+      "effect_dsl": "{extra_escape_success_rate: 0.08, extra_harvest_materials: 1}",
+      "tags": [
+        "liuchao",
+        "reasonably-inferred",
+        "sharkfolk"
+      ]
+    },
+    {
+      "id": "huamiao-wilderness",
+      "name": "花苗荒野传承",
+      "description": "花苗族群适应南荒环境的生存与采集经验；具体天赋名称原文未载。",
       "elements": [
         "WOOD",
         "EARTH"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_rest_hp_recovery_rate: 0.12, extra_retreat_success_rate: 0.04}",
+      "effect_dsl": "{extra_harvest_materials: 1, extra_hidden_domain_danger_prob: -0.02}",
       "tags": [
         "liuchao",
-        "siguan"
+        "reasonably-inferred",
+        "huamiao"
       ]
     },
     {
-      "id": "liuchao-mourning-ash-root",
-      "name": "丧乱灰根",
-      "description": "由兵火后的灰烬与哀思凝成，带着乱世求生的寒意。修行者命途多舛，却更能忍受败退和迁徙。",
+      "id": "tianzhu-traveler",
+      "name": "天竺旅人资质",
+      "description": "为引擎生成适配的异域旅人背景，代表跨越商路与海路的见闻；原文未载独立修炼体质。",
       "elements": [
-        "FIRE",
-        "EARTH"
+        "WIND"
       ],
       "stat_modifiers": {},
-      "effect_dsl": "{extra_luck: -3, extra_escape_success_rate: 0.12}",
+      "effect_dsl": "{extra_item_sell_price_multiplier: 0.04, extra_escape_success_rate: 0.03}",
       "tags": [
         "liuchao",
-        "luanshi",
-        "liuwang"
-      ]
-    },
-    {
-      "id": "liuchao-xuanxue-salon-root",
-      "name": "玄谈灵根",
-      "description": "受清谈玄学之风浸染，重虚静与辨名理。它不直接催生蛮勇，却能令修士在进退之间多一分明悟。",
-      "elements": [
-        "WATER",
-        "FIRE"
-      ],
-      "stat_modifiers": {
-        "wisdom": 1
-      },
-      "effect_dsl": "{extra_breakthrough_success_rate: 0.03, extra_retreat_success_rate: 0.05}",
-      "tags": [
-        "liuchao",
-        "qingtan",
-        "xuanxue"
+        "reasonably-inferred",
+        "tianzhu"
       ]
     }
   ]

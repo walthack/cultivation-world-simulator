@@ -73,10 +73,11 @@ def test_scenario_avatar_goldfinger_persona_realm_applied(liuchao_preset, tmp_pa
     assert avatar.id == "cheng-zongyang"
     assert avatar.goldfinger is not None
     assert avatar.goldfinger.key == "SHENGSI-GEN"
-    assert {persona.name for persona in avatar.personas} >= {"谋略", "现代知识", "野心", "灰色道德"}
-    assert avatar.cultivation_progress.level == 30
-    assert avatar.backstory == "来自异世的程宗扬卷入六朝风云。"
-    assert avatar.long_term_objective.content == "在六朝乱世中活下去并掌握主动权。"
+    assert {persona.name for persona in avatar.personas} >= {"商业谈判", "现代知识", "临机权变"}
+    assert avatar.cultivation_progress.level == 1
+    assert "来自现代的穿越者" in avatar.backstory
+    assert "王哲传功" in avatar.backstory
+    assert avatar.long_term_objective.content == "活过草原战场，摆脱奴隶处境，建立能够保护同伴的商政势力。"
 
 
 def test_scenario_relations_injected_bidirectional(liuchao_preset, tmp_path):

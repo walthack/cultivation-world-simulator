@@ -1,15 +1,15 @@
 {
   "preset_id": "liuchao",
   "realm_order": [
-    "LIAN_QI",
     "ZHU_JI",
-    "JIE_DAN",
-    "YUAN_YING",
-    "HUA_SHEN",
-    "LIAN_XU",
-    "HE_Ti",
-    "DU_JIE",
-    "DA_CHENG"
+    "NEI_SHI",
+    "SHENG_XIANG",
+    "RU_WEI",
+    "ZUO_ZHAO",
+    "TONG_YOU",
+    "GUI_YUAN",
+    "ZHI_ZHEN",
+    "RU_SHEN"
   ],
   "stage_order": [
     "EARLY_STAGE",
@@ -18,49 +18,49 @@
   ],
   "realms": [
     {
-      "id": "LIAN_QI",
-      "canonical_name": "LIAN_QI",
-      "display_name": "炼气"
-    },
-    {
       "id": "ZHU_JI",
       "canonical_name": "ZHU_JI",
-      "display_name": "筑基"
+      "display_name": "第一境·筑基"
     },
     {
-      "id": "JIE_DAN",
-      "canonical_name": "JIE_DAN",
-      "display_name": "结丹"
+      "id": "NEI_SHI",
+      "canonical_name": "NEI_SHI",
+      "display_name": "第二境·内视"
     },
     {
-      "id": "YUAN_YING",
-      "canonical_name": "YUAN_YING",
-      "display_name": "元婴"
+      "id": "SHENG_XIANG",
+      "canonical_name": "SHENG_XIANG",
+      "display_name": "第三境·生象"
     },
     {
-      "id": "HUA_SHEN",
-      "canonical_name": "HUA_SHEN",
-      "display_name": "化神"
+      "id": "RU_WEI",
+      "canonical_name": "RU_WEI",
+      "display_name": "第四境·入微"
     },
     {
-      "id": "LIAN_XU",
-      "canonical_name": "LIAN_XU",
-      "display_name": "炼虚"
+      "id": "ZUO_ZHAO",
+      "canonical_name": "ZUO_ZHAO",
+      "display_name": "第五境·坐照"
     },
     {
-      "id": "HE_Ti",
-      "canonical_name": "HE_TI",
-      "display_name": "合体"
+      "id": "TONG_YOU",
+      "canonical_name": "TONG_YOU",
+      "display_name": "第六境·通幽"
     },
     {
-      "id": "DU_JIE",
-      "canonical_name": "DU_JIE",
-      "display_name": "渡劫"
+      "id": "GUI_YUAN",
+      "canonical_name": "GUI_YUAN",
+      "display_name": "第七境·归元"
     },
     {
-      "id": "DA_CHENG",
-      "canonical_name": "DA_CHENG",
-      "display_name": "大乘"
+      "id": "ZHI_ZHEN",
+      "canonical_name": "ZHI_ZHEN",
+      "display_name": "第八境·至臻"
+    },
+    {
+      "id": "RU_SHEN",
+      "canonical_name": "RU_SHEN",
+      "display_name": "第九境·入神"
     }
   ]
 }

@@ -2,58 +2,70 @@
   "preset_id": "liuchao",
   "edges": [
     {
+      "from_region_id": "grassland_battlefield",
+      "to_region_id": "taiyi_mountain",
+      "relation": "hostile",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "taiyi_mountain",
+      "to_region_id": "wuyuan_city",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "wuyuan_city",
+      "to_region_id": "nanhuang",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "nanhuang",
+      "to_region_id": "biling_bay",
+      "relation": "restricted",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "wuyuan_city",
+      "to_region_id": "qingzhou",
+      "relation": "friendly",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "qingzhou",
+      "to_region_id": "xingyue_lake",
+      "relation": "neutral",
+      "difficulty": 2
+    },
+    {
+      "from_region_id": "xingyue_lake",
+      "to_region_id": "jiangzhou",
+      "relation": "friendly",
+      "difficulty": 1
+    },
+    {
+      "from_region_id": "jiangzhou",
+      "to_region_id": "linan",
+      "relation": "hostile",
+      "difficulty": 2
+    },
+    {
       "from_region_id": "linan",
-      "to_region_id": "jiangnan",
-      "relation": "friendly",
-      "difficulty": 1
-    },
-    {
-      "from_region_id": "jiangnan",
-      "to_region_id": "jiankang",
+      "to_region_id": "luodu",
       "relation": "neutral",
-      "difficulty": 1
-    },
-    {
-      "from_region_id": "jiankang",
-      "to_region_id": "luoyang",
-      "relation": "neutral",
-      "difficulty": 2
-    },
-    {
-      "from_region_id": "luoyang",
-      "to_region_id": "north_border",
-      "relation": "hostile",
-      "difficulty": 2
-    },
-    {
-      "from_region_id": "jiangnan",
-      "to_region_id": "chengdu",
-      "relation": "neutral",
-      "difficulty": 2
-    },
-    {
-      "from_region_id": "chengdu",
-      "to_region_id": "bashu_mountains",
-      "relation": "friendly",
-      "difficulty": 2
-    },
-    {
-      "from_region_id": "bashu_mountains",
-      "to_region_id": "chang_an",
-      "relation": "hostile",
       "difficulty": 3
     },
     {
-      "from_region_id": "chang_an",
-      "to_region_id": "guanzhong",
+      "from_region_id": "taiyi_mountain",
+      "to_region_id": "longque_mountain",
       "relation": "friendly",
-      "difficulty": 1
+      "difficulty": 2
     },
     {
-      "from_region_id": "jiangnan",
-      "to_region_id": "taiyi_mountain",
-      "relation": "restricted",
-      "difficulty": 2
+      "from_region_id": "longque_mountain",
+      "to_region_id": "linan",
+      "relation": "neutral",
+      "difficulty": 3
     }
   ]
 }

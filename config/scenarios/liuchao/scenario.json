@@ -2,9 +2,9 @@
   "schema_version": "1.2",
   "scenario_id": "liuchao",
   "title": "六朝纪事",
-  "version": "1.0",
+  "version": "1.1",
   "author": "Chaldeas",
-  "description": "Stage 1 minimal 六朝 scenario demo.",
+  "description": "据《六朝清羽记》《六朝云龙吟》《六朝燕歌行》整理的非成人向世界设定与开篇场景。",
   "world_preset": {
     "preset_id": "liuchao"
   },
@@ -21,7 +21,7 @@
     "initial_events": "scenario",
     "fallback_to_default": false
   },
-  "world_background": "六朝并立，仙道隐现。程宗扬初入局中，王哲以太乙真宗传承引路，小紫则在暗处观察。",
+  "world_background": "程宗扬与好友段强从现代坠入六朝异世，落在秦军与半兽人交战的草原。段强很快死于突袭，程宗扬被秦军俘获，并由此接触王哲与太乙真宗。此后他将从底层求生者成长为商人，进入宋国与汉国官场，同时卷入太乙真宗、光明观堂、岳家军、殇侯门、黑魔海巫毒二宗及晴州商佣网络的角力。",
   "initial_state": {
     "year": 1,
     "month": 1,
@@ -35,66 +35,83 @@
         "regions": "scenario"
       },
       "progression_profile": {
-        "id": "liuchao_historical_mixed",
-        "label": "六朝功业进身",
-        "guidance": "长期目标应优先围绕晋升官阶、积累功业、经营名望等历史成长；仙门进境只在角色身份或处境明确相关时作为可选目标。",
+        "id": "liuchao_novel_progression",
+        "label": "六朝生存、修行与立业",
+        "guidance": "长期成长应同时尊重太乙九境、程宗扬从奴隶到商人与两国官职的社会轨迹，以及由个人名望扩展为盘江程氏与盟友网络的势力轨迹。",
         "axes": [
           {
-            "id": "merit",
-            "label": "功业",
-            "description": "通过治政、军功、谋略与济世之举积累可被朝廷和世人认可的功绩。",
-            "tiers": ["立身", "建功", "柱石", "定鼎"],
+            "id": "taiyi_cultivation",
+            "label": "太乙九境",
+            "description": "六朝武学修行的九境次序；真阳、九阳是九阳神功相关表述，不替代九境名称。",
+            "tiers": [
+              "第一境·筑基",
+              "第二境·内视",
+              "第三境·生象",
+              "第四境·入微",
+              "第五境·坐照",
+              "第六境·通幽",
+              "第七境·归元",
+              "第八境·至臻",
+              "第九境·入神"
+            ],
             "optional": false
           },
           {
-            "id": "office_rank",
-            "label": "官阶",
-            "description": "沿州郡、台省与军府仕途晋升，扩大实际权责与政治影响。",
-            "tiers": ["布衣", "掾属", "郡守", "台省重臣", "公卿"],
+            "id": "social_office",
+            "label": "身份与官职",
+            "description": "程宗扬从失去自由到经商立业，再进入宋、汉两国官场的身份上升线。",
+            "tiers": [
+              "奴隶",
+              "平民",
+              "商人",
+              "宋国工部屯田司员外郎",
+              "宋国宝钞局主事",
+              "汉国鸿胪寺大行令"
+            ],
             "optional": false
           },
           {
-            "id": "reputation",
-            "label": "名望",
-            "description": "在乡里、士林、军中与天下清议中建立声誉和人脉。",
-            "tiers": ["乡里有闻", "州郡知名", "士林推重", "天下仰望"],
+            "id": "reputation_power",
+            "label": "名望与势力",
+            "description": "从孤身求生到获得同伴、商会、军伍与官场盟友支持，最终形成盘江程氏网络。",
+            "tiers": [
+              "无名异乡人",
+              "商路立足",
+              "同伴追随",
+              "星月湖盟友",
+              "盘江程氏",
+              "六朝政商要人"
+            ],
             "optional": false
-          },
-          {
-            "id": "immortal_path",
-            "label": "仙门进境",
-            "description": "保留修为、心法与境界突破，作为混合世界观中的共存成长路径。",
-            "tiers": ["炼气", "筑基", "结丹", "元婴", "化神"],
-            "optional": true
           }
         ]
       },
       "term_map": {
-        "灵石": "钱粮",
-        "宗门": "门阀",
-        "突破": "晋阶",
-        "修为": "功业",
-        "境界": "品阶",
-        "炼丹": "炼药",
-        "灵气": "气运",
-        "秘境": "禁地",
-        "丹药": "药石",
-        "功法": "心法",
-        "金丹": "还丹",
-        "筑基": "炼形",
-        "元婴": "元神",
-        "化神": "炼神",
-        "证道": "得道",
-        "洞府": "福地",
-        "灵脉": "地脉",
-        "飞升": "羽化"
+        "灵石": "金铢",
+        "宗门": "宗门",
+        "突破": "破境",
+        "修为": "修为",
+        "境界": "九境",
+        "炼丹": "制药",
+        "灵气": "真气",
+        "秘境": "古阵",
+        "丹药": "灵药",
+        "功法": "武学",
+        "金丹": "气轮",
+        "筑基": "筑基",
+        "元婴": "通幽",
+        "化神": "至臻",
+        "证道": "入神",
+        "洞府": "驻地",
+        "灵脉": "山门根基",
+        "飞升": "入神"
       },
       "narrative_context": {
         "world_lore_mode": "replace",
-        "world_lore": "此世并非一统王朝，而是宋、齐、梁、陈、魏、周六朝并立于架空乱世，江南与中原政权彼此争衡，州郡边界随战事、盟约与宫廷更替反复变动。王、谢、萧、庾等士族凭谱牒、婚盟、田庄与清议把持朝政，各家门生故吏遍布台省州郡；北地与边塞军镇则拥兵自重，镇将、部曲和流民武装时而奉诏勤王，时而割据逐鹿。所谓仙门，并非超然世外的修炼教团，而是由经学书院、玄谈社集、方术医家、游侠门馆及依附门阀的秘密结社构成的学术与政治势力：他们以心法、武艺、医药、天文和名望影响朝局，也受皇权、士族与军镇招揽压制。人物的进退荣辱系于家世、官职、军功、人情与时局，江湖纷争终会回响于庙堂，庙堂诏令也会改变百姓与豪强的命运。",
-        "background": "六朝并立的架空乱世，皇权、士族、军镇与隐世仙门互相牵制，人物在朝局与江湖之间求生取势。",
-        "style": "半文半白，取史笔纪事之风，叙事克制而有兴亡感。",
-        "terminology": "优先使用王朝、州郡、官职、士族、军府、诏令、兵变等历史事件词汇，区别于泛修真宗门秘境术语。"
+        "world_lore": "这是被先行穿越者改变过历史的六朝异世。秦军仍在草原与半兽人作战；宋国以临安为政治与商业中心，汉国以洛都为都；晴州维持中立商佣网络，南荒与碧鲮海湾分布花苗、鲛人等族群。太乙真宗由王哲掌教时号称天下第一宗门，九阳神功是镇教绝学，修行分筑基、内视、生象、入微、坐照、通幽、归元、至臻、入神九境。光明观堂以医术和光明三绝传世；岳鹏举留下岳家军、星月湖和武穆势力；殇侯门、黑魔海巫宗与毒宗围绕情报、传承和长期布局彼此角力。程宗扬凭现代知识、商业能力与太乙传功，从战场俘虏和奴隶身份起步，逐渐成为商人、宋国官员与汉国鸿胪寺大行令。",
+        "background": "六朝诸国、宗门、军伍、商会与异族并存的架空世界，开局从草原战场求生开始。",
+        "style": "以行动、阵营、官职、商路和武学为核心，叙事直接，保留乱世冒险与政治博弈感。",
+        "terminology": "优先使用金铢、真气、九境、太乙真宗、光明观堂、星月湖、晴州、宋国与汉国等原作术语；不使用泛化门阀史剧设定替代小说世界。"
       }
     },
     "avatars": [
@@ -103,20 +120,39 @@
         "surname": "程",
         "given_name": "宗扬",
         "gender": "男",
-        "age": 28,
+        "age": 25,
         "sect_id": null,
+        "location_region_id": "grassland_battlefield",
         "realm": "ZHU_JI",
-        "stage": "LATE_STAGE",
-        "level": 30,
-        "backstory": "来自异世的程宗扬卷入六朝风云。",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "来自现代的穿越者，开局尚未正式修行。第一境数值仅为引擎最小档位；其后将由王哲传功，并凭现代知识与商业谈判能力在六朝立足。",
         "persona_traits": [
-          "谋略",
           "现代知识",
-          "野心",
-          "灰色道德"
+          "商业谈判",
+          "临机权变"
         ],
         "goldfinger_id": "SHENGSI-GEN",
-        "long_term_objective": "在六朝乱世中活下去并掌握主动权。"
+        "long_term_objective": "活过草原战场，摆脱奴隶处境，建立能够保护同伴的商政势力。"
+      },
+      {
+        "id": "duan-qiang",
+        "surname": "段",
+        "given_name": "强",
+        "gender": "男",
+        "age": 25,
+        "sect_id": null,
+        "location_region_id": "grassland_battlefield",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "程宗扬的现代好友与穿越同行者，不会武功，开篇在半兽人突袭中身亡。第一境数值仅为引擎最小档位。",
+        "persona_traits": [
+          "现代知识",
+          "忠义守诺"
+        ],
+        "goldfinger_id": "MODERN-KNOWLEDGE",
+        "long_term_objective": "与程宗扬一同弄清异世处境并寻找生路。"
       },
       {
         "id": "wang-zhe",
@@ -125,16 +161,17 @@
         "gender": "男",
         "age": 82,
         "sect_id": 1,
-        "region_id": 401,
-        "realm": "YUAN_YING",
+        "location_region_id": "taiyi_mountain",
+        "realm": "ZHI_ZHEN",
         "stage": "LATE_STAGE",
         "level": 90,
-        "backstory": "太乙真宗高人，持有九阳传承。",
+        "backstory": "太乙真宗掌教，公认的第八境至臻高手，以九阳神功与一剑叩天闻名，后来向程宗扬传授功法。",
         "persona_traits": [
-          "忠义"
+          "忠义守诺",
+          "军伍果断"
         ],
-        "goldfinger_id": "TAIYI-JIUYANG",
-        "long_term_objective": "寻找可托付传承之人。"
+        "goldfinger_id": "TAIYI-TRANSMISSION",
+        "long_term_objective": "在乱局中完成太乙传承，并守住自己承担的军政责任。"
       },
       {
         "id": "xiao-zi",
@@ -142,16 +179,38 @@
         "given_name": "紫",
         "gender": "女",
         "age": 18,
-        "sect_id": null,
-        "realm": "LIAN_QI",
-        "stage": "MIDDLE_STAGE",
-        "level": 12,
-        "backstory": "神秘少女，来历不明。",
+        "sect_id": 5,
+        "location_region_id": "nanhuang",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 10,
+        "backstory": "与巫宗、毒宗背景相连的神秘少女，擅长毒术与谋划。原文明载境界不详，第一境仅作引擎最小值。",
         "persona_traits": [
-          "神秘"
+          "情报谋算",
+          "巫毒秘术",
+          "临机权变"
         ],
-        "goldfinger_id": "ZI-MYSTERY",
-        "long_term_objective": "观察程宗扬的选择。"
+        "goldfinger_id": "WU-DU-INHERITANCE",
+        "long_term_objective": "追索自身背景，在黑魔海诸宗与程宗扬势力之间掌握主动。"
+      },
+      {
+        "id": "le-mingzhu",
+        "surname": "乐",
+        "given_name": "明珠",
+        "gender": "女",
+        "age": 18,
+        "sect_id": 2,
+        "location_region_id": "wuyuan_city",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 8,
+        "backstory": "光明观堂弟子，擅长治伤与医疗辅助。原文明载境界不详，第一境仅作引擎最小值；五原城位置为开局生成所需的合理推定。",
+        "persona_traits": [
+          "医者仁心",
+          "忠义守诺"
+        ],
+        "goldfinger_id": "NO-SPECIAL-ENDOWMENT",
+        "long_term_objective": "以光明观堂医术救治伤者，并帮助同伴走出乱局。"
       }
     ],
     "sects": [
@@ -161,18 +220,57 @@
         "member_avatar_ids": [
           "wang-zhe"
         ]
+      },
+      {
+        "id": 2,
+        "leader_avatar_id": null,
+        "member_avatar_ids": [
+          "le-mingzhu"
+        ]
+      },
+      {
+        "id": 5,
+        "leader_avatar_id": null,
+        "member_avatar_ids": [
+          "xiao-zi"
+        ]
       }
     ],
     "relationships": [
       {
         "a": "cheng-zongyang",
+        "b": "duan-qiang",
+        "value": 90,
+        "tag": "现代挚友"
+      },
+      {
+        "a": "cheng-zongyang",
         "b": "wang-zhe",
         "value": 50,
-        "tag": "传承"
+        "tag": "师父级传功者"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "xiao-zi",
+        "value": 20,
+        "tag": "亦敌亦友的未来伙伴"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "le-mingzhu",
+        "value": 35,
+        "tag": "医疗盟友"
+      },
+      {
+        "a": "wang-zhe",
+        "b": "le-mingzhu",
+        "value": 15,
+        "tag": "宗门往来"
       }
     ],
     "world_flags": {
-      "liuchao_started": true
+      "liuchao_started": true,
+      "phase_1_opening_only": true
     }
   }
 }

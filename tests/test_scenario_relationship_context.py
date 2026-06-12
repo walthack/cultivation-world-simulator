@@ -92,11 +92,11 @@ def test_conversation_prompt_contains_relationship_and_liuchao_narrative_context
 
     assert "关系网摘要" in prompt_payload
     assert "与王哲" in prompt_payload
-    assert "六朝并立于架空乱世" in prompt_payload
-    assert "门阀" in prompt_payload
+    assert "秦军仍在草原与半兽人作战" in prompt_payload
+    assert "太乙真宗" in prompt_payload
     assert "成长体系" in prompt_payload
-    assert "六朝功业进身" in prompt_payload
-    assert "官阶 [主要成长轴]" in prompt_payload
+    assert "六朝生存、修行与立业" in prompt_payload
+    assert "身份与官职 [主要成长轴]" in prompt_payload
     assert "太一山洞府" not in prompt_payload
     assert "金精之气" not in prompt_payload
 

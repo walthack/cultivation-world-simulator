@@ -29,10 +29,10 @@
           "gender": "男",
           "age": 42,
           "sect_id": 1,
-          "realm": "YUAN_YING",
+          "realm": "ZUO_ZHAO",
           "stage": "EARLY_STAGE",
           "level": 76,
-          "persona_traits": ["谋略", "野心"],
+          "persona_traits": ["朝堂权术", "军伍果断"],
           "goldfinger_id": "SHENGSI-GEN",
           "long_term_objective": "Unify the river courts under a restored mandate."
         },
@@ -43,11 +43,11 @@
           "gender": "女",
           "age": 34,
           "sect_id": 1,
-          "realm": "JIE_DAN",
+          "realm": "RU_WEI",
           "stage": "LATE_STAGE",
           "level": 61,
-          "persona_traits": ["忠义", "神秘"],
-          "goldfinger_id": "TAIYI-JIUYANG",
+          "persona_traits": ["忠义守诺", "临机权变"],
+          "goldfinger_id": "TAIYI-TRANSMISSION",
           "long_term_objective": "Protect the southern court without letting its ministers sell the border."
         },
         {
@@ -57,11 +57,11 @@
           "gender": "男",
           "age": 38,
           "sect_id": 1,
-          "realm": "JIE_DAN",
+          "realm": "SHENG_XIANG",
           "stage": "MIDDLE_STAGE",
           "level": 55,
-          "persona_traits": ["灰色道德", "谋略"],
-          "goldfinger_id": "ZI-MYSTERY",
+          "persona_traits": ["情报谋算", "临机权变"],
+          "goldfinger_id": "NIGHT-EYES",
           "long_term_objective": "Use border armies and secret ledgers to become indispensable."
         },
         {
@@ -71,10 +71,10 @@
           "gender": "男",
           "age": 29,
           "sect_id": null,
-          "realm": "LIAN_QI",
+          "realm": "ZHU_JI",
           "stage": "LATE_STAGE",
           "level": 18,
-          "persona_traits": ["现代知识", "忠义"],
+          "persona_traits": ["现代知识", "忠义守诺"],
           "goldfinger_id": "SHENGSI-GEN",
           "long_term_objective": "Record the truth of the age and survive court suspicion."
         }

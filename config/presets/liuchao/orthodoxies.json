@@ -2,82 +2,114 @@
   "preset_id": "liuchao",
   "orthodoxies": [
     {
-      "id": "confucianism",
-      "name": "名教",
-      "description": "以礼法、宗族与正朔为核心的士族秩序。",
+      "id": "taiyi_dao",
+      "name": "太乙道统",
+      "description": "以九境修行、九阳神功与掌教传承为核心的太乙真宗道路。",
       "axes": {
-        "汉统": 100,
-        "胡": 0,
-        "玄学": 35,
-        "名教": 95,
-        "武": 25
+        "修行": 100,
+        "医道": 35,
+        "军略": 45,
+        "商政": 20,
+        "隐秘": 45
       },
       "tags": [
-        "confirmed",
+        "catalog-anchored",
         "liuchao"
       ]
     },
     {
-      "id": "dao",
-      "name": "玄门",
-      "description": "承接清谈、方术与山林修行的玄门道统。",
+      "id": "healing_path",
+      "name": "光明医道",
+      "description": "光明观堂以治伤、医术与护持同伴为本的传承。",
       "axes": {
-        "汉统": 45,
-        "胡": 10,
-        "玄学": 95,
-        "名教": 35,
-        "武": 20
+        "修行": 70,
+        "医道": 100,
+        "军略": 25,
+        "商政": 20,
+        "隐秘": 30
       },
       "tags": [
-        "confirmed",
+        "catalog-anchored",
         "liuchao"
       ]
     },
     {
-      "id": "buddhism",
-      "name": "佛门",
-      "description": "以寺院、戒律与度化为核心的出世道统。",
+      "id": "military_order",
+      "name": "军伍之道",
+      "description": "秦军与岳家军等军伍势力以军阵、纪律、战功和同袍关系维系的道路。",
       "axes": {
-        "汉统": 40,
-        "胡": 20,
-        "玄学": 70,
-        "名教": 45,
-        "武": 10
+        "修行": 45,
+        "医道": 15,
+        "军略": 100,
+        "商政": 25,
+        "隐秘": 30
       },
       "tags": [
-        "confirmed",
+        "catalog-anchored",
         "liuchao"
       ]
     },
     {
-      "id": "wu",
-      "name": "武脉",
-      "description": "以军功、强者秩序与边地武力为核心的实战道统。",
+      "id": "court_order",
+      "name": "朝廷官序",
+      "description": "宋、汉两国以官职、诏令、军府与宫廷权力运转的政治秩序。",
       "axes": {
-        "汉统": 45,
-        "胡": 35,
-        "玄学": 25,
-        "名教": 30,
-        "武": 100
+        "修行": 20,
+        "医道": 15,
+        "军略": 60,
+        "商政": 90,
+        "隐秘": 65
       },
       "tags": [
-        "confirmed",
+        "catalog-anchored",
         "liuchao"
       ]
     },
     {
-      "id": "sanxiu",
-      "name": "散修",
-      "description": "不依附大宗与朝廷的民间修行路径。",
+      "id": "merchant_compact",
+      "name": "商佣信约",
+      "description": "晴州与盘江程氏重视交易、信用、雇佣和资源调度的现实准则。",
       "axes": {
-        "汉统": 20,
-        "胡": 20,
-        "玄学": 55,
-        "名教": 5,
-        "武": 40
+        "修行": 15,
+        "医道": 20,
+        "军略": 45,
+        "商政": 100,
+        "隐秘": 55
       },
       "tags": [
-        "confirmed",
+        "catalog-anchored",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "secret_arts",
+      "name": "巫毒秘脉",
+      "description": "黑魔海巫宗、毒宗以隐秘术法、毒术和长期布局维系的传承。",
+      "axes": {
+        "修行": 75,
+        "医道": 40,
+        "军略": 35,
+        "商政": 30,
+        "隐秘": 100
+      },
+      "tags": [
+        "catalog-anchored",
+        "liuchao"
+      ]
+    },
+    {
+      "id": "pragmatic_path",
+      "name": "权变实务",
+      "description": "殇侯门与程宗扬班底重视情报、谈判、执行与因势制宜的行事原则。",
+      "axes": {
+        "修行": 35,
+        "医道": 15,
+        "军略": 70,
+        "商政": 80,
+        "隐秘": 85
+      },
+      "tags": [
+        "catalog-anchored",
         "liuchao"
       ]
     }

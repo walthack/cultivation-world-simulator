@@ -134,7 +134,10 @@ def test_scenario_source_scenario_hits_preset_pool():
     set_active_scenario_source(resolved)
     reload_all_static_data()
 
-    expected_names = {"谋略", "现代知识", "野心", "灰色道德", "忠义", "神秘"}
+    expected_names = {
+        "现代知识", "商业谈判", "临机权变", "忠义守诺", "军伍果断",
+        "医者仁心", "情报谋算", "巫毒秘术", "朝堂权术", "江湖侠义",
+    }
     picked = {persona.name for _ in range(8) for persona in get_random_compatible_personas(1)}
 
     assert picked
@@ -156,7 +159,10 @@ def test_scenario_source_default_overrides_to_default_pool():
     set_active_scenario_source(scenario)
     reload_all_static_data()
 
-    liuchao_names = {"谋略", "现代知识", "野心", "灰色道德", "忠义", "神秘"}
+    liuchao_names = {
+        "现代知识", "商业谈判", "临机权变", "忠义守诺", "军伍果断",
+        "医者仁心", "情报谋算", "巫毒秘术", "朝堂权术", "江湖侠义",
+    }
     picked = {persona.name for _ in range(8) for persona in get_random_compatible_personas(1)}
 
     assert picked

@@ -1,4 +1,12 @@
 {
   "preset_id": "liuchao",
-  "goldfinger_keys": ["SHENGSI-GEN", "TAIYI-JIUYANG", "ZI-MYSTERY"]
+  "goldfinger_keys": [
+    "SHENGSI-GEN",
+    "MODERN-KNOWLEDGE",
+    "TAIYI-TRANSMISSION",
+    "NIGHT-EYES",
+    "BEASTFOLK-PHYSIQUE",
+    "WU-DU-INHERITANCE",
+    "NO-SPECIAL-ENDOWMENT"
+  ]
 }

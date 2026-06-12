@@ -59,10 +59,9 @@ def test_liuchao_annual_settlement_event_applies_term_map(base_world):
         events = manager.update_sects()
 
     assert len(events) == 1
-    assert "还丹门阀" in events[0].content
-    assert "钱粮" in events[0].content
+    assert "气轮宗门" in events[0].content
+    assert "金铢" in events[0].content
     assert "灵石" not in events[0].content
-    assert "宗门" not in events[0].content
 
 
 @pytest.mark.asyncio
@@ -79,14 +78,13 @@ async def test_liuchao_breakthrough_and_movement_events_apply_term_map(dummy_ava
     movement_event = MoveToAvatar(dummy_avatar, dummy_avatar.world).start(target.id)
     movement_finish_event = (await MoveToDirection(dummy_avatar, dummy_avatar.world).finish("North"))[0]
 
-    assert "还丹" in breakthrough_event.content
-    assert "晋阶品阶" in breakthrough_event.content
+    assert "气轮" in breakthrough_event.content
+    assert "破境九境" in breakthrough_event.content
     assert "金丹" not in breakthrough_event.content
     assert "突破" not in breakthrough_event.content
-    assert "门阀福地守卫" in movement_event.content
-    assert "宗门" not in movement_event.content
+    assert "宗门驻地守卫" in movement_event.content
     assert "洞府" not in movement_event.content
-    assert "还丹" in movement_finish_event.content
+    assert "气轮" in movement_finish_event.content
     assert "金丹" not in movement_finish_event.content
 
 
@@ -126,9 +124,9 @@ async def test_liuchao_recruitment_event_applies_term_map(dummy_avatar):
         )
 
     assert len(result.events) == 2
-    assert all("钱粮" in event.content for event in result.events)
-    assert all("门阀" in event.content for event in result.events)
-    assert all("还丹" in event.content for event in result.events)
+    assert all("金铢" in event.content for event in result.events)
+    assert all("宗门" in event.content for event in result.events)
+    assert all("气轮" in event.content for event in result.events)
     assert all("灵石" not in event.content for event in result.events)
 
 
@@ -145,10 +143,9 @@ def test_liuchao_cultivation_event_applies_term_map(dummy_avatar):
 
     event = Respire(dummy_avatar, dummy_avatar.world).start()
 
-    assert "还丹" in event.content
-    assert "门阀福地" in event.content
+    assert "气轮" in event.content
+    assert "宗门驻地" in event.content
     assert "金丹" not in event.content
-    assert "宗门" not in event.content
     assert "洞府" not in event.content
 
 
@@ -206,6 +203,6 @@ async def test_liuchao_sect_decider_prompt_contains_scenario_context(base_world)
     world_lore = mock_llm.await_args.kwargs["infos"]["world_lore"]
     assert world_lore.startswith(SCENARIO_NARRATIVE_INSTRUCTION)
     assert context["background"] in world_lore
-    assert "六朝并立于架空乱世" in world_lore
-    assert "门阀" in world_lore
+    assert "秦军仍在草原与半兽人作战" in world_lore
+    assert "太乙真宗" in world_lore
     assert "默认修仙世界观" not in world_lore

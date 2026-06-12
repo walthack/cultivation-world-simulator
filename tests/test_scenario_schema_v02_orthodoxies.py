@@ -20,10 +20,10 @@ def test_default_orthodoxy_axes_are_numeric():
 
 
 def test_liuchao_orthodoxy_contains_multi_axis_positions():
-    confucianism = next(item for item in get_preset_orthodoxies("liuchao") if item["id"] == "confucianism")
+    taiyi = next(item for item in get_preset_orthodoxies("liuchao") if item["id"] == "taiyi_dao")
 
-    assert confucianism["axes"]["汉统"] == 100
-    assert confucianism["axes"]["名教"] == 95
+    assert taiyi["axes"]["修行"] == 100
+    assert taiyi["axes"]["隐秘"] == 45
 
 
 def test_orthodoxy_rejects_non_numeric_axis(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

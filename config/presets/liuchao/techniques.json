@@ -2,124 +2,165 @@
   "preset_id": "liuchao",
   "techniques": [
     {
-      "id": "liuchao-qingxu",
-      "name": "清虚导引法",
-      "grade": "mortal",
+      "id": "jiuyang-shengong",
+      "name": "九阳神功",
+      "grade": "divine",
       "attributes": [
-        "WOOD"
+        "FIRE"
       ],
       "effects": [
-        "{extra_respire_exp: 20, extra_retreat_success_rate: 0.05}"
+        "{extra_battle_strength_points: 8, extra_breakthrough_success_rate: 0.05}"
       ],
-      "prereq_realm": null,
-      "source_sect_id": null
+      "prereq_realm": "ZHU_JI",
+      "source_sect_id": 1
     },
     {
-      "id": "liuchao-xuanjiang",
-      "name": "玄江行气诀",
-      "grade": "mortal",
+      "id": "taiyi-jing",
+      "name": "太一经",
+      "grade": "divine",
       "attributes": [
         "WATER"
       ],
       "effects": [
-        "{extra_escape_success_rate: 0.08, extra_observation_radius: 1}"
+        "{extra_respire_exp: 35, extra_rest_hp_recovery_rate: 0.08}"
       ],
-      "prereq_realm": null,
+      "prereq_realm": "NEI_SHI",
       "source_sect_id": null
     },
     {
-      "id": "liuchao-zijin",
-      "name": "紫金护身功",
+      "id": "shuijing-shu",
+      "name": "水镜术",
       "grade": "earth",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [
+        "{extra_observation_radius: 2}"
+      ],
+      "prereq_realm": "NEI_SHI",
+      "source_sect_id": 8
+    },
+    {
+      "id": "mingji-shu",
+      "name": "瞑寂术",
+      "grade": "heaven",
+      "attributes": [
+        "WATER"
+      ],
+      "effects": [
+        "{extra_cast_success_rate: 0.08}"
+      ],
+      "prereq_realm": "SHENG_XIANG",
+      "source_sect_id": 4
+    },
+    {
+      "id": "wuhu-duanmen-dao",
+      "name": "五虎断门刀",
+      "grade": "mortal",
       "attributes": [
         "GOLD"
       ],
       "effects": [
-        "{extra_battle_strength_points: 2, extra_max_hp: 40}"
+        "{extra_battle_strength_points: 2}"
       ],
-      "prereq_realm": "FOUNDATION_ESTABLISHMENT",
+      "prereq_realm": "ZHU_JI",
       "source_sect_id": null
     },
     {
-      "id": "liuchao-qingtan-mingli",
-      "name": "清谈明理诀",
-      "grade": "mortal",
+      "id": "jinzhong-zhao",
+      "name": "金钟罩",
+      "grade": "heaven",
       "attributes": [
-        "WATER"
+        "GOLD",
+        "EARTH"
       ],
       "effects": [
-        "{extra_item_sell_price_multiplier: 0.05, extra_retreat_success_rate: 0.05}"
+        "{extra_max_hp: 80, extra_battle_strength_points: 4}"
       ],
-      "prereq_realm": null,
-      "source_sect_id": null
+      "prereq_realm": "RU_WEI",
+      "source_sect_id": 7
     },
     {
-      "id": "liuchao-wangshi-lanting",
-      "name": "兰亭流觞功",
-      "grade": "mortal",
-      "attributes": [
-        "WOOD",
-        "WATER"
-      ],
-      "effects": [
-        "{extra_appearance: 1, extra_respire_exp: 15}"
-      ],
-      "prereq_realm": null,
-      "source_sect_id": null
-    },
-    {
-      "id": "liuchao-taoyuan-guiyin",
-      "name": "桃源归隐法",
-      "grade": "mortal",
+      "id": "yijin-jing",
+      "name": "易筋经",
+      "grade": "divine",
       "attributes": [
         "WOOD",
         "EARTH"
       ],
       "effects": [
-        "{extra_harvest_materials: 1, extra_rest_hp_recovery_rate: 0.08}"
+        "{extra_max_hp: 100, extra_rest_hp_recovery_rate: 0.12}"
       ],
-      "prereq_realm": null,
-      "source_sect_id": null
+      "prereq_realm": "ZUO_ZHAO",
+      "source_sect_id": 7
     },
     {
-      "id": "liuchao-huiyuan-jingxin",
-      "name": "慧远静心观",
-      "grade": "mortal",
+      "id": "shengguang-chanzhang",
+      "name": "圣光禅掌",
+      "grade": "heaven",
       "attributes": [
+        "FIRE",
+        "GOLD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 5, extra_cast_success_rate: 0.05}"
+      ],
+      "prereq_realm": "TONG_YOU",
+      "source_sect_id": 7
+    },
+    {
+      "id": "fenghuang-xinfa",
+      "name": "凤凰心法",
+      "grade": "heaven",
+      "attributes": [
+        "FIRE",
         "WOOD"
       ],
       "effects": [
-        "{extra_breakthrough_success_rate: 0.03, extra_retreat_success_rate: 0.05}"
+        "{extra_rest_hp_recovery_rate: 0.12, extra_breakthrough_success_rate: 0.04}"
       ],
-      "prereq_realm": "QI_REFINEMENT",
-      "source_sect_id": null
+      "prereq_realm": "SHENG_XIANG",
+      "source_sect_id": 2
     },
     {
-      "id": "liuchao-xuanxue-bianming",
-      "name": "玄学辨名诀",
-      "grade": "earth",
+      "id": "guangming-jianfa",
+      "name": "光明剑法",
+      "grade": "heaven",
       "attributes": [
-        "WATER",
+        "GOLD",
         "FIRE"
       ],
       "effects": [
-        "{extra_breakthrough_success_rate: 0.04, extra_cast_success_rate: 0.04}"
+        "{extra_battle_strength_points: 5}"
       ],
-      "prereq_realm": "FOUNDATION_ESTABLISHMENT",
-      "source_sect_id": null
+      "prereq_realm": "SHENG_XIANG",
+      "source_sect_id": 2
     },
     {
-      "id": "liuchao-zhiguai-yeyu",
-      "name": "夜雨志怪录",
-      "grade": "mortal",
+      "id": "dieying-shenfa",
+      "name": "蝶影身法",
+      "grade": "heaven",
       "attributes": [
-        "WATER"
+        "WIND"
       ],
       "effects": [
-        "{extra_fortune_probability: 0.002, extra_hidden_domain_danger_prob: -0.02}"
+        "{extra_escape_success_rate: 0.15, extra_retreat_success_rate: 0.1}"
       ],
-      "prereq_realm": null,
-      "source_sect_id": null
+      "prereq_realm": "SHENG_XIANG",
+      "source_sect_id": 2
+    },
+    {
+      "id": "fenjin-cuogu-shou",
+      "name": "分筋错骨手",
+      "grade": "earth",
+      "attributes": [
+        "GOLD"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3, extra_cast_success_rate: 0.03}"
+      ],
+      "prereq_realm": "NEI_SHI",
+      "source_sect_id": 3
     }
   ]
 }

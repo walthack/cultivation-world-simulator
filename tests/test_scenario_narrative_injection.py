@@ -37,15 +37,15 @@ def _assert_liuchao_context_present(text: str, context: dict) -> None:
     assert "Scenario narrative context:" in text
     assert context["background"] in text
     assert context["style"] in text
-    assert "门阀" in text
-    assert "禁地" in text
+    assert "太乙真宗" in text
+    assert "九境" in text
 
 
 def _assert_liuchao_m2_world_lore(text: str, context: dict) -> None:
     assert text.startswith(SCENARIO_NARRATIVE_INSTRUCTION)
-    assert "六朝并立于架空乱世" in text
-    assert "门阀" in text
-    assert "禁地" in text
+    assert "秦军仍在草原与半兽人作战" in text
+    assert "太乙真宗" in text
+    assert "九境" in text
     assert "默认修仙世界观" not in text
 
 
@@ -102,12 +102,12 @@ async def test_liuchao_long_term_objective_prompt_contains_narrative_context(dum
     infos = mock_llm.await_args.args[2]
     _assert_liuchao_m2_world_lore(infos["world_lore"], context)
     progression = infos["avatar_info"]["成长体系"]
-    assert "六朝功业进身" in progression
-    assert "官阶 [主要成长轴]" in progression
-    assert "功业 [主要成长轴]" in progression
-    assert "名望 [主要成长轴]" in progression
-    assert "仙门进境 [可选共存轴]" in progression
-    assert "优先围绕晋升官阶、积累功业" in progression
+    assert "六朝生存、修行与立业" in progression
+    assert "身份与官职 [主要成长轴]" in progression
+    assert "名望与势力 [主要成长轴]" in progression
+    assert "太乙九境 [主要成长轴]" in progression
+    assert "汉国鸿胪寺大行令" in progression
+    assert "同时尊重太乙九境" in progression
 
 
 @pytest.mark.asyncio
@@ -125,7 +125,7 @@ async def test_liuchao_story_teller_prompt_contains_narrative_context(dummy_avat
     _assert_liuchao_m2_world_lore(infos["world_lore"], context)
     assert infos["story_prompt"].startswith(SCENARIO_NARRATIVE_INSTRUCTION)
     assert "门阀" in infos["story_prompt"]
-    assert "禁地" in infos["story_prompt"]
+    assert "九境" in infos["story_prompt"]
     assert "保留原始提示" in infos["story_prompt"]
 
 

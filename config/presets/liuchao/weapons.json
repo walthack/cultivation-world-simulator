@@ -2,112 +2,101 @@
   "preset_id": "liuchao",
   "weapons": [
     {
-      "id": "liuchao-bamboo-sword",
-      "name": "青竹剑",
-      "tier": 1,
-      "attributes": [
-        "SWORD"
-      ],
-      "effects": [
-        "{extra_battle_strength_points: 1, extra_harvest_materials: 1}"
-      ],
-      "required_realm": "QI_REFINEMENT"
-    },
-    {
-      "id": "liuchao-river-saber",
-      "name": "江月刀",
-      "tier": 1,
+      "id": "tulong-saber",
+      "name": "屠龙刀",
+      "tier": 8,
       "attributes": [
         "SABER"
       ],
       "effects": [
-        "{extra_battle_strength_points: 1, extra_escape_success_rate: 0.05}"
+        "{extra_battle_strength_points: 8}"
       ],
-      "required_realm": "QI_REFINEMENT"
+      "required_realm": "ZUO_ZHAO"
     },
     {
-      "id": "liuchao-plain-fan",
-      "name": "素纨扇",
-      "tier": 1,
-      "attributes": [
-        "FAN"
-      ],
-      "effects": [
-        "{extra_appearance: 1, extra_retreat_success_rate: 0.05}"
-      ],
-      "required_realm": "QI_REFINEMENT"
-    },
-    {
-      "id": "liuchao-jiangzuo-feather-fan",
-      "name": "江左羽扇",
-      "tier": 1,
-      "attributes": [
-        "FAN"
-      ],
-      "effects": [
-        "{extra_observation_radius: 1, extra_retreat_success_rate: 0.08}"
-      ],
-      "required_realm": "QI_REFINEMENT"
-    },
-    {
-      "id": "liuchao-menfa-ritual-blade",
-      "name": "门阀礼刀",
-      "tier": 1,
+      "id": "jia-wenhe-cuo-saber",
+      "name": "错刀",
+      "tier": 2,
       "attributes": [
         "SABER"
       ],
       "effects": [
-        "{extra_item_sell_price_multiplier: 0.08, extra_appearance: 1}"
+        "{extra_battle_strength_points: 1}"
       ],
-      "required_realm": "QI_REFINEMENT"
+      "required_realm": "ZHU_JI"
     },
     {
-      "id": "liuchao-qingtan-zither",
-      "name": "清谈焦琴",
-      "tier": 1,
+      "id": "aorun-iron-bow",
+      "name": "敖润铁弓",
+      "tier": 3,
       "attributes": [
-        "ZITHER"
+        "BOW"
       ],
       "effects": [
-        "{extra_retreat_success_rate: 0.1, extra_respire_exp: 10}"
+        "{extra_battle_strength_points: 2, extra_observation_radius: 1}"
       ],
-      "required_realm": "QI_REFINEMENT"
+      "required_realm": "NEI_SHI"
     },
     {
-      "id": "liuchao-siguan-staff",
-      "name": "寺观戒杖",
+      "id": "beastfolk-heavy-axe",
+      "name": "半兽人巨斧",
+      "tier": 2,
+      "attributes": [
+        "AXE"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 2}"
+      ],
+      "required_realm": "ZHU_JI"
+    },
+    {
+      "id": "qin-long-spear",
+      "name": "秦军长矛",
       "tier": 1,
       "attributes": [
+        "SPEAR"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 1}"
+      ],
+      "required_realm": "ZHU_JI"
+    },
+    {
+      "id": "wuer-saber",
+      "name": "武二郎佩刀",
+      "tier": 3,
+      "attributes": [
+        "SABER"
+      ],
+      "effects": [
+        "{extra_battle_strength_points: 3}"
+      ],
+      "required_realm": "SHENG_XIANG"
+    },
+    {
+      "id": "linchong-spear",
+      "name": "林冲枪棒",
+      "tier": 4,
+      "attributes": [
+        "SPEAR",
         "STAFF"
       ],
       "effects": [
-        "{extra_max_hp: 30, extra_rest_hp_recovery_rate: 0.08}"
+        "{extra_battle_strength_points: 3, extra_cast_success_rate: 0.03}"
       ],
-      "required_realm": "QI_REFINEMENT"
+      "required_realm": "RU_WEI"
     },
     {
-      "id": "liuchao-zhiguai-bone-flute",
-      "name": "志怪骨笛",
-      "tier": 1,
+      "id": "wusan-gui-spear",
+      "name": "吴三桂长矛",
+      "tier": 3,
       "attributes": [
-        "FLUTE"
+        "SPEAR"
       ],
       "effects": [
-        "{extra_fortune_probability: 0.002, extra_luck: -1}"
+        "{extra_battle_strength_points: 2}"
       ],
-      "required_realm": "QI_REFINEMENT"
-    },
-    {
-      "id": "liuchao-exile-hidden-needle",
-      "name": "流亡袖针",
-      "tier": 1,
-      "attributes": [
-        "HIDDEN_WEAPON"
-      ],
-      "effects": [
-        "{extra_battle_strength_points: 1, extra_escape_success_rate: 0.12}"
-      ],
-      "required_realm": "QI_REFINEMENT"
+      "required_realm": "SHENG_XIANG"
     }
   ]
 }
