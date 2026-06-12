@@ -866,6 +866,7 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
                     raise MissingReferenceError(f"{path}.{field_name}", ref, "timeline.events[].id")
 
     _validate_storyline_reachability(events)
+    _validate_storyline_structure(events)
     return events
 
 
@@ -912,6 +913,95 @@ def _validate_storyline_reachability(events: list[dict[str, Any]]) -> None:
             raise ScenarioValidationError(
                 f"timeline.events[{idx}].storyline",
                 "a storyline activatable by some activate_storyline effect",
+                storyline,
+            )
+
+
+def _activate_targets(effects: Any) -> list[str]:
+    return [
+        str(effect["storyline"])
+        for effect in (effects or [])
+        if isinstance(effect, dict) and effect.get("type") == "activate_storyline" and effect.get("storyline")
+    ]
+
+
+def _find_storyline_cycle(edges: dict[str, set[str]]) -> list[str] | None:
+    """A storyline X -> Y edge means an X-tagged carrier activates Y. A cycle
+    means a set of storylines can only activate each other — unreachable."""
+    WHITE, GREY, BLACK = 0, 1, 2
+    color: dict[str, int] = {}
+
+    def visit(node: str, path: list[str]) -> list[str] | None:
+        color[node] = GREY
+        path.append(node)
+        for nxt in edges.get(node, ()):
+            if color.get(nxt, WHITE) == GREY:
+                return path[path.index(nxt):] + [nxt]
+            if color.get(nxt, WHITE) == WHITE:
+                found = visit(nxt, path)
+                if found:
+                    return found
+        path.pop()
+        color[node] = BLACK
+        return None
+
+    for node in list(edges):
+        if color.get(node, WHITE) == WHITE:
+            found = visit(node, [])
+            if found:
+                return found
+    return None
+
+
+def _validate_storyline_structure(events: list[dict[str, Any]]) -> None:
+    """v1.6 step B (P1-b): enforce the spec's mutual-exclusion guarantee at load.
+
+    - self-activation: an event tagged `S` may not activate `S` (it can only run
+      once `S` is active, so re-activating it is contradictory / unreachable).
+    - cycles: the storyline activation graph must be acyclic.
+    - sibling exclusivity: a storyline activated by a `branch` outcome must have
+      exactly one activator in the whole timeline, so sibling lines can never be
+      co-active on a single runtime path.
+    """
+    activator_count: dict[str, int] = {}
+    edges: dict[str, set[str]] = {}
+    sibling_storylines: set[str] = set()
+
+    for idx, event in enumerate(events):
+        source = event.get("storyline")
+        source = str(source) if source is not None else None
+        carriers: list[tuple[list[str], bool]] = [(_activate_targets(event.get("effects")), False)]
+        for choice in event.get("choices", []) or []:
+            carriers.append((_activate_targets(choice.get("effects")), False))
+        for branch in event.get("branches", []) or []:
+            carriers.append((_activate_targets(branch.get("effects")), True))
+        for targets, is_sibling in carriers:
+            for target in targets:
+                if source is not None and target == source:
+                    raise ScenarioValidationError(
+                        f"timeline.events[{idx}].storyline",
+                        "a storyline that does not activate itself",
+                        source,
+                    )
+                activator_count[target] = activator_count.get(target, 0) + 1
+                if source is not None:
+                    edges.setdefault(source, set()).add(target)
+                if is_sibling:
+                    sibling_storylines.add(target)
+
+    cycle = _find_storyline_cycle(edges)
+    if cycle is not None:
+        raise ScenarioValidationError(
+            "timeline.storyline_graph",
+            "an acyclic storyline activation graph",
+            " → ".join(cycle),
+        )
+
+    for storyline in sorted(sibling_storylines):
+        if activator_count.get(storyline, 0) > 1:
+            raise ScenarioValidationError(
+                "timeline.storyline_activation",
+                "a branch storyline activated by exactly one path (mutually exclusive siblings)",
                 storyline,
             )
 
