@@ -99,5 +99,9 @@ def get_scenario_vars(state: Any) -> dict[str, Any]:
 
 def get_active_storylines(state: Any) -> list[Any]:
     """v1.6 step B: storyline ids currently active. An event tagged with a
-    `storyline` only dispatches while that id is in this set."""
-    return ensure_list(get_scenario_runtime(state), "active_storylines")
+    `storyline` only dispatches while that id is in this set.
+
+    Stored in the *persisted* scenario state (same place as set_var vars) so an
+    activation in one month survives into later production ticks — the dispatch
+    state is rebuilt every tick, and scenario_runtime is ephemeral."""
+    return ensure_list(get_scenario_vars(state), "active_storylines")
