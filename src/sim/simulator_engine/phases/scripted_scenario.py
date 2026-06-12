@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import inspect
 import logging
 from typing import Any
 
@@ -112,30 +114,44 @@ async def phase_scripted_scenario_tick(world: Any, ctx: Any) -> list[Event]:
         month=int(month_stamp.get_month().value),
     )
     _sync_dispatch_state(sc, dispatch_state)
-    return [_fill_narration(world, _to_event(world, scenario_event), scenario_event) for scenario_event in dispatched]
+    events = [_to_event(world, scenario_event) for scenario_event in dispatched]
+    await _apply_narrative_fill(world, events, dispatched)
+    return events
 
 
-def _fill_narration(world: Any, event: Event, scenario_event: dict[str, Any]) -> Event:
+NARRATIVE_FILL_TIMEOUT_SECONDS = 30.0  # strict, well under the 120s provider timeout (Q1b)
+NARRATIVE_FILL_BUDGET = 8  # max generated narrations per tick (Q11)
+
+
+async def _apply_narrative_fill(world: Any, events: list[Event], scenario_events: list[dict[str, Any]]) -> None:
     """v1.7 render-only fill. Writes ONLY event.narration — never touches content,
-    world state, effects, flags, or branch outcome. Opt-in via the scenario event's
-    `narrative_fill: true`. narration = LLM text when an injectable
-    `world.narrative_filler` yields a non-empty string, else the authored
-    `narration_fallback` (Q2/Q9 — permanent fallback on no-filler / failure / miss;
-    no-LLM environments stay playable). Default (no filler) → fallback."""
-    if not scenario_event.get("narrative_fill"):
-        return event
-    fallback = scenario_event.get("narration_fallback")
-    text: Any = None
+    world state, effects, flags, or branch outcome. Opt-in via `narrative_fill: true`.
+
+    Per-tick bounded (Q1b/Q11): at most `budget` generated narrations, each awaited
+    call wrapped in a strict timeout. narration = LLM text when the injectable
+    `world.narrative_filler` (sync or async) yields a non-empty string, else the
+    authored `narration_fallback` (Q2/Q9). No filler → fallback; no-LLM stays playable."""
     filler = getattr(world, "narrative_filler", None)
-    if filler is not None:
-        try:
-            text = filler(scenario_event, world)
-        except Exception:  # noqa: BLE001 — a filler failure must never break the tick
-            logging.getLogger(__name__).warning(
-                "narrative_filler failed for event %s; using authored fallback",
-                scenario_event.get("id"),
-                exc_info=True,
-            )
-            text = None
-    event.narration = text if isinstance(text, str) and text.strip() else fallback
-    return event
+    budget = int(getattr(world, "narrative_fill_budget", NARRATIVE_FILL_BUDGET))
+    timeout = float(getattr(world, "narrative_fill_timeout", NARRATIVE_FILL_TIMEOUT_SECONDS))
+    used = 0
+    for event, scenario_event in zip(events, scenario_events):
+        if not scenario_event.get("narrative_fill"):
+            continue
+        fallback = scenario_event.get("narration_fallback")
+        text: Any = None
+        if filler is not None and used < budget:
+            used += 1
+            try:
+                result = filler(scenario_event, world)
+                if inspect.isawaitable(result):
+                    result = await asyncio.wait_for(result, timeout)
+                text = result
+            except Exception:  # noqa: BLE001 — a filler failure/timeout must never break the tick
+                logging.getLogger(__name__).warning(
+                    "narrative_filler failed/timed out for event %s; using authored fallback",
+                    scenario_event.get("id"),
+                    exc_info=True,
+                )
+                text = None
+        event.narration = text if isinstance(text, str) and text.strip() else fallback
