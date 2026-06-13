@@ -1011,3 +1011,31 @@ class TestEventNarrationPersistence:
         major = event_storage.get_major_events_by_avatar("av-x", limit=10)
         assert major, "expected the major event to be returned on the AI-memory path"
         assert all(e.narration is None for e in major)
+
+    def test_narration_stripped_from_llm_prompt_apis(self, event_storage):
+        """Q12 结构性隔离:LLM-prompt 专用 API(get_events_by_avatar / get_events_between)
+        即使底层共用展示 SELECT,也剥掉 narration,不依赖下游只读 content。"""
+        e1 = make_event(100, 5, "content-a", ["av-a", "av-b"], event_id="evt-ab")
+        e1.narration = "LEAK-1"
+        event_storage.add_event(e1)
+
+        by_avatar = event_storage.get_events_by_avatar("av-a", limit=10)
+        assert by_avatar and all(e.narration is None for e in by_avatar)
+
+        between = event_storage.get_events_between("av-a", "av-b", limit=10)
+        assert between and all(e.narration is None for e in between)
+
+    def test_narration_stripped_from_in_memory_ai_memory_render(self):
+        """Q12:内存模式 AI 记忆渲染(_render_for_observer 经 to_dict/from_dict 克隆)
+        必须剥掉 narration,与 DB 模式一致。"""
+        manager = EventManager.create_in_memory()
+        try:
+            event = make_event(100, 5, "content-m", ["av-m"], is_major=True, event_id="evt-mem-mode")
+            event.narration = "LEAK-MEM"
+            manager.add_event(event)
+
+            major = manager.get_major_events_by_avatar("av-m", limit=10)
+            assert major, "expected the major event on the in-memory AI-memory path"
+            assert all(e.narration is None for e in major)
+        finally:
+            manager.close()

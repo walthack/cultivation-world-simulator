@@ -290,12 +290,13 @@ export function useEventPanel() {
   })
 
   function getEventText(event: GameEvent) {
-    // v1.7: LLM 生成的 narration 是完整叙事散文，优先展示；缺省回退到既有渲染。
-    if (event.narration) return event.narration
-
-    const text = event.renderKey
-      ? t(`game.event_templates.${event.renderKey}`, event.renderParams ?? {})
-      : (event.content || event.text || '')
+    // v1.7: LLM 生成的 narration 优先展示；缺省回退到既有渲染。narration 仍走下方
+    // story-subject 前缀逻辑(保持与普通文本一致的展示行为)。
+    const text = event.narration
+      ? event.narration
+      : event.renderKey
+        ? t(`game.event_templates.${event.renderKey}`, event.renderParams ?? {})
+        : (event.content || event.text || '')
 
     if (!event.isStory || event.relatedAvatarIds.length !== 1) {
       return text

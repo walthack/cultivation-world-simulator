@@ -118,6 +118,10 @@ class EventManager:
 
         rendered = Event.from_dict(event.to_dict())
         rendered.content = render_observed_event(rendered, matched_observation)
+        # Q12: 这是内存模式 AI 记忆渲染路径。to_dict/from_dict 会带过来 render-only
+        # narration,但记忆/展示-记忆都只该用 content。剥掉它,与 DB 模式 get_major/minor
+        # SELECT 不取 narration 保持一致。
+        rendered.narration = None
         return rendered
 
     def get_recent_events(self, limit: int = 100) -> List["Event"]:

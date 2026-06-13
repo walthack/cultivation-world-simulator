@@ -549,6 +549,15 @@ class EventStorage:
             )
             return [], None
 
+    @staticmethod
+    def _strip_narration(events: list["Event"]) -> list["Event"]:
+        """Q12: 这些是 LLM-prompt/机制路径(非前端展示),剥掉 render-only narration,
+        使隔离成为结构性保证(不依赖下游只读 content)。与 get_major/minor SELECT 不取
+        narration、以及 DB/内存两模式保持一致。"""
+        for event in events:
+            event.narration = None
+        return events
+
     def get_events_by_avatar(self, avatar_id: str, limit: int = 50) -> list["Event"]:
         """
         后端用：获取角色相关事件（供 LLM prompt 使用）。
@@ -556,7 +565,7 @@ class EventStorage:
         返回最新的 N 条，按时间正序排列。
         """
         events, _ = self.get_events(avatar_id=avatar_id, limit=limit)
-        return list(reversed(events))  # 转为时间正序。
+        return self._strip_narration(list(reversed(events)))  # 转为时间正序。
 
     def get_events_between(self, id1: str, id2: str, limit: int = 50) -> list["Event"]:
         """
@@ -565,7 +574,7 @@ class EventStorage:
         返回最新的 N 条，按时间正序排列。
         """
         events, _ = self.get_events(avatar_id_pair=(id1, id2), limit=limit)
-        return list(reversed(events))  # 转为时间正序。
+        return self._strip_narration(list(reversed(events)))  # 转为时间正序。
 
     def get_major_events_by_avatar(self, avatar_id: str, limit: int = 10) -> list["Event"]:
         """获取角色的大事（长期记忆）。"""
