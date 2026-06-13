@@ -25,7 +25,10 @@ AUTHORED_FIELD_LIMIT = 2000  # Q10: cap untrusted authored fields
 
 
 def _clip(value: Any, limit: int = AUTHORED_FIELD_LIMIT) -> str:
-    return str(value or "").strip()[:limit]
+    # Neutralize fence markers so an authored field can't close the reference-data
+    # region early and smuggle text out as instructions (NEW-1).
+    text = str(value or "").replace("<<<", "‹‹‹").replace(">>>", "›››")
+    return text.strip()[:limit]
 
 
 def _involved_avatar_ids(scenario_event: dict[str, Any]) -> list[str]:
