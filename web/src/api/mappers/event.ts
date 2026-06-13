@@ -12,6 +12,7 @@ export function mapEventDtoToGameEvent(event: EventDTO): GameEvent {
     id: event.id,
     text: event.text,
     content: event.content,
+    narration: event.narration,
     year: event.year,
     month: event.month,
     timestamp: event.month_stamp,

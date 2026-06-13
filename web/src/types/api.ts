@@ -319,6 +319,7 @@ export interface EventDTO {
   id: string;
   text: string;
   content: string;
+  narration?: string | null;
   year: number;
   month: number;
   month_stamp: number;

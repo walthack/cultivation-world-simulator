@@ -56,9 +56,9 @@ class Event:
             "render_params": self.render_params,
             "id": self.id,
             "created_at": self.created_at,
-            # NOTE: `narration` is intentionally NOT serialized yet — it has no
-            # EventStorage column. It is re-added together with the DB column +
-            # client DTO in v1.7 P1-2 so persistence is consistent end-to-end.
+            # v1.7 P1-2: render-only narration is persisted alongside the
+            # EventStorage `narration` column so display text survives round-trips.
+            "narration": self.narration,
         }
     
     @classmethod
@@ -76,6 +76,7 @@ class Event:
             render_params=data.get("render_params"),
             id=data.get("id", str(uuid.uuid4())),
             created_at=data.get("created_at", time.time()),
+            narration=data.get("narration"),
         )
 
 class NullEvent:

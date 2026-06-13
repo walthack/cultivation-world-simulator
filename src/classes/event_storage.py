@@ -88,6 +88,7 @@ class EventStorage:
                         event_type TEXT DEFAULT '',
                         render_key TEXT,
                         render_params TEXT,
+                        narration TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
 
@@ -138,6 +139,16 @@ class EventStorage:
                     CREATE INDEX IF NOT EXISTS idx_event_observations_subject_avatar_id
                         ON event_observations(subject_avatar_id);
                 """)
+
+                # 迁移既有存档：旧库的 events 表没有 narration 列（v1.7 P1-2 新增）。
+                # CREATE TABLE IF NOT EXISTS 不会给已存在的表补列，需显式 ALTER。
+                existing_cols = {
+                    row["name"]
+                    for row in self._conn.execute("PRAGMA table_info(events)").fetchall()
+                }
+                if "narration" not in existing_cols:
+                    self._conn.execute("ALTER TABLE events ADD COLUMN narration TEXT")
+
                 self._conn.commit()
             self._logger.info(f"EventStorage initialized: {self._db_path}")
         except Exception as e:
@@ -177,9 +188,9 @@ class EventStorage:
                 self._conn.execute(
                     """
                     INSERT OR IGNORE INTO events (
-                        id, month_stamp, content, is_major, is_story, event_type, render_key, render_params, created_at
+                        id, month_stamp, content, is_major, is_story, event_type, render_key, render_params, narration, created_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         event.id,
@@ -190,6 +201,7 @@ class EventStorage:
                         event.event_type,
                         event.render_key,
                         json.dumps(event.render_params, ensure_ascii=False) if event.render_params is not None else None,
+                        getattr(event, "narration", None),
                         _format_time(event.created_at),
                     )
                 )
@@ -342,6 +354,10 @@ class EventStorage:
         else:
             related_sects = sect_map.get(row["id"], [])
 
+        # narration 只在展示路径的 SELECT 里列出（get_events）；AI 记忆等 SELECT 不取它，
+        # 防御式读取保证缺列时事件仍为 narration=None（Q12 隔离的额外保险）。
+        narration = row["narration"] if "narration" in row.keys() else None
+
         return Event(
             month_stamp=MonthStamp(row["month_stamp"]),
             content=row["content"],
@@ -354,6 +370,7 @@ class EventStorage:
             render_params=json.loads(row["render_params"]) if row["render_params"] else None,
             id=row["id"],
             created_at=_parse_time(row["created_at"]),
+            narration=narration,
         )
 
     def _build_events_from_rows(self, rows) -> list["Event"]:
@@ -438,7 +455,7 @@ class EventStorage:
                     base_query = """
                         SELECT DISTINCT
                             e.rowid, e.id, e.month_stamp, e.content, e.is_major, e.is_story,
-                            e.event_type, e.render_key, e.render_params, e.created_at
+                            e.event_type, e.render_key, e.render_params, e.narration, e.created_at
                         FROM events e
                         JOIN event_avatars ea1 ON e.id = ea1.event_id AND ea1.avatar_id = ?
                         JOIN event_avatars ea2 ON e.id = ea2.event_id AND ea2.avatar_id = ?
@@ -449,7 +466,7 @@ class EventStorage:
                     base_query = """
                         SELECT DISTINCT
                             e.rowid, e.id, e.month_stamp, e.content, e.is_major, e.is_story,
-                            e.event_type, e.render_key, e.render_params, e.created_at
+                            e.event_type, e.render_key, e.render_params, e.narration, e.created_at
                         FROM events e
                         JOIN event_avatars ea ON e.id = ea.event_id AND ea.avatar_id = ?
                     """
@@ -459,7 +476,7 @@ class EventStorage:
                     base_query = """
                         SELECT DISTINCT
                             e.rowid, e.id, e.month_stamp, e.content, e.is_major, e.is_story,
-                            e.event_type, e.render_key, e.render_params, e.created_at
+                            e.event_type, e.render_key, e.render_params, e.narration, e.created_at
                         FROM events e
                         JOIN event_sects es ON e.id = es.event_id AND es.sect_id = ?
                     """
@@ -469,7 +486,7 @@ class EventStorage:
                     base_query = """
                         SELECT
                             rowid, id, month_stamp, content, is_major, is_story,
-                            event_type, render_key, render_params, e.created_at
+                            event_type, render_key, render_params, narration, e.created_at
                         FROM events e
                     """
 

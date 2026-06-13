@@ -914,3 +914,100 @@ class TestEventStorageThreadSafety:
 
         final_events, _ = event_storage.get_events(limit=expected_total + 5)
         assert len(final_events) == expected_total
+
+
+# --- v1.7 P1-2: render-only narration persistence ---
+
+class TestEventNarrationPersistence:
+    """narration 必须经 DB 持久化 + 读回(仅展示路径),旧库需迁移,且不污染 AI 记忆路径。"""
+
+    def test_narration_round_trips_through_get_events(self, event_storage):
+        """opt-in 事件的 narration 写入后,经 get_events(展示路径)逐字节读回。"""
+        event = make_event(100, 5, "scripted content", event_id="evt-narr")
+        event.narration = "门外风雪渐起,程宗扬负手而立。"
+        assert event_storage.add_event(event) is True
+
+        events, _ = event_storage.get_events(limit=10)
+        by_id = {e.id: e for e in events}
+        assert by_id["evt-narr"].narration == "门外风雪渐起,程宗扬负手而立。"
+        # content 不被 narration 覆盖
+        assert by_id["evt-narr"].content == "scripted content"
+
+    def test_narration_round_trips_filtered_by_avatar(self, event_storage):
+        """单角色筛选(前端 avatar 过滤共用此 SELECT)也读回 narration。"""
+        event = make_event(100, 5, "scripted content", ["av-1"], event_id="evt-narr-av")
+        event.narration = "NARR-AVATAR"
+        event_storage.add_event(event)
+
+        events, _ = event_storage.get_events(avatar_id="av-1", limit=10)
+        assert events[0].narration == "NARR-AVATAR"
+
+    def test_event_without_narration_reads_back_none(self, event_storage):
+        """未填充的事件 narration 读回为 None。"""
+        event_storage.add_event(make_event(100, 5, "plain", event_id="evt-plain"))
+        events, _ = event_storage.get_events(limit=10)
+        assert {e.id: e for e in events}["evt-plain"].narration is None
+
+    def test_legacy_db_without_narration_column_is_migrated(self, temp_db_path):
+        """旧存档的 events 表没有 narration 列 → 初始化时 ALTER 补列,既有行 narration=NULL。"""
+        import sqlite3
+
+        # 模拟旧库:建一个没有 narration 列的 events 表 + 一行旧数据。
+        conn = sqlite3.connect(str(temp_db_path))
+        conn.execute(
+            """
+            CREATE TABLE events (
+                id TEXT PRIMARY KEY,
+                month_stamp INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                is_major BOOLEAN DEFAULT FALSE,
+                is_story BOOLEAN DEFAULT FALSE,
+                event_type TEXT DEFAULT '',
+                render_key TEXT,
+                render_params TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO events (id, month_stamp, content) VALUES (?, ?, ?)",
+            ("legacy-1", 1200, "old event"),
+        )
+        conn.commit()
+        conn.close()
+
+        # 打开为 EventStorage → 触发迁移。
+        storage = EventStorage(temp_db_path)
+        try:
+            cols = {row["name"] for row in storage._conn.execute("PRAGMA table_info(events)").fetchall()}
+            assert "narration" in cols
+
+            events, _ = storage.get_events(limit=10)
+            legacy = {e.id: e for e in events}["legacy-1"]
+            assert legacy.narration is None
+            assert legacy.content == "old event"
+
+            # 迁移后仍可写入带 narration 的新事件。
+            new_event = make_event(101, 1, "fresh", event_id="fresh-1")
+            new_event.narration = "MIGRATED-OK"
+            storage.add_event(new_event)
+            events, _ = storage.get_events(limit=10)
+            assert {e.id: e for e in events}["fresh-1"].narration == "MIGRATED-OK"
+        finally:
+            storage.close()
+
+    def test_narration_absent_from_ai_memory_select(self, event_storage):
+        """Q12 隔离:AI 记忆专用 SELECT(get_*_events_by_avatar)不取 narration → 读回 None,
+        即使该事件在展示路径带 narration。"""
+        event = make_event(100, 5, "scripted content", ["av-x"], is_major=True, event_id="evt-mem")
+        event.narration = "SHOULD-NOT-REACH-AI"
+        event_storage.add_event(event)
+
+        # 展示路径有 narration。
+        shown, _ = event_storage.get_events(avatar_id="av-x", limit=10)
+        assert shown[0].narration == "SHOULD-NOT-REACH-AI"
+
+        # AI 长期记忆路径无 narration。
+        major = event_storage.get_major_events_by_avatar("av-x", limit=10)
+        assert major, "expected the major event to be returned on the AI-memory path"
+        assert all(e.narration is None for e in major)

@@ -79,6 +79,7 @@ def serialize_events_for_client(events: list[Any]) -> list[dict[str, Any]]:
                 "id": getattr(event, "id", None) or f"{stamp_int or 'evt'}-{idx}",
                 "text": str(event),
                 "content": getattr(event, "content", ""),
+                "narration": getattr(event, "narration", None),
                 "year": year,
                 "month": month,
                 "month_stamp": stamp_int,

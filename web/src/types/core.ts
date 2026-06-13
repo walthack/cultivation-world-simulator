@@ -431,6 +431,7 @@ export interface GameEvent {
   id: string;
   text: string;
   content?: string; // 详细描述
+  narration?: string | null; // v1.7 render-only: LLM 生成的叙事文本，仅供展示
   year: number;
   month: number;
   // 排序权重
