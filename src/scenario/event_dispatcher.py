@@ -111,7 +111,14 @@ class EventDispatcher:
             if handler is not None:
                 result = handler(state, event)
                 if hasattr(result, "__await__"):
-                    await result
+                    result = await result
+                # M2: expose the resolved branch outcome so reproducible narration
+                # keying can distinguish alternate branches of the same event.
+                # (Choice outcomes are already recorded by the main-event handler.)
+                if isinstance(result, dict) and result.get("selected_branch") is not None:
+                    runtime.setdefault("event_outcomes", {})[event_id] = {
+                        "branch_id": str(result["selected_branch"])
+                    }
             triggered.append(event_id)
             for blocked_event in event.get("blocks_events", []) or []:
                 if blocked_event not in blocked:

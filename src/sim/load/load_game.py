@@ -143,6 +143,7 @@ def load_game(
                 generation_profile=resolved.generation_profile,
                 state=dict(saved_sc.get("state", {}) or {}),
                 triggered_events=set(saved_sc.get("triggered_events", []) or []),
+                narration_cache=dict(saved_sc.get("narration_cache", {}) or {}),
             )
             from src.scenario.narrative_fill import attach_default_narrative_filler
 

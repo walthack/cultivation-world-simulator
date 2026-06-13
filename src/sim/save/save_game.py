@@ -247,6 +247,9 @@ def save_game(
                 "scenario_id": world.scripted_scenario.scenario_id,
                 "state": dict(world.scripted_scenario.state),
                 "triggered_events": sorted(world.scripted_scenario.triggered_events),
+                # M2: reproducible narration cache — its own field, NOT inside state
+                # (state is var_equals-readable; this must stay out of it).
+                "narration_cache": dict(getattr(world.scripted_scenario, "narration_cache", {}) or {}),
             }
         
         # 写入文件

@@ -6,7 +6,9 @@ import logging
 from typing import Any
 
 from src.classes.event import Event
+from src.classes.language import language_manager
 from src.scenario.event_dispatcher import EventDispatcher
+from src.scenario.narration_cache import narration_cache_key, resolved_outcome
 from src.scenario.event_handlers import (
     handle_branch,
     handle_character_introduction,
@@ -132,33 +134,71 @@ async def _apply_narrative_fill(world: Any, events: list[Event], scenario_events
     tick-level timeout (the whole batch is bounded regardless of event count). Q11
     budget caps how many events the filler is asked to generate. narration = the
     returned text when non-empty, else the authored `narration_fallback` (Q2/Q9).
-    No filler / failure / timeout → fallback; no-LLM environments stay playable."""
-    requests = [se for ev, se in zip(events, scenario_events) if se.get("narrative_fill")]
-    if not requests:
+    No filler / failure / timeout → fallback; no-LLM environments stay playable.
+
+    M2 (Q3/Q9): generated narration is reproducible. Each fillable event is keyed
+    by (scenario_id, event_id, resolved_outcome, content_locale) against the
+    save-persisted `narration_cache`. A cache HIT reuses the frozen text and
+    consumes no LLM call/budget. A MISS generates once and freezes the result.
+    Generation failure → authored fallback, which is NOT cached: it is static and
+    thus already reproducible, and leaving it uncached lets a later LLM-available
+    run fill it in (the permanent-fallback recovery never forces non-reproducible
+    regeneration of an already-frozen entry)."""
+    fillable = [(ev, se) for ev, se in zip(events, scenario_events) if se.get("narrative_fill")]
+    if not fillable:
         return
-    budget = int(getattr(world, "narrative_fill_budget", NARRATIVE_FILL_BUDGET))
-    timeout = float(getattr(world, "narrative_fill_timeout", NARRATIVE_FILL_TIMEOUT_SECONDS))
-    filler = getattr(world, "narrative_filler", None)
+
+    sc = getattr(world, "scripted_scenario", None)
+    cache = getattr(sc, "narration_cache", None)
+    if not isinstance(cache, dict):
+        cache = {}
+    scenario_id = getattr(sc, "scenario_id", "")
+    locale = getattr(language_manager, "current", "")
+    event_outcomes = (getattr(sc, "state", {}) or {}).get("event_outcomes", {}) or {}
+
+    keys: dict[str, str] = {}
+    to_generate: list[tuple[Event, dict[str, Any]]] = []
+    for event, scenario_event in fillable:
+        event_id = str(scenario_event.get("id"))
+        key = narration_cache_key(
+            scenario_id, event_id, resolved_outcome(event_id, event_outcomes), locale
+        )
+        keys[event_id] = key
+        cached = cache.get(key)
+        if isinstance(cached, str) and cached.strip():
+            event.narration = cached  # frozen text — no LLM call, no budget
+        else:
+            to_generate.append((event, scenario_event))
 
     generated: dict[str, Any] = {}
-    if filler is not None:
-        try:
-            result = filler(requests[:budget], world)
-            if inspect.isawaitable(result):
-                result = await asyncio.wait_for(result, timeout)
-            if isinstance(result, dict):
-                generated = result
-        except Exception:  # noqa: BLE001 — a filler failure/timeout must never break the tick
-            logging.getLogger(__name__).warning(
-                "narrative_filler batch failed/timed out (%d events); using authored fallback",
-                len(requests),
-                exc_info=True,
-            )
-            generated = {}
+    if to_generate:
+        budget = int(getattr(world, "narrative_fill_budget", NARRATIVE_FILL_BUDGET))
+        timeout = float(getattr(world, "narrative_fill_timeout", NARRATIVE_FILL_TIMEOUT_SECONDS))
+        filler = getattr(world, "narrative_filler", None)
+        requests = [se for _, se in to_generate]
+        if filler is not None:
+            try:
+                result = filler(requests[:budget], world)
+                if inspect.isawaitable(result):
+                    result = await asyncio.wait_for(result, timeout)
+                if isinstance(result, dict):
+                    generated = result
+            except Exception:  # noqa: BLE001 — a filler failure/timeout must never break the tick
+                logging.getLogger(__name__).warning(
+                    "narrative_filler batch failed/timed out (%d events); using authored fallback",
+                    len(requests),
+                    exc_info=True,
+                )
+                generated = {}
 
-    for event, scenario_event in zip(events, scenario_events):
-        if not scenario_event.get("narrative_fill"):
-            continue
-        text = generated.get(str(scenario_event.get("id")))
-        fallback = scenario_event.get("narration_fallback")
-        event.narration = text if isinstance(text, str) and text.strip() else fallback
+    for event, scenario_event in to_generate:
+        event_id = str(scenario_event.get("id"))
+        text = generated.get(event_id)
+        if isinstance(text, str) and text.strip():
+            event.narration = text
+            cache[keys[event_id]] = text  # freeze generated text for reproducibility
+        else:
+            event.narration = scenario_event.get("narration_fallback")  # static, not cached
+
+    if sc is not None and cache:
+        sc.narration_cache = cache
