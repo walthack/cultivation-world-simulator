@@ -23,6 +23,7 @@ CallLLM = Callable[[str, LLMMode], Awaitable[str]]
 
 AUTHORED_FIELD_LIMIT = 2000  # Q10: cap untrusted authored fields
 RELATIONSHIP_MAX_ENTRIES = 6  # M3 (Q4): bound the per-avatar relationship subgraph
+RELATIONSHIP_MAX_AVATARS = 4  # M3: bound how many involved avatars we summarize (work cap)
 CHRONICLE_MAX_EVENTS = 5  # M3 (Q4): bound the recent chronicle
 CONTEXT_BUDGET_CHARS = 8000  # M3 (Q11): total assembled data-block cap (token proxy)
 
@@ -66,7 +67,10 @@ def _relationship_context(scenario_event: dict[str, Any], world: Any) -> str:
     from src.classes.relation.relationship_summary import build_relationship_summary
 
     parts: list[str] = []
-    for avatar_id in _involved_avatar_ids(scenario_event):
+    # Cap the number of summarized avatars so a pathological event (many
+    # effects/choices/branches) can't blow up assembly work — output is already
+    # clipped, this bounds the work too.
+    for avatar_id in _involved_avatar_ids(scenario_event)[:RELATIONSHIP_MAX_AVATARS]:
         summary = _safe(
             lambda aid=avatar_id: build_relationship_summary(world, aid, max_entries=RELATIONSHIP_MAX_ENTRIES),
             "",
@@ -83,8 +87,13 @@ def _chronicle_context(world: Any) -> str:
     manager = getattr(world, "event_manager", None)
     if manager is None:
         return ""
-    events = _safe(lambda: manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS), []) or []
-    return _clip("\n".join(str(event) for event in events), 1200)
+    # Retrieval AND str() formatting both inside _safe — a non-Event or a raising
+    # __str__ must degrade to empty, never break the fill.
+    lines = _safe(
+        lambda: [str(event) for event in (manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS) or [])],
+        [],
+    )
+    return _clip("\n".join(lines), 1200)
 
 
 def _assemble_within_budget(
@@ -94,15 +103,15 @@ def _assemble_within_budget(
     layers (relationship, chronicle) added only while under the context budget.
     Hard-capped at the end so the data block is bounded regardless."""
     lines = [f"{label}：{value}" for label, value in mandatory if value]
-    used = sum(len(line) for line in lines)
     for label, value in optional:
         if not value:
             continue
-        line = f"{label}：{value}"
-        if used + len(line) > budget:
+        candidate = lines + [f"{label}：{value}"]
+        # Measure the actual joined length (counts the \n separators) so an
+        # admitted block never silently overruns the budget and gets truncated.
+        if len("\n".join(candidate)) > budget:
             break
-        lines.append(line)
-        used += len(line)
+        lines = candidate
     return "\n".join(lines)[:budget]
 
 

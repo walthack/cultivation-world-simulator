@@ -80,6 +80,34 @@ def test_chronicle_is_safe_without_event_manager():
     assert _chronicle_context(SimpleNamespace()) == ""
 
 
+def test_chronicle_is_safe_when_event_str_raises():
+    class Boom:
+        def __str__(self):
+            raise RuntimeError("bad event")
+
+    world = SimpleNamespace(
+        event_manager=SimpleNamespace(get_recent_events=lambda limit: [Boom()])
+    )
+    assert _chronicle_context(world) == ""  # formatting failure degrades, never raises
+
+
+def test_relationship_layer_caps_number_of_summarized_avatars(monkeypatch):
+    calls = []
+
+    def fake_summary(world, npc_id, *, max_entries):
+        calls.append(npc_id)
+        return f"rel[{npc_id}]"
+
+    monkeypatch.setattr(
+        "src.classes.relation.relationship_summary.build_relationship_summary", fake_summary
+    )
+    many = {"id": "e", "effects": [{"type": "x", "npc_id": f"av-{i}"} for i in range(10)]}
+
+    _relationship_context(many, SimpleNamespace())
+
+    assert len(calls) <= 4  # RELATIONSHIP_MAX_AVATARS
+
+
 def test_full_prompt_never_carries_generated_narration_back():
     """Integration: the assembled prompt includes chronicle content but never the
     generated narration of a past event (Q12 / no feedback loop)."""
