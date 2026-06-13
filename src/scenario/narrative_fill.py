@@ -22,6 +22,9 @@ from src.utils.llm.client import LLMMode, call_llm
 CallLLM = Callable[[str, LLMMode], Awaitable[str]]
 
 AUTHORED_FIELD_LIMIT = 2000  # Q10: cap untrusted authored fields
+RELATIONSHIP_MAX_ENTRIES = 6  # M3 (Q4): bound the per-avatar relationship subgraph
+CHRONICLE_MAX_EVENTS = 5  # M3 (Q4): bound the recent chronicle
+CONTEXT_BUDGET_CHARS = 8000  # M3 (Q11): total assembled data-block cap (token proxy)
 
 
 def _clip(value: Any, limit: int = AUTHORED_FIELD_LIMIT) -> str:
@@ -58,10 +61,56 @@ def _safe(fn: Callable[[], Any], default: Any) -> Any:
         return default
 
 
+def _relationship_context(scenario_event: dict[str, Any], world: Any) -> str:
+    """Relationship subgraph for the involved avatars (M3/Q4), bounded per avatar."""
+    from src.classes.relation.relationship_summary import build_relationship_summary
+
+    parts: list[str] = []
+    for avatar_id in _involved_avatar_ids(scenario_event):
+        summary = _safe(
+            lambda aid=avatar_id: build_relationship_summary(world, aid, max_entries=RELATIONSHIP_MAX_ENTRIES),
+            "",
+        )
+        if summary:
+            parts.append(f"{avatar_id}→{summary}")
+    return _clip("；".join(parts), 800)
+
+
+def _chronicle_context(world: Any) -> str:
+    """Recent chronicle (M3/Q4). AUTHORED / mechanical text ONLY: `str(Event)` reads
+    Event.content, never Event.narration — so generated fill can never feed back
+    into a later generation (no context feedback loop)."""
+    manager = getattr(world, "event_manager", None)
+    if manager is None:
+        return ""
+    events = _safe(lambda: manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS), []) or []
+    return _clip("\n".join(str(event) for event in events), 1200)
+
+
+def _assemble_within_budget(
+    mandatory: list[tuple[str, str]], optional: list[tuple[str, str]], budget: int
+) -> str:
+    """Q4 layering under a Q11 budget: mandatory layers always included; optional
+    layers (relationship, chronicle) added only while under the context budget.
+    Hard-capped at the end so the data block is bounded regardless."""
+    lines = [f"{label}：{value}" for label, value in mandatory if value]
+    used = sum(len(line) for line in lines)
+    for label, value in optional:
+        if not value:
+            continue
+        line = f"{label}：{value}"
+        if used + len(line) > budget:
+            break
+        lines.append(line)
+        used += len(line)
+    return "\n".join(lines)[:budget]
+
+
 def build_narrative_prompt(scenario_event: dict[str, Any], world: Any) -> str:
     """Assemble the fill prompt: mandatory context (event skeleton + involved
-    avatars + active storyline) + world_lore/terminology + progression (Q4).
-    Authored fields are sandboxed (Q10)."""
+    avatars + active storyline + world_lore/terminology + progression) plus, within
+    a bounded budget, optional layers (relationship subgraph + recent chronicle) —
+    Q4 layering, Q11 budget. Authored fields are sandboxed (Q10)."""
     # Every authored / scenario-derived field is UNTRUSTED data (Q10): clipped and
     # fenced inside one data region, never emitted as instructions.
     world_lore = _clip(_safe(lambda: build_prompt_world_lore("", world), ""))
@@ -69,7 +118,7 @@ def build_narrative_prompt(scenario_event: dict[str, Any], world: Any) -> str:
     storylines = _clip(", ".join(_safe(lambda: [str(s) for s in get_active_storylines(world)], [])), 500)
     avatars = _clip(", ".join(_involved_avatar_ids(scenario_event)), 500)
 
-    data_fields = [
+    mandatory = [
         ("世界设定", world_lore),
         ("成长体系", progression),
         ("当前剧情线", storylines),
@@ -77,7 +126,11 @@ def build_narrative_prompt(scenario_event: dict[str, Any], world: Any) -> str:
         ("事件名", _clip(scenario_event.get("name"))),
         ("事件梗概", _clip(scenario_event.get("description"))),
     ]
-    data_block = "\n".join(f"{label}：{value}" for label, value in data_fields if value)
+    optional = [
+        ("人物关系", _relationship_context(scenario_event, world)),
+        ("近期纪事", _chronicle_context(world)),
+    ]
+    data_block = _assemble_within_budget(mandatory, optional, CONTEXT_BUDGET_CHARS)
 
     return (
         "你是一名为剧本世界生成叙事文本的写手。"
