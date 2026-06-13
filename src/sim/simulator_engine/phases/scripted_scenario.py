@@ -139,11 +139,11 @@ async def _apply_narrative_fill(world: Any, events: list[Event], scenario_events
     M2 (Q3/Q9): generated narration is reproducible. Each fillable event is keyed
     by (scenario_id, event_id, resolved_outcome, content_locale) against the
     save-persisted `narration_cache`. A cache HIT reuses the frozen text and
-    consumes no LLM call/budget. A MISS generates once and freezes the result.
-    Generation failure → authored fallback, which is NOT cached: it is static and
-    thus already reproducible, and leaving it uncached lets a later LLM-available
-    run fill it in (the permanent-fallback recovery never forces non-reproducible
-    regeneration of an already-frozen entry)."""
+    consumes no LLM call/budget. A MISS generates once and freezes the result —
+    AND on generation failure freezes the authored fallback too (Q9 "permanent
+    fallback"): once an event has resolved in a save, its narration must never
+    change on reload, even if the LLM later becomes available. A fresh game starts
+    with an empty cache, so a first run can still attempt generation."""
     fillable = [(ev, se) for ev, se in zip(events, scenario_events) if se.get("narrative_fill")]
     if not fillable:
         return
@@ -198,7 +198,12 @@ async def _apply_narrative_fill(world: Any, events: list[Event], scenario_events
             event.narration = text
             cache[keys[event_id]] = text  # freeze generated text for reproducibility
         else:
-            event.narration = scenario_event.get("narration_fallback")  # static, not cached
+            fallback = scenario_event.get("narration_fallback")
+            event.narration = fallback
+            # Q9: freeze the fallback too — a resolved event's text is permanent;
+            # a later LLM-available reload must not regenerate and diverge.
+            if isinstance(fallback, str) and fallback.strip():
+                cache[keys[event_id]] = fallback
 
     if sc is not None and cache:
         sc.narration_cache = cache

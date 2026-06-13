@@ -10,11 +10,8 @@ readable by `var_equals` / conditions — preserving the Q12 isolation boundary.
 
 from __future__ import annotations
 
+import json
 from typing import Any
-
-# Unit separator: not valid inside scenario/event ids or locale codes, so the
-# composite key is unambiguous.
-_SEP = "\x1f"
 
 
 def resolved_outcome(event_id: str, event_outcomes: dict[str, Any] | None) -> str:
@@ -29,7 +26,12 @@ def resolved_outcome(event_id: str, event_outcomes: dict[str, Any] | None) -> st
 
 def narration_cache_key(scenario_id: Any, event_id: Any, outcome: Any, locale: Any) -> str:
     """Compose the reproducibility key. Locale is part of the key (Q8) so each
-    content_locale stores its own narration and they never overwrite each other."""
-    return _SEP.join(
-        (str(scenario_id or ""), str(event_id or ""), str(outcome or ""), str(locale or ""))
+    content_locale stores its own narration and they never overwrite each other.
+
+    Encoded structurally (JSON array) rather than delimiter-joined: scenario/event
+    ids are only validated as non-empty, so a delimiter could collide across
+    components — JSON encoding is unambiguous regardless of id content."""
+    return json.dumps(
+        [str(scenario_id or ""), str(event_id or ""), str(outcome or ""), str(locale or "")],
+        ensure_ascii=False,
     )

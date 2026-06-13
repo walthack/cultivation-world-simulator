@@ -117,13 +117,23 @@ async def test_reproducible_across_a_simulated_reload(base_world):
 
 
 @pytest.mark.asyncio
-async def test_fallback_is_not_cached(base_world):
-    """Generation failure → authored fallback, which must NOT be frozen (Q9): a
-    later LLM-available run should still be able to fill it in."""
+async def test_fallback_is_frozen_for_permanent_reproducibility(base_world):
+    """Generation failure → authored fallback, frozen into the cache (Q9 permanent
+    fallback): once resolved, a later LLM-available reload must NOT regenerate."""
     sc = ScriptedScenarioState(scenario_id="sc", timeline=_timeline())
     events = await _tick(base_world, sc, lambda reqs, w: {})  # filler yields nothing
     assert events[0].narration == "AUTHORED-FALLBACK"
-    assert sc.narration_cache == {}  # nothing frozen
+    key = narration_cache_key("sc", "e1", "", base_world_locale())
+    assert sc.narration_cache[key] == "AUTHORED-FALLBACK"  # frozen
+
+    # simulated reload with the LLM now available — frozen fallback wins, no regen
+    sc2 = ScriptedScenarioState(
+        scenario_id="sc", timeline=_timeline(), narration_cache=dict(sc.narration_cache)
+    )
+    f = CountingFiller("LATE-GENERATION")
+    e2 = await _tick(base_world, sc2, f)
+    assert e2[0].narration == "AUTHORED-FALLBACK"
+    assert f.calls == 0
 
 
 @pytest.mark.asyncio
