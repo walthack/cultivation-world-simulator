@@ -17,3 +17,7 @@ class ScriptedScenarioState:
     # SIBLING of `state` — never inside it — so conditions/var_equals can't read
     # generated text (Q12). Persisted to the save as its own field.
     narration_cache: dict[str, str] = field(default_factory=dict)
+    # v1.8 M0 (L3): audit ledger of generated transition beats (accept/reject +
+    # reason + applied command). Like `narration_cache`, a deliberate SIBLING of
+    # `state` — beat plans/text must never be var_equals-readable.
+    transition_ledger: list[dict[str, Any]] = field(default_factory=list)

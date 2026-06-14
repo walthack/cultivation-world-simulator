@@ -9,6 +9,7 @@ from src.classes.event import Event
 from src.classes.language import language_manager
 from src.scenario.event_dispatcher import EventDispatcher
 from src.scenario.narration_cache import narration_cache_key, resolved_outcome
+from src.scenario.narrative_transition import apply_narrative_transition
 from src.scenario.event_handlers import (
     handle_branch,
     handle_character_introduction,
@@ -118,6 +119,11 @@ async def phase_scripted_scenario_tick(world: Any, ctx: Any) -> list[Event]:
     _sync_dispatch_state(sc, dispatch_state)
     events = [_to_event(world, scenario_event) for scenario_event in dispatched]
     await _apply_narrative_fill(world, events, dispatched)
+    # v1.8 M0: anchors have already dispatched (priority); now fill the gap BETWEEN
+    # anchors with validated, write-set-checked transition beats. No-op unless a
+    # `world.transition_generator` is injected and this is a gap tick.
+    fired_ids = {str(se.get("id") or "") for se in dispatched}
+    events.extend(await apply_narrative_transition(world, dispatch_state, fired_ids))
     return events
 
 

@@ -811,6 +811,16 @@ def _validate_narrative_fill(event: dict[str, Any], path: str) -> None:
         )
 
 
+def _validate_anchor(event: dict[str, Any], path: str) -> None:
+    """v1.8 M0 (L3): `anchor` is an explicit boolean. Anchors are the
+    deterministic backbone the LLM may not cross; transition beats fill the gaps
+    BETWEEN them. (Timed/conditional anchor-chain reachability is M1.)"""
+    if "anchor" not in event:
+        return
+    if not isinstance(event["anchor"], bool):
+        raise ScenarioValidationError(f"{path}.anchor", "boolean", event["anchor"])
+
+
 def _validate_branch_event(event: dict[str, Any], path: str) -> None:
     """v1.6 M1: a `branch` event is a selector node — non-empty `branches`,
     each with a unique id + condition + effects; `default_branch` (if set) must
@@ -865,6 +875,7 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
         if event_type == "branch":
             _validate_branch_event(event, path)
         _validate_narrative_fill(event, path)
+        _validate_anchor(event, path)
         dynasty_id = event.get("dynasty_id")
         if uses_v02_timeline and dynasty_id is not None and str(dynasty_id) not in dynasty_ids:
             raise MissingReferenceError(f"{path}.dynasty_id", dynasty_id, "preset dynasties.json")
