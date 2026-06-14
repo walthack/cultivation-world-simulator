@@ -10,6 +10,12 @@ intersect the read set of ANY pending anchor precondition. Combined with the
 narrow Q2 whitelist (initially only a bounded relation delta), this guarantees a
 beat can never starve a scheduled anchor — the L3 promise that 锚点必触发、走向被夹住.
 
+Read-set extraction is **fail-closed**: a condition predicate we cannot model
+precisely (a registered mod predicate, or a ``var_equals`` that reads a structural
+state sub-object such as ``relations``) yields the ``PROTECT_ALL`` sentinel, which
+intersects every non-empty write set and so rejects every stateful beat. Silent
+under-extraction would be a starvation hole, so we err toward rejection.
+
 Why NOT ``apply_effects``: it skips rollback snapshots for non-picklable live
 objects and dispatches arbitrary registered mod-effect callables, so it cannot
 enforce an authority boundary. Beats go through the dedicated, whitelist-only
@@ -26,37 +32,62 @@ from typing import Any
 
 from src.classes.event import Event
 
-from .state_access import as_id, get_relation, get_relations, set_relation
+from .state_access import as_id, get_player, get_relation, get_relations, get_value, set_relation
 
 LOGGER = logging.getLogger(__name__)
 
 # Q2 (locked): the ONLY stateful command L3 may apply initially. Flags, vars,
 # storyline activation, world-event triggers, entity death/realm/membership, and
 # registered mod effects are all excluded — they feed anchor preconditions or are
-# unbounded. The whitelist grows only in lockstep with `command_write_set` below.
+# unbounded. The whitelist grows only in lockstep with `command_write_set` AND a
+# re-audit of `condition_read_set` (every command-writable namespace must be
+# extractable there, or fail closed).
 TRANSITION_COMMAND_WHITELIST = {"relation_delta"}
 
 RELATION_DELTA_MAX = 10  # bounded magnitude per beat (Q2: "the delta is bounded")
 
-# strict tick-level bound (Q4), well under the 120s provider timeout; mirrors v1.7
-TRANSITION_TIMEOUT_SECONDS = 30.0
-TRANSITION_BUDGET = 4  # max beats requested/considered per gap tick (Q4 budget)
+# sentinel: a read set we cannot model precisely; intersects every write set.
+PROTECT_ALL: tuple = ("*", "*")
+
+# var_equals reads the WHOLE scenario state (get_scenario_vars returns sc.state),
+# so a var_equals over a structural sub-object that a command can mutate is a
+# write-set collision we must treat as universal. `relations` is the only one a
+# relation_delta touches; the rest are listed for when the whitelist grows.
+_STRUCTURAL_STATE_KEYS = {"relations", "world_flags", "active_storylines"}
+
+# atomic predicates we model precisely AND that no current whitelisted command can
+# affect — safe to extract as an empty read set. Anything NOT here and not handled
+# explicitly below is treated as unknown → PROTECT_ALL.
+_RELATION_INERT_PREDICATES = {
+    "always",
+    "controlled_avatar_is",
+    "player_realm",
+    "player_sect",
+    "player_has_skill",
+    "player_stat",
+    "world_year",
+    "world_month",
+    "npc_alive",
+    "npc_realm",
+    "random_chance",
+}
+# the player-endpoint sentinel inside a statically-extracted relation token; the
+# real player id is substituted in `pending_anchor_read_set`.
+PLAYER_SENTINEL = "@player"
 
 
 # --- read-set / write-set extraction (the invariant rests on these) ----------
 
 
 def condition_read_set(expression: Any) -> set[tuple]:
-    """The set of mechanical facts a condition DSL expression READS.
+    """The set of mechanical facts a condition DSL expression READS (fail-closed).
 
-    Returned tokens: ``("relation", frozenset({a, b}))``, ``("flag", name)``,
-    ``("var", name)``, ``("event", id)``. Player-relations use the ``"@player"``
-    sentinel as one endpoint. Predicates that the whitelist can never write are
-    intentionally not extracted — this MUST stay in lockstep with the whitelist:
-    every command-writable namespace has to be represented here.
+    Tokens: ``("relation", frozenset({a, b}))``, ``("flag", name)``,
+    ``("var", name)``, ``("event", id)``, or ``PROTECT_ALL`` for anything we can't
+    model. Player-relations use ``PLAYER_SENTINEL`` as one endpoint.
     """
     if not isinstance(expression, dict) or len(expression) != 1:
-        return set()
+        return {PROTECT_ALL}  # malformed → fail closed
     key, value = next(iter(expression.items()))
     if key in ("all", "any"):
         reads: set[tuple] = set()
@@ -66,20 +97,23 @@ def condition_read_set(expression: Any) -> set[tuple]:
     if key == "not":
         return condition_read_set(value)
 
-    params = value or {}
-    if not isinstance(params, dict):
-        return set()
+    params = value if isinstance(value, dict) else {}
     if key == "world_flag":
         return {("flag", str(params.get("flag")))}
-    if key == "var_equals":
-        return {("var", str(params.get("name")))}
     if key == "event_triggered":
         return {("event", as_id(params.get("event_id")))}
     if key == "npc_relation":
         return {("relation", frozenset({as_id(params.get("a")), as_id(params.get("b"))}))}
     if key == "player_relation":
-        return {("relation", frozenset({"@player", as_id(params.get("npc_id"))}))}
-    return set()
+        return {("relation", frozenset({PLAYER_SENTINEL, as_id(params.get("npc_id"))}))}
+    if key == "var_equals":
+        name = str(params.get("name"))
+        if name in _STRUCTURAL_STATE_KEYS:
+            return {PROTECT_ALL}  # reads a structural sub-object a command can mutate
+        return {("var", name)}
+    if key in _RELATION_INERT_PREDICATES:
+        return set()
+    return {PROTECT_ALL}  # unknown / mod predicate → fail closed
 
 
 def command_write_set(command: dict[str, Any]) -> set[tuple]:
@@ -90,16 +124,33 @@ def command_write_set(command: dict[str, Any]) -> set[tuple]:
     return set()
 
 
-def pending_anchor_read_set(timeline: list[dict[str, Any]], triggered: set[str]) -> set[tuple]:
-    """Union of read sets of every anchor that has NOT yet fired — the facts a
-    transition beat must leave untouched, or it could starve a future anchor."""
+def pending_anchor_read_set(
+    timeline: list[dict[str, Any]],
+    triggered: set[str],
+    *,
+    player_id: Any,
+    now: tuple[int, int],
+) -> set[tuple]:
+    """Union of read sets of every FUTURE-or-current anchor that has NOT fired —
+    the facts a transition beat must leave untouched, or it could starve an anchor.
+
+    Past-due unfired anchors are excluded (already missed, not protectable). The
+    ``PLAYER_SENTINEL`` endpoint is resolved to the real player id so a beat acting
+    on ``(player_id, npc)`` cannot bypass a ``player_relation`` precondition.
+    """
+    resolved = as_id(player_id)
     reads: set[tuple] = set()
     for event in timeline:
         if not event.get("anchor"):
             continue
         if str(event.get("id", "")) in triggered:
             continue
-        reads |= condition_read_set((event.get("trigger", {}) or {}).get("condition"))
+        if _anchor_when(event) < now:
+            continue  # past-due missed anchor — not a future obligation
+        for token in condition_read_set((event.get("trigger", {}) or {}).get("condition")):
+            if token[0] == "relation" and PLAYER_SENTINEL in token[1]:
+                token = ("relation", frozenset({resolved if e == PLAYER_SENTINEL else e for e in token[1]}))
+            reads.add(token)
     return reads
 
 
@@ -118,13 +169,20 @@ def validate_beat(beat: dict[str, Any], protected: set[tuple]) -> tuple[bool, st
     if name not in TRANSITION_COMMAND_WHITELIST:
         return False, f"command not whitelisted: {name}"
     if name == "relation_delta":
-        try:
-            delta = int(command.get("delta", 0))
-        except (TypeError, ValueError):
+        a_id, b_id = as_id(command.get("a")), as_id(command.get("b"))
+        if not a_id or not b_id:
+            return False, "relation_delta requires non-empty a and b"
+        if a_id == b_id:
+            return False, "relation_delta endpoints must differ"
+        delta = command.get("delta")
+        if not isinstance(delta, int) or isinstance(delta, bool):
             return False, "relation delta must be an integer"
+        if delta == 0:
+            return False, "relation delta must be nonzero"
         if abs(delta) > RELATION_DELTA_MAX:
             return False, f"relation delta {delta} exceeds bound {RELATION_DELTA_MAX}"
-    if command_write_set(command) & protected:
+    write = command_write_set(command)
+    if write and (PROTECT_ALL in protected or write & protected):
         return False, "write-set intersects a pending anchor precondition"
     return True, None
 
@@ -141,9 +199,18 @@ def apply_beat_command(state: Any, command: dict[str, Any]) -> None:
 # --- gap detection + snapshot + the phase entry point -------------------------
 
 
-def _is_gap_tick(timeline: list[dict[str, Any]], triggered: set[str], fired_ids: set[str]) -> bool:
+def _anchor_when(event: dict[str, Any]) -> tuple[int, int]:
+    trigger = event.get("trigger", {}) or {}
+    return int(trigger.get("year", -1)), int(trigger.get("month", -1))
+
+
+def _is_gap_tick(
+    timeline: list[dict[str, Any]], triggered: set[str], fired_ids: set[str], now: tuple[int, int]
+) -> bool:
     """A gap tick is BETWEEN anchors: at least one anchor already fired, at least
-    one anchor is still pending, and no anchor fired this very month."""
+    one FUTURE anchor is still pending, and no anchor fired this very month.
+    Past-due unfired anchors do NOT keep the gap open (else generation runs
+    forever after a missed anchor)."""
     anchors = [e for e in timeline if e.get("anchor")]
     if not anchors:
         return False
@@ -151,18 +218,27 @@ def _is_gap_tick(timeline: list[dict[str, Any]], triggered: set[str], fired_ids:
     if anchor_ids & fired_ids:
         return False  # an anchor fired this month — this is an anchor tick, not a gap
     past = any(aid in triggered for aid in anchor_ids)
-    pending = any(aid not in triggered for aid in anchor_ids)
-    return past and pending
+    future_pending = any(
+        str(e.get("id", "")) not in triggered and _anchor_when(e) >= now for e in anchors
+    )
+    return past and future_pending
 
 
-def _build_snapshot(world: Any, state: Any, pending_ids: list[str]) -> dict[str, Any]:
-    """An IMMUTABLE-by-convention read view for the generator. Deliberately not
-    the live ``world`` — the generator returns data only, never mutates."""
+def _now(world: Any) -> tuple[int, int]:
+    stamp = getattr(world, "month_stamp", None)
+    if stamp is None:
+        return (0, 0)
+    return int(stamp.get_year()), int(stamp.get_month().value)
+
+
+def _build_snapshot(world: Any, state: Any, pending_ids: list[str], now: tuple[int, int]) -> dict[str, Any]:
+    """An IMMUTABLE-by-convention read view for the generator. Deliberately NOT the
+    live ``world`` — the generator returns data only, never mutates. (The interface
+    cannot prevent a hostile closure from capturing ``world``; this is by
+    convention, like every injectable in the engine.)"""
     return {
-        "year": int(getattr(getattr(world, "month_stamp", None), "get_year", lambda: 0)()),
-        "month": int(getattr(getattr(world, "month_stamp", None), "get_month", lambda: 0)().value)
-        if getattr(world, "month_stamp", None) is not None
-        else 0,
+        "year": now[0],
+        "month": now[1],
         "relations": dict(get_relations(state)),
         "pending_anchor_ids": list(pending_ids),
     }
@@ -171,7 +247,7 @@ def _build_snapshot(world: Any, state: Any, pending_ids: list[str]) -> dict[str,
 def _beat_event(world: Any, beat: dict[str, Any]) -> Event:
     # prose lives ONLY on the render-only narration channel; content stays empty so
     # the beat never enters AI memory / chronicle (is_story=True keeps it out of the
-    # memory index too).
+    # memory index, and _chronicle_context filters is_story too).
     return Event(
         month_stamp=world.month_stamp,
         content="",
@@ -184,9 +260,7 @@ def _beat_event(world: Any, beat: dict[str, Any]) -> Event:
     )
 
 
-async def apply_narrative_transition(
-    world: Any, state: Any, fired_ids: set[str]
-) -> list[Event]:
+async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]) -> list[Event]:
     """Generate, validate, and apply L3 transition beats for a gap tick.
 
     Runs AFTER anchors have already dispatched this month, so anchors always take
@@ -203,16 +277,18 @@ async def apply_narrative_transition(
         return []
 
     triggered = set(str(t) for t in getattr(sc, "triggered_events", set()) or set())
-    if not _is_gap_tick(sc.timeline, triggered, fired_ids):
+    now = _now(world)
+    if not _is_gap_tick(sc.timeline, triggered, fired_ids, now):
         return []
 
-    protected = pending_anchor_read_set(sc.timeline, triggered)
+    player_id = get_value(get_player(state), "id")
+    protected = pending_anchor_read_set(sc.timeline, triggered, player_id=player_id, now=now)
     pending_ids = [
         str(e.get("id", ""))
         for e in sc.timeline
-        if e.get("anchor") and str(e.get("id", "")) not in triggered
+        if e.get("anchor") and str(e.get("id", "")) not in triggered and _anchor_when(e) >= now
     ]
-    snapshot = _build_snapshot(world, state, pending_ids)
+    snapshot = _build_snapshot(world, state, pending_ids, now)
 
     budget = int(getattr(world, "transition_budget", TRANSITION_BUDGET))
     timeout = float(getattr(world, "transition_timeout", TRANSITION_TIMEOUT_SECONDS))
@@ -254,3 +330,8 @@ async def apply_narrative_transition(
     sc.state["relations"] = dict(get_relations(state))
     sc.transition_ledger = ledger
     return events
+
+
+# strict tick-level bound (Q4), well under the 120s provider timeout; mirrors v1.7
+TRANSITION_TIMEOUT_SECONDS = 30.0
+TRANSITION_BUDGET = 4  # max beats requested/considered per gap tick (Q4 budget)

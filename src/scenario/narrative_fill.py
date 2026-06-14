@@ -83,14 +83,20 @@ def _relationship_context(scenario_event: dict[str, Any], world: Any) -> str:
 def _chronicle_context(world: Any) -> str:
     """Recent chronicle (M3/Q4). AUTHORED / mechanical text ONLY: `str(Event)` reads
     Event.content, never Event.narration — so generated fill can never feed back
-    into a later generation (no context feedback loop)."""
+    into a later generation (no context feedback loop). v1.8: is_story events
+    (e.g. L3 transition beats) are display flavor with empty content — exclude them
+    so they cannot displace authored facts from the chronicle window either."""
     manager = getattr(world, "event_manager", None)
     if manager is None:
         return ""
     # Retrieval AND str() formatting both inside _safe — a non-Event or a raising
     # __str__ must degrade to empty, never break the fill.
     lines = _safe(
-        lambda: [str(event) for event in (manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS) or [])],
+        lambda: [
+            str(event)
+            for event in (manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS) or [])
+            if not getattr(event, "is_story", False)
+        ],
         [],
     )
     return _clip("\n".join(lines), 1200)
