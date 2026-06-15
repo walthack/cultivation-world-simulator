@@ -336,6 +336,16 @@ def _normalize_command(command: dict[str, Any]) -> dict[str, Any]:
     return {"command": name}
 
 
+def _run_locale(world: Any) -> str:
+    """The run's FROZEN content locale (persisted in run_config_snapshot), not the
+    live UI language — so a mid-run language toggle can't shift a gap's cache key
+    and hide already-frozen beats. Falls back to the current language manager."""
+    snap = getattr(world, "run_config_snapshot", None)
+    if isinstance(snap, dict) and snap.get("content_locale"):
+        return str(snap["content_locale"])
+    return str(getattr(language_manager, "current", "") or "")
+
+
 def _gap_key(timeline: list[dict[str, Any]], triggered: set[str], now: tuple[int, int], locale: str) -> str:
     """Stable reproducibility key for the gap-month: (prev_anchor > next_anchor,
     Y/M, locale). The frozen beats for this key never change on reload."""
@@ -365,9 +375,6 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     re-application of effects (those already live in persisted state). So once a
     gap-month is generated and saved, a reload never re-queries or diverges.
     """
-    generator = getattr(world, "transition_generator", None)
-    if generator is None:
-        return []
     sc = getattr(world, "scripted_scenario", None)
     if sc is None:
         return []
@@ -377,7 +384,7 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     if not _is_gap_tick(sc.timeline, triggered, fired_ids, now):
         return []
 
-    locale = str(getattr(language_manager, "current", ""))
+    locale = _run_locale(world)
     gap_key = _gap_key(sc.timeline, triggered, now, locale)
     cache = getattr(sc, "transition_cache", None)
     if not isinstance(cache, dict):
@@ -387,9 +394,16 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     if isinstance(frozen, list):
         # HIT — reproducible replay: emit accepted beats' display events only, NO
         # LLM call, NO effect re-application (effects already persisted in state).
+        # Deliberately ABOVE the generator check: a reload with no LLM available
+        # must still replay already-frozen narration.
         return [_beat_event(world, r["engine_id"], r.get("narration", "")) for r in frozen if r.get("accepted")]
 
-    # MISS → M2 cadence (Q4): throttle generation within a long gap.
+    # MISS needs to generate → from here on a generator is required.
+    generator = getattr(world, "transition_generator", None)
+    if generator is None:
+        return []
+
+    # M2 cadence (Q4): throttle generation within a long gap.
     cadence = max(1, int(getattr(world, "transition_cadence_months", 1)))
     total_now = now[0] * 12 + now[1]
     if total_now - int(getattr(sc, "transition_last_gen_month", -10**9)) < cadence:

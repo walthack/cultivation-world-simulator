@@ -1,12 +1,16 @@
 """v1.8 M3 — transition beat persistence + deterministic replay.
 
 A generated transition beat's MECHANICAL effect (relation_delta) lands in scenario
-state, which persists; its audit record lands in the transition ledger, which must
-also persist; and the cadence cursor persists (M2). Together these give
-deterministic replay: a reload restores the post-beat world, and continuing the
-simulation neither re-invokes the generator for an already-generated gap month nor
-re-applies the beat's effect. No frozen LLM output is replayed — beats are applied
-once and their results are what survive.
+state (persisted), its audit in the transition ledger (persisted), the cadence
+cursor persists, and the beat itself is frozen in transition_cache keyed by gap +
+month + locale. Together these give the reproducibility contract: once a gap-month
+is generated and saved, a reload reuses the frozen beats — no LLM re-query, no
+effect re-application. (Reproducibility is "freeze once generated", like v1.7
+narration; a gap not yet generated at save time is generated fresh on first reach,
+since the LLM client exposes no seed — by design, not a bug.)
+
+load_game rebuilds the timeline from scenario_loader.load(saved_id), so these
+tests patch that to feed back the anchored timeline under test.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ import pytest
 from src.classes.core.world import World
 from src.classes.environment.map import Map
 from src.classes.environment.tile import TileType
+from src.scenario.scenario_loader import ResolvedScenario
 from src.scenario.state import ScriptedScenarioState
 from src.scenario.state_access import get_relation
 from src.sim.load.load_game import load_game
@@ -43,6 +48,21 @@ def _timeline():
     ]
 
 
+def _resolved():
+    # load_game forces the timeline from scenario_loader.load — feed ours back
+    return ResolvedScenario(
+        scenario_id="sample", title="t", version="1.0", preset_id="default", scenario={}, timeline=_timeline()
+    )
+
+
+def _reload(save_path):
+    with patch("src.run.load_map.load_cultivation_world_map", return_value=_map()), patch(
+        "src.scenario.scenario_loader.load", return_value=_resolved()
+    ):
+        loaded, _, _ = load_game(save_path, active_scenario_id="sample")
+    return loaded
+
+
 def _apply_one_beat_generator():
     """Applies a single relation_delta beat on its first (gap) call, then nothing."""
     state = {"calls": 0}
@@ -63,18 +83,22 @@ async def _advance(world, year, month):
     return await phase_scripted_scenario_tick(world, SimpleNamespace(month_stamp=stamp))
 
 
-@pytest.mark.asyncio
-async def test_ledger_and_beat_effect_survive_reload_without_reapplying(tmp_path):
-    world = World.create_with_db(
+def _new_world(tmp_path):
+    return World.create_with_db(
         map=_map(),
         month_stamp=create_month_stamp(Year(100), Month.JANUARY),
         events_db_path=tmp_path / "events.db",
     )
+
+
+@pytest.mark.asyncio
+async def test_ledger_and_beat_effect_survive_reload_without_reapplying(tmp_path):
+    world = _new_world(tmp_path)
     world.transition_generator = _apply_one_beat_generator()
     world.scripted_scenario = ScriptedScenarioState(scenario_id="sample", timeline=_timeline())
 
     await _advance(world, 100, 1)  # anchor a1 fires (not a gap)
-    await _advance(world, 100, 2)  # gap → beat applied here
+    await _advance(world, 100, 2)  # gap → beat applied + frozen here
 
     sc = world.scripted_scenario
     assert get_relation(sc.state, "hero", "merchant") == 4          # effect applied
@@ -87,27 +111,47 @@ async def test_ledger_and_beat_effect_survive_reload_without_reapplying(tmp_path
     assert ok
     world.event_manager.close()
 
-    # ledger is a top-level scenario field, never inside state (var_equals boundary)
+    # ledger + cache are top-level scenario fields, never inside state (var_equals boundary)
     import json
     sc_blob = json.loads(save_path.read_text(encoding="utf-8"))["scripted_scenario"]
     assert sc_blob["transition_ledger"] == saved_ledger
     assert "transition_ledger" not in sc_blob["state"]
+    assert "transition_cache" not in sc_blob["state"]
 
-    with patch("src.run.load_map.load_cultivation_world_map", return_value=_map()):
-        loaded, _, _ = load_game(save_path, active_scenario_id="sample")
-
+    loaded = _reload(save_path)
     lsc = loaded.scripted_scenario
     assert get_relation(lsc.state, "hero", "merchant") == 4          # effect persisted
     assert lsc.transition_ledger == saved_ledger                     # ledger persisted
     assert lsc.transition_last_gen_month == saved_cursor             # cadence persisted
 
-    # DETERMINISTIC REPLAY: re-running the same gap month on the reloaded world must
-    # NOT re-invoke the generator (frozen cache HIT) nor re-apply the relation delta.
+    # DETERMINISTIC REPLAY: re-entering the same gap month on the reloaded world
+    # hits the frozen cache → generator NOT re-invoked, relation NOT doubled.
     replay_gen = _apply_one_beat_generator()
     loaded.transition_generator = replay_gen
     await _advance(loaded, 100, 2)
     assert replay_gen.state["calls"] == 0                            # not re-invoked
     assert get_relation(lsc.state, "hero", "merchant") == 4          # not doubled
+
+
+@pytest.mark.asyncio
+async def test_frozen_beats_replay_on_reload_without_a_generator(tmp_path):
+    # the P1 fix: cache HIT must replay frozen narration even when NO LLM/generator
+    # is available on the reloaded world (display must survive a no-key reload).
+    world = _new_world(tmp_path)
+    world.transition_generator = _apply_one_beat_generator()
+    world.scripted_scenario = ScriptedScenarioState(scenario_id="sample", timeline=_timeline())
+    await _advance(world, 100, 1)
+    await _advance(world, 100, 2)  # generate + freeze
+
+    save_path = tmp_path / "save.json"
+    save_game(world, Simulator(world), [], save_path)
+    world.event_manager.close()
+
+    loaded = _reload(save_path)
+    loaded.transition_generator = None  # no LLM available on reload
+
+    replay = await _advance(loaded, 100, 2)  # re-enter the gap month
+    assert any(e.narration == "茶肆闲谈。" for e in replay)  # frozen beat still shown
 
 
 def _accept_and_reject_generator():
@@ -121,11 +165,7 @@ def _accept_and_reject_generator():
 
 @pytest.mark.asyncio
 async def test_reject_records_and_frozen_cache_are_json_safe_and_survive_reload(tmp_path):
-    world = World.create_with_db(
-        map=_map(),
-        month_stamp=create_month_stamp(Year(100), Month.JANUARY),
-        events_db_path=tmp_path / "events.db",
-    )
+    world = _new_world(tmp_path)
     world.transition_generator = _accept_and_reject_generator()
     world.scripted_scenario = ScriptedScenarioState(scenario_id="sample", timeline=_timeline())
 
@@ -141,9 +181,7 @@ async def test_reject_records_and_frozen_cache_are_json_safe_and_survive_reload(
     assert ok
     world.event_manager.close()
 
-    with patch("src.run.load_map.load_cultivation_world_map", return_value=_map()):
-        loaded, _, _ = load_game(save_path, active_scenario_id="sample")
-
+    loaded = _reload(save_path)
     lsc = loaded.scripted_scenario
     # the rejection reason and the frozen cache both survive the JSON round-trip
     assert any(not r["accepted"] and "whitelist" in r.get("reason", "") for r in lsc.transition_ledger)
