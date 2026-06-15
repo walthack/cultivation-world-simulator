@@ -33,6 +33,7 @@ from typing import Any
 from src.classes.event import Event
 from src.classes.language import language_manager
 from src.utils.llm.client import LLMMode, call_llm_json
+from src.utils.llm.config import LLMConfig
 
 from .narrative_context import build_prompt_world_lore
 from .narrative_fill import CONTEXT_BUDGET_CHARS, _assemble_within_budget, _chronicle_context, _clip, _safe
@@ -519,19 +520,26 @@ _TRANSITION_INSTRUCTION = (
 )
 
 
+TARGET_CAP_CHARS = 800  # next-anchor target: reserved from budget trimming, still per-field clipped
+
+
 def build_transition_prompt(snapshot: dict[str, Any]) -> str:
-    """Assemble the generator prompt from the (world-free) snapshot. The reserved
-    next-anchor target is emitted in full (never trimmed); everything else is
-    already bounded + sandboxed in `context_block` (Q9/Q10/Q11)."""
-    target = _clip(snapshot.get("next_anchor_target", ""), 600)
+    """Assemble the generator prompt from the (world-free) snapshot. Defense in
+    depth: EVERY field is `_clip`'d here (clip caps length AND neutralizes the
+    fence delimiters), so even an arbitrary/unsanitized snapshot can't break out of
+    the data region or blow the prompt size. The next-anchor target is RESERVED
+    from the context-budget competition (emitted separately, not trimmed to fit
+    other layers) but still per-field clipped like any authored value (Q9/Q10/Q11)."""
+    target = _clip(snapshot.get("next_anchor_target", ""), TARGET_CAP_CHARS)
     relations = _clip(", ".join(f"{k}={v}" for k, v in (snapshot.get("relations") or {}).items()), 600)
     pending = _clip(", ".join(str(p) for p in snapshot.get("pending_anchor_ids", [])), 300)
+    context = _clip(snapshot.get("context_block", ""), CONTEXT_BUDGET_CHARS)
     data_block = (
         f"【下一锚点目标】{target}\n"
         f"【时间】Y{snapshot.get('year')}M{snapshot.get('month')}\n"
         f"【待触发锚点】{pending}\n"
         f"【关系】{relations}\n"
-        f"{snapshot.get('context_block', '')}"
+        f"{context}"
     )
     return (
         f"{_TRANSITION_INSTRUCTION}\n"
@@ -541,13 +549,29 @@ def build_transition_prompt(snapshot: dict[str, Any]) -> str:
     )
 
 
-def make_transition_generator(*, call_llm_json=call_llm_json, mode: LLMMode = LLMMode.NORMAL):
+def _llm_available(mode: LLMMode) -> bool:
+    """True only when an LLM key is actually configured — so the default generator
+    does NOT fire an (anonymous) provider request on a gap tick when the user has
+    no key. Fails closed (treat as unavailable) on any config error."""
+    try:
+        return bool(LLMConfig.from_mode(mode).api_key)
+    except Exception:
+        return False
+
+
+def make_transition_generator(*, call_llm_json=call_llm_json, mode: LLMMode = LLMMode.NORMAL, require_key: bool = True):
     """Return an async snapshot-only generator `(snapshot) -> list[beat]`. Resilient:
     any failure / bad shape yields ``[]`` so the phase degrades to no beats (anchors
     already fired). Proposed beats are still validated by the phase, so a malformed
-    or out-of-bounds command from the model is rejected, never applied."""
+    or out-of-bounds command from the model is rejected, never applied.
+
+    ``require_key`` (default) gates the real provider: with no LLM key configured,
+    generation is skipped entirely rather than sending a request. Tests injecting a
+    fake ``call_llm_json`` pass ``require_key=False``."""
 
     async def generate(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+        if require_key and not _llm_available(mode):
+            return []  # no key → degrade to scripted anchors, never call the provider
         try:
             result = await call_llm_json(build_transition_prompt(snapshot), mode)
         except Exception:  # noqa: BLE001 — generator failure must never break the tick
