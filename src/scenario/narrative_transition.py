@@ -77,7 +77,7 @@ _RELATION_INERT_PREDICATES = {
     "random_chance",
 }
 # the player-endpoint sentinel inside a statically-extracted relation token; the
-# real player id is substituted in `pending_anchor_read_set`.
+# real player id is substituted in `protected_read_set`.
 PLAYER_SENTINEL = "@player"
 
 
@@ -129,93 +129,42 @@ def command_write_set(command: dict[str, Any]) -> set[tuple]:
     return set()
 
 
-def pending_anchor_read_set(
+def protected_read_set(
     timeline: list[dict[str, Any]],
     triggered: set[str],
     *,
     player_id: Any,
     now: tuple[int, int],
 ) -> set[tuple]:
-    """Union of read sets over the PRECONDITION CLOSURE of every future-or-current
-    pending anchor — the facts a transition beat must leave untouched, or it could
-    starve an anchor.
+    """Tokens a transition beat must NOT write: the condition read-set of EVERY
+    future-or-current pending event (anchor OR ordinary), with the player endpoint
+    resolved.
 
-    Protecting only an anchor's own condition is NOT enough (codex M1 review): an
-    anchor's reachability also depends on the conditions of every event it
-    transitively requires and of the activators of any storyline that gates it. A
-    beat that breaks a *required* event's condition starves the anchor even when
-    the anchor's own condition is ``always``. So the protected set is the closure.
+    Why ALL events, not just anchors (holistic codex review, P0): a beat changes
+    only relations; the ONLY way it can affect the scripted world is by flipping
+    some future event's relation-condition so that event fires (or stops firing).
+    A fired ordinary event can then starve an anchor INDIRECTLY — via its
+    ``blocks_events`` or via effects that change a later anchor's condition. So we
+    forbid a beat from touching any token a future event branches on at all. The
+    beat can then never change WHICH events fire, hence never alters any anchor's
+    reachability — a strictly stronger, simpler guarantee than tracking each
+    anchor's precondition closure (which missed the indirect blocks_events vector).
 
-    Past-due unfired anchors are excluded (already missed, not protectable). The
-    ``PLAYER_SENTINEL`` endpoint is resolved to the real player id so a beat acting
-    on ``(player_id, npc)`` cannot bypass a ``player_relation`` precondition.
+    Past-due unfired events are excluded — their exact-month window has passed, so
+    a beat can no longer cause them to fire.
     """
     resolved = as_id(player_id)
     reads: set[tuple] = set()
     for event in timeline:
-        if not event.get("anchor"):
-            continue
         if str(event.get("id", "")) in triggered:
             continue
         if _anchor_when(event) < now:
-            continue  # past-due missed anchor — not a future obligation
-        for node in _precondition_closure(timeline, event):
-            for token in condition_read_set((node.get("trigger", {}) or {}).get("condition")):
-                if token[0] == "relation" and PLAYER_SENTINEL in token[1]:
-                    token = ("relation", frozenset({resolved if e == PLAYER_SENTINEL else e for e in token[1]}))
-                reads.add(token)
+            continue  # past-due — can no longer fire, so a beat can't enable it
+        for token in condition_read_set((event.get("trigger", {}) or {}).get("condition")):
+            if token[0] == "relation" and PLAYER_SENTINEL in token[1]:
+                token = ("relation", frozenset({resolved if e == PLAYER_SENTINEL else e for e in token[1]}))
+            reads.add(token)
     return reads
-
-
-def _activate_storyline_targets(event: dict[str, Any]) -> set[str]:
-    """Storyline ids an event can activate (top-level / choice / branch effects)."""
-    targets: set[str] = set()
-
-    def scan(effects: Any) -> None:
-        for effect in effects or []:
-            if isinstance(effect, dict) and effect.get("type") == "activate_storyline":
-                sl = effect.get("storyline")
-                if sl:
-                    targets.add(str(sl))
-
-    scan(event.get("effects"))
-    for choice in event.get("choices") or []:
-        if isinstance(choice, dict):
-            scan(choice.get("effects"))
-    for branch in event.get("branches") or []:
-        if isinstance(branch, dict):
-            scan(branch.get("effects"))
-    return targets
-
-
-def _precondition_closure(timeline: list[dict[str, Any]], anchor: dict[str, Any]) -> list[dict[str, Any]]:
-    """Transitive closure of nodes whose conditions gate an anchor: the anchor, its
-    transitive ``requires_events``, and the activators of any storyline tag found
-    along the way. Conditions of all these nodes must be protected from beats."""
-    by_id = {str(e.get("id", "")): e for e in timeline}
-    activators: dict[str, list[dict[str, Any]]] = {}
-    for event in timeline:
-        for sl in _activate_storyline_targets(event):
-            activators.setdefault(sl, []).append(event)
-
-    seen: set[str] = set()
-    stack: list[dict[str, Any]] = [anchor]
-    nodes: list[dict[str, Any]] = []
-    while stack:
-        node = stack.pop()
-        nid = str(node.get("id", ""))
-        if nid in seen:
-            continue
-        seen.add(nid)
-        nodes.append(node)
-        for required in node.get("requires_events", []) or []:
-            dep = by_id.get(str(required))
-            if dep is not None:
-                stack.append(dep)
-        storyline = node.get("storyline")
-        if storyline is not None:
-            stack.extend(activators.get(str(storyline), []))
-    return nodes
 
 
 # --- validation + deterministic application ----------------------------------
@@ -446,7 +395,7 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     sc.transition_last_gen_month = total_now
 
     player_id = get_value(get_player(state), "id")
-    protected = pending_anchor_read_set(sc.timeline, triggered, player_id=player_id, now=now)
+    protected = protected_read_set(sc.timeline, triggered, player_id=player_id, now=now)
     pending_ids = [
         str(e.get("id", ""))
         for e in sc.timeline

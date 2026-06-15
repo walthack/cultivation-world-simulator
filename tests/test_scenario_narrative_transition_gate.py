@@ -24,7 +24,7 @@ from src.scenario.narrative_transition import (
     TRANSITION_COMMAND_WHITELIST,
     command_write_set,
     condition_read_set,
-    pending_anchor_read_set,
+    protected_read_set,
     validate_beat,
 )
 from src.scenario.state import ScriptedScenarioState
@@ -188,35 +188,35 @@ def test_validate_beat_rejects_malformed_relation_deltas():
         assert reason
 
 
-def test_closure_protects_required_event_conditions_not_just_the_anchor():
-    # A2's OWN condition is `always` (empty read-set), but it requires R whose
-    # condition reads (hero, rival). A beat touching that pair would break R → A2
-    # starves. The protected set must include R's reads via the closure.
+def test_protects_a_non_anchor_events_condition_so_beats_cant_indirectly_starve():
+    # holistic-review P0: A2's OWN condition is `always`, but a NON-anchor event B
+    # reads (hero, rival) and blocks_events A2. A beat flipping that relation would
+    # fire B → block A2. The protected set must include B's reads, even though B is
+    # not an anchor and not in A2's requires-closure.
     timeline = [
         {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
-        {"id": "r", "trigger": {"year": 1, "month": 3, "condition": {"npc_relation": {"a": "hero", "b": "rival", "value": 0, "op": "<="}}}},
-        {"id": "a2", "anchor": True, "requires_events": ["r"], "trigger": {"year": 1, "month": 4, "condition": {"always": {}}}},
+        {"id": "b", "trigger": {"year": 1, "month": 3, "condition": {"npc_relation": {"a": "hero", "b": "rival", "value": 1, "op": ">="}}},
+         "blocks_events": ["a2"]},
+        {"id": "a2", "anchor": True, "trigger": {"year": 1, "month": 4, "condition": {"always": {}}}},
     ]
-    protected = pending_anchor_read_set(timeline, {"a1"}, player_id="p", now=(1, 2))
+    protected = protected_read_set(timeline, {"a1"}, player_id="p", now=(1, 2))
     assert ("relation", frozenset({"hero", "rival"})) in protected
-    # a beat touching the required event's pair is therefore rejected
     starving = {"command": {"command": "relation_delta", "a": "hero", "b": "rival", "delta": 1}}
     assert validate_beat(starving, protected)[0] is False
 
 
-def test_closure_protects_storyline_activator_conditions():
-    # the anchor is gated by storyline "line-a"; its activator's condition reads
-    # (hero, elder). A beat breaking that would stop activation → anchor starves.
+def test_protects_future_event_conditions_regardless_of_type():
+    # any future-pending event's relation reads are protected (here an activator)
     timeline = [
-        {"id": "act", "type": "branch", "trigger": {"year": 1, "month": 1, "condition": {"npc_relation": {"a": "hero", "b": "elder", "value": 0}}},
+        {"id": "act", "type": "branch", "trigger": {"year": 1, "month": 3, "condition": {"npc_relation": {"a": "hero", "b": "elder", "value": 0}}},
          "effects": [{"type": "activate_storyline", "storyline": "line-a"}]},
         {"id": "anc", "anchor": True, "storyline": "line-a", "trigger": {"year": 1, "month": 5, "condition": {"always": {}}}},
     ]
-    protected = pending_anchor_read_set(timeline, set(), player_id="p", now=(1, 2))
+    protected = protected_read_set(timeline, set(), player_id="p", now=(1, 2))
     assert ("relation", frozenset({"hero", "elder"})) in protected
 
 
-def test_pending_read_set_resolves_player_and_skips_past_due_anchors():
+def test_protected_read_set_resolves_player_and_skips_past_due_events():
     timeline = [
         {  # future player_relation anchor: protects (real_player, rival)
             "id": "future",
@@ -229,7 +229,7 @@ def test_pending_read_set_resolves_player_and_skips_past_due_anchors():
             "trigger": {"year": 1, "month": 2, "condition": {"npc_relation": {"a": "hero", "b": "elder", "value": 0}}},
         },
     ]
-    reads = pending_anchor_read_set(timeline, set(), player_id="player-7", now=(1, 3))
+    reads = protected_read_set(timeline, set(), player_id="player-7", now=(1, 3))
     assert ("relation", frozenset({"player-7", "rival"})) in reads  # @player resolved
     assert ("relation", frozenset({"hero", "elder"})) not in reads   # past-due skipped
 
@@ -464,6 +464,37 @@ async def test_cadence_cursor_round_trips_through_save_and_load(tmp_path):
         loaded, _, _ = load_game(save_path, active_scenario_id="sample")
     # the cadence cursor survives — reload won't reset the throttle and re-generate
     assert loaded.scripted_scenario.transition_last_gen_month == 1234
+
+
+@pytest.mark.asyncio
+async def test_beat_cannot_indirectly_starve_an_anchor_via_blocks_events(base_world):
+    # holistic-review P0, end-to-end: a beat tries to raise (hero,rival); a NON-anchor
+    # event B reads that pair and blocks_events the M4 anchor. The beat must be
+    # rejected so B never fires and the anchor still fires on schedule.
+    def gen(snapshot):
+        return [{"id": "x", "narration": "流言四起", "command": {"command": "relation_delta", "a": "hero", "b": "rival", "delta": 5}}]
+
+    base_world.world_flags.clear()
+    base_world.transition_generator = gen
+    base_world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="p0",
+        timeline=[
+            {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+            {"id": "b", "trigger": {"year": 1, "month": 3, "condition": {"npc_relation": {"a": "hero", "b": "rival", "value": 1, "op": ">="}}}, "blocks_events": ["a2"]},
+            {"id": "a2", "anchor": True, "trigger": {"year": 1, "month": 4, "condition": {"always": {}}}},
+        ],
+    )
+    fired: set[str] = set()
+    for m in (Month.JANUARY, Month.FEBRUARY, Month.MARCH, Month.APRIL):
+        stamp = create_month_stamp(Year(1), m)
+        base_world.month_stamp = stamp
+        for ev in await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp)):
+            fired.add(ev.id)
+
+    sc = base_world.scripted_scenario
+    assert get_relation(sc.state, "hero", "rival") == 0   # starving beat rejected
+    assert "b" not in fired                                # B never fired
+    assert "a2" in fired                                   # anchor survived
 
 
 @pytest.mark.asyncio
