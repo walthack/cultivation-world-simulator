@@ -146,6 +146,7 @@ def load_game(
                 narration_cache=dict(saved_sc.get("narration_cache", {}) or {}),
                 transition_last_gen_month=int(saved_sc.get("transition_last_gen_month", -10**9)),
                 transition_ledger=list(saved_sc.get("transition_ledger", []) or []),
+                transition_cache=dict(saved_sc.get("transition_cache", {}) or {}),
             )
             from src.scenario.narrative_fill import attach_default_narrative_filler
 

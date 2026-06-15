@@ -25,3 +25,8 @@ class ScriptedScenarioState:
     # transition generator was invoked — drives the cadence throttle (don't ask the
     # generator every gap month). Sibling of `state`, like the ledger.
     transition_last_gen_month: int = -10**9
+    # v1.8 M3 (Q5): reproducible frozen transition beats, keyed by gap+month+locale
+    # (see narrative_transition._gap_key). Sibling of `state` (var_equals boundary),
+    # persisted to the save. A reload reuses frozen beats instead of re-querying the
+    # LLM — once a gap-month is generated and saved its beats never change.
+    transition_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)

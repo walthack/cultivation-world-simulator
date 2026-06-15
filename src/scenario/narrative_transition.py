@@ -31,6 +31,7 @@ import logging
 from typing import Any
 
 from src.classes.event import Event
+from src.classes.language import language_manager
 
 from .state_access import as_id, get_player, get_relation, get_relations, get_value, set_relation
 
@@ -303,30 +304,66 @@ def _build_snapshot(world: Any, state: Any, pending_ids: list[str], now: tuple[i
     }
 
 
-def _beat_event(world: Any, beat: dict[str, Any]) -> Event:
+def _beat_event(world: Any, engine_id: str, narration: str) -> Event:
     # prose lives ONLY on the render-only narration channel; content stays empty so
     # the beat never enters AI memory / chronicle (is_story=True keeps it out of the
-    # memory index, and _chronicle_context filters is_story too).
+    # memory index, and _chronicle_context filters is_story too). The id is
+    # ENGINE-assigned and unique per (gap, month, index) — never the model's id —
+    # so finalizer dedup / SQLite INSERT-OR-IGNORE can't silently drop a beat.
     return Event(
         month_stamp=world.month_stamp,
         content="",
-        narration=str(beat.get("narration") or ""),
+        narration=narration,
         is_story=True,
         event_type="scenario",
         render_key="scenario.transition",
-        render_params={"transition_beat_id": str(beat.get("id") or "")},
-        id=str(beat.get("id") or ""),
+        render_params={"transition_beat_id": engine_id},
+        id=engine_id,
     )
+
+
+def _normalize_command(command: dict[str, Any]) -> dict[str, Any]:
+    """JSON-safe projection of a VALIDATED command (no UUIDs / sets / objects reach
+    the persisted ledger or cache)."""
+    name = str(command.get("command", ""))
+    if name == "relation_delta":
+        return {
+            "command": "relation_delta",
+            "a": str(as_id(command.get("a"))),
+            "b": str(as_id(command.get("b"))),
+            "delta": int(command.get("delta", 0)),
+        }
+    return {"command": name}
+
+
+def _gap_key(timeline: list[dict[str, Any]], triggered: set[str], now: tuple[int, int], locale: str) -> str:
+    """Stable reproducibility key for the gap-month: (prev_anchor > next_anchor,
+    Y/M, locale). The frozen beats for this key never change on reload."""
+    prev_id, prev_when = "", (-(10**9), 0)
+    next_id, next_when = "", (10**9, 0)
+    for event in timeline:
+        if not event.get("anchor"):
+            continue
+        eid = str(event.get("id", ""))
+        when = _anchor_when(event)
+        if eid in triggered and when <= now and when > prev_when:
+            prev_id, prev_when = eid, when
+        if eid not in triggered and when >= now and when < next_when:
+            next_id, next_when = eid, when
+    return f"{prev_id}>{next_id}|Y{now[0]}M{now[1]}|{locale}"
 
 
 async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]) -> list[Event]:
     """Generate, validate, and apply L3 transition beats for a gap tick.
 
     Runs AFTER anchors have already dispatched this month, so anchors always take
-    priority. No generator / failure / timeout → returns ``[]`` (anchors already
-    fired; the game stays playable). Accepted beats apply their bounded command
-    through ``apply_beat_command`` and emit render-only narration events; every
-    decision (accept/reject + reason) is recorded on the non-``state`` ledger.
+    priority. No generator → ``[]`` (anchors already fired; game stays playable).
+
+    Reproducibility (Q5, mirrors v1.7 narration_cache): a gap-month's beats are
+    frozen in ``transition_cache`` under ``_gap_key`` the first time they generate.
+    A cache HIT REPLAYS the frozen beats for display only — no LLM call, and NO
+    re-application of effects (those already live in persisted state). So once a
+    gap-month is generated and saved, a reload never re-queries or diverges.
     """
     generator = getattr(world, "transition_generator", None)
     if generator is None:
@@ -340,8 +377,19 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     if not _is_gap_tick(sc.timeline, triggered, fired_ids, now):
         return []
 
-    # M2 cadence (Q4): throttle generation within a long gap — ask the generator at
-    # most once per `transition_cadence_months`. Default 1 = every gap month.
+    locale = str(getattr(language_manager, "current", ""))
+    gap_key = _gap_key(sc.timeline, triggered, now, locale)
+    cache = getattr(sc, "transition_cache", None)
+    if not isinstance(cache, dict):
+        cache = {}
+
+    frozen = cache.get(gap_key)
+    if isinstance(frozen, list):
+        # HIT — reproducible replay: emit accepted beats' display events only, NO
+        # LLM call, NO effect re-application (effects already persisted in state).
+        return [_beat_event(world, r["engine_id"], r.get("narration", "")) for r in frozen if r.get("accepted")]
+
+    # MISS → M2 cadence (Q4): throttle generation within a long gap.
     cadence = max(1, int(getattr(world, "transition_cadence_months", 1)))
     total_now = now[0] * 12 + now[1]
     if total_now - int(getattr(sc, "transition_last_gen_month", -10**9)) < cadence:
@@ -375,25 +423,37 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     month_stamp = str(int(world.month_stamp)) if getattr(world, "month_stamp", None) is not None else ""
 
     events: list[Event] = []
-    for beat in proposals[:budget]:
+    frozen_records: list[dict[str, Any]] = []
+    for idx, beat in enumerate(proposals[:budget]):
         if not isinstance(beat, dict):
             continue
-        beat_id = str(beat.get("id") or "")
+        engine_id = f"transition:{gap_key}:{idx}"
         accepted, reason = validate_beat(beat, protected)
-        record = {"month_stamp": month_stamp, "beat_id": beat_id, "accepted": accepted}
+        # normalized, JSON-safe record (no model objects reach ledger/cache)
+        record: dict[str, Any] = {
+            "month_stamp": month_stamp,
+            "engine_id": engine_id,
+            "beat_id": str(beat.get("id") or ""),
+            "accepted": accepted,
+            "narration": str(beat.get("narration") or ""),
+        }
         if not accepted:
             record["reason"] = reason
             ledger.append(record)
+            frozen_records.append(record)
             continue
         command = beat.get("command")
         if isinstance(command, dict):
             apply_beat_command(state, command)
-            record["command"] = dict(command)
+            record["command"] = _normalize_command(command)
         ledger.append(record)
-        events.append(_beat_event(world, beat))
+        frozen_records.append(record)
+        events.append(_beat_event(world, engine_id, record["narration"]))
 
-    # persist relation writes back to the scenario state (the dispatch view is a
-    # shallow copy whose `relations` key may not be the same object) and the ledger
+    # freeze this gap-month's result (even if empty — so re-entry can't regenerate
+    # and diverge), persist relation writes back to scenario state, and the ledger.
+    cache[gap_key] = frozen_records
+    sc.transition_cache = cache
     sc.state["relations"] = dict(get_relations(state))
     sc.transition_ledger = ledger
     return events

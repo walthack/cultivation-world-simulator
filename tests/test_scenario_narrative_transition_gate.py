@@ -257,7 +257,9 @@ async def test_on_run_is_non_vacuous_and_protected_pair_untouched(base_world):
     assert gen.state["calls"] >= 1
     relations = mech_on["state"].get("relations", {})
     assert get_relation(mech_on["state"], "hero", "merchant") == 5
-    assert any(b.id == "beat-allowed" for b in beats)
+    # beat events carry ENGINE-assigned ids (not the model's) — identify by narration
+    assert any(b.narration == "市井间，少侠与货商相谈甚欢。" for b in beats)
+    assert all(b.id.startswith("transition:") for b in beats)
 
     # the protected (hero, rival) pair A2 reads was never moved by a rejected beat
     assert get_relation(mech_on["state"], "hero", "rival") == 0
@@ -283,8 +285,9 @@ async def test_ledger_records_accept_and_reject_with_reasons_and_no_event(base_w
 @pytest.mark.asyncio
 async def test_forbidden_beats_emit_no_event(base_world):
     _, beats = await _run(base_world, generator=_stub_generator())
-    emitted = {b.id for b in beats}
-    assert emitted == {"beat-allowed"}  # rejected beats never become events
+    # only the one allowed beat becomes an event; the two rejected beats do not
+    narrations = [b.narration for b in beats]
+    assert narrations == ["市井间，少侠与货商相谈甚欢。"]
 
 
 @pytest.mark.asyncio
@@ -299,6 +302,45 @@ async def test_generator_is_only_invoked_on_gap_ticks(base_world):
     # anchors fire at M1 and M4; generation happens ONLY in the gap (M2, M3),
     # never on an anchor month or before the first anchor.
     assert seen_months == [2, 3]
+
+
+@pytest.mark.asyncio
+async def test_reentering_a_gap_month_replays_frozen_beats_without_regenerating(base_world):
+    # a generator that would emit a fresh applicable beat on EVERY call — proves the
+    # cache HIT path neither re-queries nor re-applies on re-entry of the same month.
+    calls = {"n": 0}
+
+    def gen(snapshot):
+        calls["n"] += 1
+        return [
+            {"id": "x", "narration": "甲", "command": {"command": "relation_delta", "a": "hero", "b": "merchant", "delta": 3}},
+            {"id": "y", "narration": "乙", "command": {"command": "relation_delta", "a": "hero", "b": "smith", "delta": 2}},
+        ]
+
+    base_world.world_flags.clear()
+    base_world.transition_generator = gen
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="hit", timeline=_timeline())
+
+    # M1 anchor fires; M2 is the gap month — generate once
+    for m in (Month.JANUARY, Month.FEBRUARY):
+        stamp = create_month_stamp(Year(1), m)
+        base_world.month_stamp = stamp
+        await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+    sc = base_world.scripted_scenario
+    assert calls["n"] == 1
+    assert get_relation(sc.state, "hero", "merchant") == 3
+    assert get_relation(sc.state, "hero", "smith") == 2
+
+    # re-enter the SAME gap month → cache HIT → replay, no new call, no double-apply
+    stamp = create_month_stamp(Year(1), Month.FEBRUARY)
+    base_world.month_stamp = stamp
+    replay = await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+    assert calls["n"] == 1                                   # generator not re-invoked
+    assert get_relation(sc.state, "hero", "merchant") == 3   # effect not doubled
+    assert get_relation(sc.state, "hero", "smith") == 2
+    # both beats replayed with stable, DISTINCT engine ids (no collision)
+    ids = [e.id for e in replay if e.narration in ("甲", "乙")]
+    assert len(ids) == 2 and len(set(ids)) == 2
 
 
 @pytest.mark.asyncio

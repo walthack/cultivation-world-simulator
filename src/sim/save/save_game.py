@@ -258,6 +258,8 @@ def save_game(
                 # M3: transition beat audit ledger — its own field, NOT inside state
                 # (state is var_equals-readable; beat plans must stay out of it).
                 "transition_ledger": list(getattr(world.scripted_scenario, "transition_ledger", []) or []),
+                # M3 (Q5): reproducible frozen beats — reload reuses, never re-queries
+                "transition_cache": dict(getattr(world.scripted_scenario, "transition_cache", {}) or {}),
             }
         
         # 写入文件

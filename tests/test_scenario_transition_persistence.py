@@ -102,9 +102,49 @@ async def test_ledger_and_beat_effect_survive_reload_without_reapplying(tmp_path
     assert lsc.transition_last_gen_month == saved_cursor             # cadence persisted
 
     # DETERMINISTIC REPLAY: re-running the same gap month on the reloaded world must
-    # NOT re-invoke the generator (cadence cursor) nor re-apply the relation delta.
+    # NOT re-invoke the generator (frozen cache HIT) nor re-apply the relation delta.
     replay_gen = _apply_one_beat_generator()
     loaded.transition_generator = replay_gen
     await _advance(loaded, 100, 2)
     assert replay_gen.state["calls"] == 0                            # not re-invoked
     assert get_relation(lsc.state, "hero", "merchant") == 4          # not doubled
+
+
+def _accept_and_reject_generator():
+    def gen(snapshot):
+        return [
+            {"id": "ok", "narration": "允许", "command": {"command": "relation_delta", "a": "hero", "b": "merchant", "delta": 4}},
+            {"id": "bad", "narration": "拒绝", "command": {"command": "set_flag", "flag": "nope"}},
+        ]
+    return gen
+
+
+@pytest.mark.asyncio
+async def test_reject_records_and_frozen_cache_are_json_safe_and_survive_reload(tmp_path):
+    world = World.create_with_db(
+        map=_map(),
+        month_stamp=create_month_stamp(Year(100), Month.JANUARY),
+        events_db_path=tmp_path / "events.db",
+    )
+    world.transition_generator = _accept_and_reject_generator()
+    world.scripted_scenario = ScriptedScenarioState(scenario_id="sample", timeline=_timeline())
+
+    await _advance(world, 100, 1)
+    await _advance(world, 100, 2)  # gap → one accepted, one rejected beat
+
+    sc = world.scripted_scenario
+    reject = next(r for r in sc.transition_ledger if not r["accepted"])
+    assert "whitelist" in reject["reason"]
+
+    save_path = tmp_path / "save.json"
+    ok, _ = save_game(world, Simulator(world), [], save_path)  # would raise if ledger/cache not JSON-safe
+    assert ok
+    world.event_manager.close()
+
+    with patch("src.run.load_map.load_cultivation_world_map", return_value=_map()):
+        loaded, _, _ = load_game(save_path, active_scenario_id="sample")
+
+    lsc = loaded.scripted_scenario
+    # the rejection reason and the frozen cache both survive the JSON round-trip
+    assert any(not r["accepted"] and "whitelist" in r.get("reason", "") for r in lsc.transition_ledger)
+    assert lsc.transition_cache  # frozen gap beats persisted
