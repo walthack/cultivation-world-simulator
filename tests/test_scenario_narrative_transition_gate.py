@@ -219,6 +219,30 @@ def test_protects_branch_conditions_not_just_trigger():
     assert ("relation", frozenset({"hero", "rival"})) in protected  # branch condition protected
 
 
+def test_future_event_with_mod_effect_fails_closed():
+    # a future `always` event running a registered mod effect could read a relation
+    # and bridge to flag/triggered state — unanalyzable, so PROTECT_ALL.
+    timeline = [
+        {"id": "m", "trigger": {"year": 1, "month": 3, "condition": {"always": {}}},
+         "effects": [{"type": "some_registered_mod_effect", "x": 1}]},
+    ]
+    protected = protected_read_set(timeline, set(), player_id="p", now=(1, 2))
+    assert PROTECT_ALL in protected
+    # so ANY relation beat is rejected while that event is pending
+    beat = {"command": {"command": "relation_delta", "a": "x", "b": "y", "delta": 1}}
+    assert validate_beat(beat, protected)[0] is False
+
+
+def test_canonical_effects_do_not_trigger_fail_closed():
+    # canonical effects apply fixed values and never branch on a relation → no PROTECT_ALL
+    timeline = [
+        {"id": "c", "trigger": {"year": 1, "month": 3, "condition": {"always": {}}},
+         "effects": [{"type": "set_flag", "flag": "f"}, {"type": "relation_change", "a": "x", "b": "y", "delta": 1}]},
+    ]
+    protected = protected_read_set(timeline, set(), player_id="p", now=(1, 2))
+    assert PROTECT_ALL not in protected
+
+
 def test_missing_condition_is_unconditional_not_protect_all():
     # no condition = always-true = beat-independent → contributes NO protected token
     assert condition_read_set(None) == set()

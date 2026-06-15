@@ -37,6 +37,7 @@ from src.utils.llm.config import LLMConfig
 
 from .narrative_context import build_prompt_world_lore
 from .narrative_fill import CONTEXT_BUDGET_CHARS, _assemble_within_budget, _chronicle_context, _clip, _safe
+from .schema_constants import CANONICAL_EFFECT_TYPES
 from .state_access import as_id, get_player, get_relation, get_relations, get_value, set_relation
 
 LOGGER = logging.getLogger(__name__)
@@ -159,6 +160,13 @@ def protected_read_set(
     ``choices[].condition``: a branch event can fire on ``always`` yet pick a
     different branch (and run that branch's effects) based on a relation a beat
     touched — an indirect path the trigger condition alone misses.
+
+    Fail-closed on mod effects: a future event carrying a non-canonical (registered
+    mod) effect is an arbitrary callable that could READ a relation and write a
+    flag/var/triggered/blocked state — a causal bridge we can't statically analyze.
+    Such an event contributes ``PROTECT_ALL``, rejecting every stateful beat while
+    it is pending. Canonical effects apply fixed values and never branch on a
+    relation, so they need no such treatment.
     """
     resolved = as_id(player_id)
     reads: set[tuple] = set()
@@ -178,7 +186,27 @@ def protected_read_set(
         for outcome in (event.get("branches") or []) + (event.get("choices") or []):
             if isinstance(outcome, dict):
                 _add(outcome.get("condition"))
+        if _has_unanalyzable_effect(event):
+            reads.add(PROTECT_ALL)
     return reads
+
+
+def _has_unanalyzable_effect(event: dict[str, Any]) -> bool:
+    """True if the event carries any non-canonical (registered mod) effect — an
+    arbitrary callable whose relation-dependence we can't prove."""
+
+    def scan(effects: Any) -> bool:
+        return any(
+            isinstance(eff, dict) and str(eff.get("type", "")) not in CANONICAL_EFFECT_TYPES
+            for eff in (effects or [])
+        )
+
+    if scan(event.get("effects")):
+        return True
+    for outcome in (event.get("branches") or []) + (event.get("choices") or []):
+        if isinstance(outcome, dict) and scan(outcome.get("effects")):
+            return True
+    return False
 
 
 # --- validation + deterministic application ----------------------------------
