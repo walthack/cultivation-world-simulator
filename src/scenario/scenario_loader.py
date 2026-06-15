@@ -821,6 +821,45 @@ def _validate_anchor(event: dict[str, Any], path: str) -> None:
         raise ScenarioValidationError(f"{path}.anchor", "boolean", event["anchor"])
 
 
+def _validate_anchor_reachability(events: list[dict[str, Any]]) -> None:
+    """v1.8 M1: TIMED reachability for the anchor backbone. For every anchor, each
+    of its `requires_events` must be scheduled to fire at or before the anchor's
+    own exact-month window — otherwise the one-shot, single-pass dispatcher can
+    never satisfy the requirement and the anchor starves.
+
+    Two failure modes, both load-time hard errors:
+      - a required event scheduled in a LATER (year, month) than the anchor;
+      - a required event in the SAME month but authored AFTER the anchor (the
+        single forward scan evaluates the anchor before the requirement fires).
+
+    This is timing-only — it complements, not replaces, the M0 runtime write-set
+    non-interference guard (which stops generated beats from breaking an anchor's
+    *conditional* reachability)."""
+    schedule: dict[str, tuple[int, int, int]] = {}
+    for idx, event in enumerate(events):
+        eid = str(event.get("id", "") or "")
+        trigger = event.get("trigger", {}) or {}
+        schedule[eid] = (int(trigger.get("year", -1)), int(trigger.get("month", -1)), idx)
+
+    for idx, event in enumerate(events):
+        if not event.get("anchor"):
+            continue
+        anchor_when = schedule[str(event.get("id", "") or "")]
+        path = f"timeline.events[{idx}].requires_events"
+        for required in event.get("requires_events", []) or []:
+            req_when = schedule.get(str(required))
+            if req_when is None:
+                continue  # missing reference already raised by the ref-integrity pass
+            if req_when[:2] > anchor_when[:2] or (
+                req_when[:2] == anchor_when[:2] and req_when[2] > anchor_when[2]
+            ):
+                raise ScenarioValidationError(
+                    path,
+                    "required event scheduled at or before this anchor (same-month requirements must be authored earlier)",
+                    required,
+                )
+
+
 def _validate_branch_event(event: dict[str, Any], path: str) -> None:
     """v1.6 M1: a `branch` event is a selector node — non-empty `branches`,
     each with a unique id + condition + effects; `default_branch` (if set) must
@@ -897,6 +936,7 @@ def _validate_timeline(timeline_data: dict[str, Any], *, preset_id: str, scenari
                 if ref not in event_ids:
                     raise MissingReferenceError(f"{path}.{field_name}", ref, "timeline.events[].id")
 
+    _validate_anchor_reachability(events)
     _validate_storyline_reachability(events)
     _validate_storyline_structure(events)
     return events
