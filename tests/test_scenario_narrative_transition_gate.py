@@ -188,6 +188,34 @@ def test_validate_beat_rejects_malformed_relation_deltas():
         assert reason
 
 
+def test_closure_protects_required_event_conditions_not_just_the_anchor():
+    # A2's OWN condition is `always` (empty read-set), but it requires R whose
+    # condition reads (hero, rival). A beat touching that pair would break R → A2
+    # starves. The protected set must include R's reads via the closure.
+    timeline = [
+        {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+        {"id": "r", "trigger": {"year": 1, "month": 3, "condition": {"npc_relation": {"a": "hero", "b": "rival", "value": 0, "op": "<="}}}},
+        {"id": "a2", "anchor": True, "requires_events": ["r"], "trigger": {"year": 1, "month": 4, "condition": {"always": {}}}},
+    ]
+    protected = pending_anchor_read_set(timeline, {"a1"}, player_id="p", now=(1, 2))
+    assert ("relation", frozenset({"hero", "rival"})) in protected
+    # a beat touching the required event's pair is therefore rejected
+    starving = {"command": {"command": "relation_delta", "a": "hero", "b": "rival", "delta": 1}}
+    assert validate_beat(starving, protected)[0] is False
+
+
+def test_closure_protects_storyline_activator_conditions():
+    # the anchor is gated by storyline "line-a"; its activator's condition reads
+    # (hero, elder). A beat breaking that would stop activation → anchor starves.
+    timeline = [
+        {"id": "act", "type": "branch", "trigger": {"year": 1, "month": 1, "condition": {"npc_relation": {"a": "hero", "b": "elder", "value": 0}}},
+         "effects": [{"type": "activate_storyline", "storyline": "line-a"}]},
+        {"id": "anc", "anchor": True, "storyline": "line-a", "trigger": {"year": 1, "month": 5, "condition": {"always": {}}}},
+    ]
+    protected = pending_anchor_read_set(timeline, set(), player_id="p", now=(1, 2))
+    assert ("relation", frozenset({"hero", "elder"})) in protected
+
+
 def test_pending_read_set_resolves_player_and_skips_past_due_anchors():
     timeline = [
         {  # future player_relation anchor: protects (real_player, rival)

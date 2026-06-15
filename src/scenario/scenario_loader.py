@@ -822,42 +822,69 @@ def _validate_anchor(event: dict[str, Any], path: str) -> None:
 
 
 def _validate_anchor_reachability(events: list[dict[str, Any]]) -> None:
-    """v1.8 M1: TIMED reachability for the anchor backbone. For every anchor, each
-    of its `requires_events` must be scheduled to fire at or before the anchor's
-    own exact-month window — otherwise the one-shot, single-pass dispatcher can
-    never satisfy the requirement and the anchor starves.
+    """v1.8 M1: TIMED reachability for the anchor backbone, over the TRANSITIVE
+    `requires_events` closure of each anchor. Along every dependency edge X→Y
+    (X requires Y), Y must be scheduled to fire at or before X's exact-month
+    window — otherwise the one-shot, single-pass dispatcher can never satisfy the
+    chain and the anchor starves. Dependency cycles in the closure are rejected
+    (no node can ever fire first).
 
-    Two failure modes, both load-time hard errors:
-      - a required event scheduled in a LATER (year, month) than the anchor;
-      - a required event in the SAME month but authored AFTER the anchor (the
-        single forward scan evaluates the anchor before the requirement fires).
+    Two timing failure modes per edge, both load-time hard errors:
+      - the required event scheduled in a LATER (year, month) than its requirer;
+      - the required event in the SAME month but authored AFTER its requirer (the
+        single forward scan evaluates the requirer before the requirement fires).
 
-    This is timing-only — it complements, not replaces, the M0 runtime write-set
-    non-interference guard (which stops generated beats from breaking an anchor's
-    *conditional* reachability)."""
+    Scope (honest): this proves only TIMING + acyclicity of the dependency
+    closure — NOT full dynamic reachability. Statically-false conditions,
+    `blocks_events` starvation, and timed storyline-activator reachability are
+    authored-baseline validation backlog. The L3 SAFETY contract (a generated beat
+    must never WORSEN anchor reachability vs the no-beat baseline) is delivered by
+    the M0 runtime write-set non-interference guard over the same closure."""
     schedule: dict[str, tuple[int, int, int]] = {}
+    by_id: dict[str, dict[str, Any]] = {}
     for idx, event in enumerate(events):
         eid = str(event.get("id", "") or "")
         trigger = event.get("trigger", {}) or {}
         schedule[eid] = (int(trigger.get("year", -1)), int(trigger.get("month", -1)), idx)
+        by_id[eid] = event
 
-    for idx, event in enumerate(events):
-        if not event.get("anchor"):
-            continue
-        anchor_when = schedule[str(event.get("id", "") or "")]
-        path = f"timeline.events[{idx}].requires_events"
-        for required in event.get("requires_events", []) or []:
-            req_when = schedule.get(str(required))
+    def _required_fires_before(req: tuple[int, int, int], requirer: tuple[int, int, int]) -> bool:
+        return req[:2] < requirer[:2] or (req[:2] == requirer[:2] and req[2] < requirer[2])
+
+    # DFS the requires-closure of each anchor; GREY = on current path (cycle if revisited).
+    GREY, BLACK = 1, 2
+
+    def _walk(node_id: str, color: dict[str, int]) -> None:
+        color[node_id] = GREY
+        node = by_id.get(node_id)
+        node_when = schedule[node_id]
+        node_idx = node_when[2]
+        for required in (node.get("requires_events", []) or []) if node else []:
+            req_id = str(required)
+            req_when = schedule.get(req_id)
             if req_when is None:
                 continue  # missing reference already raised by the ref-integrity pass
-            if req_when[:2] > anchor_when[:2] or (
-                req_when[:2] == anchor_when[:2] and req_when[2] > anchor_when[2]
-            ):
+            if not _required_fires_before(req_when, node_when):
                 raise ScenarioValidationError(
-                    path,
-                    "required event scheduled at or before this anchor (same-month requirements must be authored earlier)",
+                    f"timeline.events[{node_idx}].requires_events",
+                    "required event scheduled at or before its requirer in the anchor closure "
+                    "(same-month requirements must be authored earlier)",
                     required,
                 )
+            state = color.get(req_id)
+            if state == GREY:
+                raise ScenarioValidationError(
+                    f"timeline.events[{node_idx}].requires_events",
+                    "acyclic dependency chain (a requires-cycle starves the anchor)",
+                    required,
+                )
+            if state != BLACK:
+                _walk(req_id, color)
+        color[node_id] = BLACK
+
+    for event in events:
+        if event.get("anchor"):
+            _walk(str(event.get("id", "") or ""), {})
 
 
 def _validate_branch_event(event: dict[str, Any], path: str) -> None:

@@ -81,3 +81,34 @@ def test_anchor_requiring_another_anchor_respects_timing():
         _ev("a2", 1, 2, anchor=True, requires=["a1"]),
     ]
     _validate_anchor_reachability(events)  # no raise
+
+
+def test_transitive_requirement_timing_is_enforced():
+    # A@M5 requires B@M4 (ok), but B requires C@M6 (broken) → B misses → A starves.
+    events = [
+        _ev("c", 1, 6),
+        _ev("b", 1, 4, requires=["c"]),
+        _ev("a", 1, 5, anchor=True, requires=["b"]),
+    ]
+    with pytest.raises(ScenarioValidationError):
+        _validate_anchor_reachability(events)
+
+
+def test_requires_cycle_in_anchor_closure_is_rejected():
+    events = [
+        _ev("b", 1, 4, requires=["a"]),
+        _ev("a", 1, 5, anchor=True, requires=["b"]),
+    ]
+    with pytest.raises(ScenarioValidationError):
+        _validate_anchor_reachability(events)
+
+
+def test_non_anchor_node_inside_an_anchor_closure_is_checked():
+    # entering an anchor's dependency closure tightens an otherwise-loose non-anchor
+    events = [
+        _ev("late", 2, 1),
+        _ev("mid", 1, 4, requires=["late"]),     # non-anchor, but in A's closure
+        _ev("a", 1, 5, anchor=True, requires=["mid"]),
+    ]
+    with pytest.raises(ScenarioValidationError):
+        _validate_anchor_reachability(events)
