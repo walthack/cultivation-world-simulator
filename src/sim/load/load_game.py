@@ -149,8 +149,10 @@ def load_game(
                 transition_cache=dict(saved_sc.get("transition_cache", {}) or {}),
             )
             from src.scenario.narrative_fill import attach_default_narrative_filler
+            from src.scenario.narrative_transition import attach_default_transition_generator
 
             attach_default_narrative_filler(world)
+            attach_default_transition_generator(world)
         CustomContentRegistry.load_from_dict(save_data.get("custom_content"))
         dynasty_data = world_data.get("dynasty")
         if dynasty_data is not None:
