@@ -255,6 +255,9 @@ def save_game(
                 "transition_last_gen_month": int(
                     getattr(world.scripted_scenario, "transition_last_gen_month", -10**9)
                 ),
+                # M3: transition beat audit ledger — its own field, NOT inside state
+                # (state is var_equals-readable; beat plans must stay out of it).
+                "transition_ledger": list(getattr(world.scripted_scenario, "transition_ledger", []) or []),
             }
         
         # 写入文件
