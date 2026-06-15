@@ -124,12 +124,13 @@ class EventManager:
         rendered.narration = None
         return rendered
 
-    def get_recent_events(self, limit: int = 100) -> List["Event"]:
-        """获取最近的事件（时间正序）。"""
+    def get_recent_events(self, limit: int = 100, *, exclude_story: bool = False) -> List["Event"]:
+        """获取最近的事件（时间正序）。`exclude_story` 在查询层剔除 is_story 事件。"""
         if self._storage:
-            return self._storage.get_recent_events(limit=limit)
+            return self._storage.get_recent_events(limit=limit, exclude_story=exclude_story)
         else:
-            return self._memory_events[-limit:]
+            events = [e for e in self._memory_events if not getattr(e, "is_story", False)] if exclude_story else self._memory_events
+            return events[-limit:]
 
     def get_events_by_avatar(self, avatar_id: str, *, limit: int = 50) -> List["Event"]:
         """获取角色相关的事件（时间正序）。"""

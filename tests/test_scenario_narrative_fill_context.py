@@ -68,7 +68,7 @@ def _narrated_event():
 
 def test_chronicle_uses_content_never_generated_narration():
     world = SimpleNamespace(
-        event_manager=SimpleNamespace(get_recent_events=lambda limit: [_narrated_event()])
+        event_manager=SimpleNamespace(get_recent_events=lambda limit, exclude_story=False: [_narrated_event()])
     )
     text = _chronicle_context(world)
 
@@ -86,7 +86,7 @@ def test_chronicle_is_safe_when_event_str_raises():
             raise RuntimeError("bad event")
 
     world = SimpleNamespace(
-        event_manager=SimpleNamespace(get_recent_events=lambda limit: [Boom()])
+        event_manager=SimpleNamespace(get_recent_events=lambda limit, exclude_story=False: [Boom()])
     )
     assert _chronicle_context(world) == ""  # formatting failure degrades, never raises
 
@@ -112,7 +112,7 @@ def test_full_prompt_never_carries_generated_narration_back():
     """Integration: the assembled prompt includes chronicle content but never the
     generated narration of a past event (Q12 / no feedback loop)."""
     world = SimpleNamespace(
-        event_manager=SimpleNamespace(get_recent_events=lambda limit: [_narrated_event()])
+        event_manager=SimpleNamespace(get_recent_events=lambda limit, exclude_story=False: [_narrated_event()])
     )
     prompt = build_narrative_prompt({"id": "e", "name": "n", "description": "d"}, world)
 

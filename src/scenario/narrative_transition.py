@@ -91,6 +91,8 @@ def condition_read_set(expression: Any) -> set[tuple]:
     ``("var", name)``, ``("event", id)``, or ``PROTECT_ALL`` for anything we can't
     model. Player-relations use ``PLAYER_SENTINEL`` as one endpoint.
     """
+    if expression is None:
+        return set()  # no condition = unconditional (always fires) → beat-independent
     if not isinstance(expression, dict) or len(expression) != 1:
         return {PROTECT_ALL}  # malformed → fail closed
     key, value = next(iter(expression.items()))
@@ -152,18 +154,30 @@ def protected_read_set(
 
     Past-due unfired events are excluded — their exact-month window has passed, so
     a beat can no longer cause them to fire.
+
+    Covers not just ``trigger.condition`` but also ``branches[].condition`` and
+    ``choices[].condition``: a branch event can fire on ``always`` yet pick a
+    different branch (and run that branch's effects) based on a relation a beat
+    touched — an indirect path the trigger condition alone misses.
     """
     resolved = as_id(player_id)
     reads: set[tuple] = set()
+
+    def _add(expression: Any) -> None:
+        for token in condition_read_set(expression):
+            if token[0] == "relation" and PLAYER_SENTINEL in token[1]:
+                token = ("relation", frozenset({resolved if e == PLAYER_SENTINEL else e for e in token[1]}))
+            reads.add(token)
+
     for event in timeline:
         if str(event.get("id", "")) in triggered:
             continue
         if _anchor_when(event) < now:
             continue  # past-due — can no longer fire, so a beat can't enable it
-        for token in condition_read_set((event.get("trigger", {}) or {}).get("condition")):
-            if token[0] == "relation" and PLAYER_SENTINEL in token[1]:
-                token = ("relation", frozenset({resolved if e == PLAYER_SENTINEL else e for e in token[1]}))
-            reads.add(token)
+        _add((event.get("trigger", {}) or {}).get("condition"))
+        for outcome in (event.get("branches") or []) + (event.get("choices") or []):
+            if isinstance(outcome, dict):
+                _add(outcome.get("condition"))
     return reads
 
 

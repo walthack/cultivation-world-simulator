@@ -427,6 +427,7 @@ class EventStorage:
         major_scope: Optional[str] = None,
         cursor: Optional[str] = None,
         limit: int = 100,
+        exclude_story: bool = False,
     ) -> tuple[list["Event"], Optional[str]]:
         """
         分页查询事件。
@@ -497,6 +498,11 @@ class EventStorage:
                     where_clauses.append("e.is_major = TRUE AND e.is_story = FALSE")
                 elif major_scope == "minor":
                     where_clauses.append("(e.is_major = FALSE OR e.is_story = TRUE)")
+                if exclude_story:
+                    # hard guarantee (not an over-fetch heuristic): drop is_story
+                    # events (e.g. v1.8 transition beats) at the query level so they
+                    # can never crowd authored facts out of a bounded window.
+                    where_clauses.append("e.is_story = FALSE")
 
                 if cursor:
                     cursor_month, cursor_rowid = self._parse_cursor(cursor)
@@ -724,9 +730,10 @@ class EventStorage:
             )
             return []
 
-    def get_recent_events(self, limit: int = 100) -> list["Event"]:
-        """获取最近的事件（供初始状态 API 使用）。"""
-        events, _ = self.get_events(limit=limit)
+    def get_recent_events(self, limit: int = 100, *, exclude_story: bool = False) -> list["Event"]:
+        """获取最近的事件（供初始状态 API 使用）。`exclude_story` 在查询层剔除
+        is_story 事件（如 v1.8 过渡 beat），保证有界窗口内不被它们挤占。"""
+        events, _ = self.get_events(limit=limit, exclude_story=exclude_story)
         return list(reversed(events))  # 时间正序。
 
     def cleanup(self, keep_major: bool = True, before_month_stamp: Optional[int] = None) -> int:

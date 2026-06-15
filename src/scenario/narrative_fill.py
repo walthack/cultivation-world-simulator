@@ -90,16 +90,14 @@ def _chronicle_context(world: Any) -> str:
     if manager is None:
         return ""
     # Retrieval AND str() formatting both inside _safe — a non-Event or a raising
-    # __str__ must degrade to empty, never break the fill. v1.8: over-fetch then
-    # filter is_story (transition beats) BEFORE truncating to N — filtering the
-    # already-truncated window would let a burst of beats crowd authored facts out
-    # of the chronicle entirely (the SQLite limit doesn't backfill the dropped).
+    # __str__ must degrade to empty, never break the fill. v1.8: exclude is_story
+    # (transition beats) at the QUERY level — a hard guarantee that a burst of beats
+    # can never crowd authored facts out of the bounded chronicle window.
     lines = _safe(
         lambda: [
             str(event)
-            for event in (manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS * 8) or [])
-            if not getattr(event, "is_story", False)
-        ][-CHRONICLE_MAX_EVENTS:],
+            for event in (manager.get_recent_events(limit=CHRONICLE_MAX_EVENTS, exclude_story=True) or [])
+        ],
         [],
     )
     return _clip("\n".join(lines), 1200)

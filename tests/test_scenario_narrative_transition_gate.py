@@ -205,6 +205,25 @@ def test_protects_a_non_anchor_events_condition_so_beats_cant_indirectly_starve(
     assert validate_beat(starving, protected)[0] is False
 
 
+def test_protects_branch_conditions_not_just_trigger():
+    # a branch event fires on `always` but selects a branch by a relation read —
+    # a beat flipping it would change the branch's effects (indirect走向 change).
+    timeline = [
+        {"id": "bp", "type": "branch", "trigger": {"year": 1, "month": 3, "condition": {"always": {}}},
+         "branches": [
+             {"id": "x", "condition": {"npc_relation": {"a": "hero", "b": "rival", "value": 1, "op": ">="}}, "effects": []},
+             {"id": "y", "condition": {"always": {}}, "effects": []},
+         ]},
+    ]
+    protected = protected_read_set(timeline, set(), player_id="p", now=(1, 2))
+    assert ("relation", frozenset({"hero", "rival"})) in protected  # branch condition protected
+
+
+def test_missing_condition_is_unconditional_not_protect_all():
+    # no condition = always-true = beat-independent → contributes NO protected token
+    assert condition_read_set(None) == set()
+
+
 def test_protects_future_event_conditions_regardless_of_type():
     # any future-pending event's relation reads are protected (here an activator)
     timeline = [

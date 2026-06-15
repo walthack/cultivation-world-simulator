@@ -154,6 +154,24 @@ async def test_frozen_beats_replay_on_reload_without_a_generator(tmp_path):
     assert any(e.narration == "茶肆闲谈。" for e in replay)  # frozen beat still shown
 
 
+def test_chronicle_query_excludes_is_story_as_a_hard_guarantee(tmp_path):
+    # P1 hard fix: even when is_story beats vastly outnumber authored events, the
+    # query-level exclude_story keeps authored facts in the bounded window.
+    from src.classes.event import Event
+    world = _new_world(tmp_path)
+    em = world.event_manager
+    for i in range(3):
+        em.add_event(Event(month_stamp=int(create_month_stamp(Year(100), Month.JANUARY)),
+                            content=f"authored-{i}", id=f"a{i}"))
+    for i in range(40):  # a flood of transition beats
+        em.add_event(Event(month_stamp=int(create_month_stamp(Year(100), Month.FEBRUARY)),
+                            content="", narration=f"beat-{i}", is_story=True, id=f"s{i}"))
+
+    recent = em.get_recent_events(limit=5, exclude_story=True)
+    assert recent and all(not e.is_story for e in recent)        # no beat leaks in
+    assert {e.content for e in recent} == {"authored-0", "authored-1", "authored-2"}
+
+
 def _accept_and_reject_generator():
     def gen(snapshot):
         return [
