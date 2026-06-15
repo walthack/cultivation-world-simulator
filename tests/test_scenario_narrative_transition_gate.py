@@ -330,6 +330,101 @@ async def test_cadence_throttles_generation_within_a_long_gap(base_world):
 
 
 @pytest.mark.asyncio
+async def test_cadence_arithmetic_spans_a_year_boundary(base_world):
+    # anchors at Y1M11 and Y2M3; gap = Y1M12, Y2M1, Y2M2. cadence=2 → call at
+    # Y1M12 (total 24), skip Y2M1 (25-24=1), call Y2M2 (26-24=2). Proves
+    # year*12+month month-diff is correct across the year boundary.
+    seen: list[tuple[int, int]] = []
+
+    def spy(snapshot):
+        seen.append((snapshot["year"], snapshot["month"]))
+        return []
+
+    base_world.world_flags.clear()
+    base_world.transition_generator = spy
+    base_world.transition_cadence_months = 2
+    base_world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="m2y",
+        timeline=[
+            {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 11, "condition": {"always": {}}}},
+            {"id": "a2", "anchor": True, "trigger": {"year": 2, "month": 3, "condition": {"always": {}}}},
+        ],
+    )
+    for yr, mo in [(1, 11), (1, 12), (2, 1), (2, 2), (2, 3)]:
+        stamp = create_month_stamp(Year(yr), Month(mo))
+        base_world.month_stamp = stamp
+        await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+
+    assert seen == [(1, 12), (2, 2)]
+
+
+@pytest.mark.asyncio
+async def test_a_failed_generation_still_advances_the_cadence_cursor(base_world):
+    # a generator failure must not let the next month re-invoke immediately
+    # (no failure-driven hammering): cadence=2, generator raises at M2 → M3 skipped.
+    calls: list[int] = []
+
+    def boom(snapshot):
+        calls.append(snapshot["month"])
+        raise RuntimeError("provider down")
+
+    base_world.world_flags.clear()
+    base_world.transition_generator = boom
+    base_world.transition_cadence_months = 2
+    base_world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="m2f",
+        timeline=[
+            {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+            {"id": "a2", "anchor": True, "trigger": {"year": 1, "month": 4, "condition": {"always": {}}}},
+        ],
+    )
+    for m in (1, 2, 3, 4):
+        stamp = create_month_stamp(Year(1), Month(m))
+        base_world.month_stamp = stamp
+        await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+
+    assert calls == [2]  # M3 throttled despite the M2 failure
+
+
+@pytest.mark.asyncio
+async def test_cadence_cursor_round_trips_through_save_and_load(tmp_path):
+    from unittest.mock import patch
+
+    from src.classes.core.world import World
+    from src.classes.environment.map import Map
+    from src.classes.environment.tile import TileType
+    from src.sim.load.load_game import load_game
+    from src.sim.save.save_game import save_game
+    from src.sim.simulator import Simulator
+
+    def _map():
+        m = Map(width=10, height=10)
+        for x in range(10):
+            for y in range(10):
+                m.create_tile(x, y, TileType.PLAIN)
+        return m
+
+    world = World.create_with_db(
+        map=_map(),
+        month_stamp=create_month_stamp(Year(100), Month.JANUARY),
+        events_db_path=tmp_path / "events.db",
+    )
+    world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="sample", timeline=[], transition_last_gen_month=1234
+    )
+
+    save_path = tmp_path / "save.json"
+    ok, _ = save_game(world, Simulator(world), [], save_path)
+    assert ok
+    world.event_manager.close()
+
+    with patch("src.run.load_map.load_cultivation_world_map", return_value=_map()):
+        loaded, _, _ = load_game(save_path, active_scenario_id="sample")
+    # the cadence cursor survives — reload won't reset the throttle and re-generate
+    assert loaded.scripted_scenario.transition_last_gen_month == 1234
+
+
+@pytest.mark.asyncio
 async def test_off_run_never_invokes_generator_or_creates_beats(base_world):
     mech_off, beats = await _run(base_world, generator=None)
 

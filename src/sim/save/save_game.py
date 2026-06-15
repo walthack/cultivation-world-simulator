@@ -250,6 +250,11 @@ def save_game(
                 # M2: reproducible narration cache — its own field, NOT inside state
                 # (state is var_equals-readable; this must stay out of it).
                 "narration_cache": dict(getattr(world.scripted_scenario, "narration_cache", {}) or {}),
+                # M2: cadence cursor — persist so reload doesn't reset the throttle
+                # and re-invoke the generator (which could re-apply a beat effect).
+                "transition_last_gen_month": int(
+                    getattr(world.scripted_scenario, "transition_last_gen_month", -10**9)
+                ),
             }
         
         # 写入文件
