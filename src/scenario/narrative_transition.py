@@ -340,6 +340,14 @@ async def apply_narrative_transition(world: Any, state: Any, fired_ids: set[str]
     if not _is_gap_tick(sc.timeline, triggered, fired_ids, now):
         return []
 
+    # M2 cadence (Q4): throttle generation within a long gap — ask the generator at
+    # most once per `transition_cadence_months`. Default 1 = every gap month.
+    cadence = max(1, int(getattr(world, "transition_cadence_months", 1)))
+    total_now = now[0] * 12 + now[1]
+    if total_now - int(getattr(sc, "transition_last_gen_month", -10**9)) < cadence:
+        return []
+    sc.transition_last_gen_month = total_now
+
     player_id = get_value(get_player(state), "id")
     protected = pending_anchor_read_set(sc.timeline, triggered, player_id=player_id, now=now)
     pending_ids = [

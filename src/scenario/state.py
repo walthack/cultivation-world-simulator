@@ -21,3 +21,7 @@ class ScriptedScenarioState:
     # reason + applied command). Like `narration_cache`, a deliberate SIBLING of
     # `state` — beat plans/text must never be var_equals-readable.
     transition_ledger: list[dict[str, Any]] = field(default_factory=list)
+    # v1.8 M2: total-month stamp (year*12+month) of the last gap tick on which the
+    # transition generator was invoked — drives the cadence throttle (don't ask the
+    # generator every gap month). Sibling of `state`, like the ledger.
+    transition_last_gen_month: int = -10**9

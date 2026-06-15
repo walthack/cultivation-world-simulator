@@ -302,6 +302,34 @@ async def test_generator_is_only_invoked_on_gap_ticks(base_world):
 
 
 @pytest.mark.asyncio
+async def test_cadence_throttles_generation_within_a_long_gap(base_world):
+    # anchors at M1 and M8 → gap = M2..M7. With cadence=3 the generator is asked at
+    # M2, then not until M5, then M8 is an anchor month → seen = [2, 5].
+    seen: list[int] = []
+
+    def spy(snapshot):
+        seen.append(snapshot["month"])
+        return []
+
+    base_world.world_flags.clear()
+    base_world.transition_generator = spy
+    base_world.transition_cadence_months = 3
+    base_world.scripted_scenario = ScriptedScenarioState(
+        scenario_id="m2",
+        timeline=[
+            {"id": "a1", "anchor": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+            {"id": "a2", "anchor": True, "trigger": {"year": 1, "month": 8, "condition": {"always": {}}}},
+        ],
+    )
+    for m in range(1, 9):
+        stamp = create_month_stamp(Year(1), Month(m))
+        base_world.month_stamp = stamp
+        await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+
+    assert seen == [2, 5]
+
+
+@pytest.mark.asyncio
 async def test_off_run_never_invokes_generator_or_creates_beats(base_world):
     mech_off, beats = await _run(base_world, generator=None)
 
