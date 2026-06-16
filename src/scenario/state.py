@@ -30,3 +30,7 @@ class ScriptedScenarioState:
     # persisted to the save. A reload reuses frozen beats instead of re-querying the
     # LLM — once a gap-month is generated and saved its beats never change.
     transition_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    # v1.9 M0 (L4): Narrative Director audit ledger (accept/reject + reason + scoped
+    # fact). Sibling of `state` like the others — director plans/facts must never be
+    # var_equals-readable. (Plot-ledger formalization is M2.)
+    director_ledger: list[dict[str, Any]] = field(default_factory=list)

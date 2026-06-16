@@ -30,3 +30,19 @@ def test_anchor_must_be_a_real_boolean():
     for bad in ("true", 1, "1", {}):
         with pytest.raises(ScenarioValidationError):
             _validate_anchor(_event(anchor=bad), "timeline.events[0]")
+
+
+def test_mandatory_must_be_a_real_boolean():
+    for bad in ("true", 1, {}):
+        with pytest.raises(ScenarioValidationError):
+            _validate_anchor(_event(anchor=True, mandatory=bad), "timeline.events[0]")
+
+
+def test_mandatory_requires_anchor():
+    # v1.9: a mandatory backbone event must also be an anchor
+    with pytest.raises(ScenarioValidationError):
+        _validate_anchor(_event(mandatory=True), "timeline.events[0]")
+
+
+def test_mandatory_anchor_passes():
+    _validate_anchor(_event(anchor=True, mandatory=True), "timeline.events[0]")

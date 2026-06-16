@@ -260,6 +260,8 @@ def save_game(
                 "transition_ledger": list(getattr(world.scripted_scenario, "transition_ledger", []) or []),
                 # M3 (Q5): reproducible frozen beats — reload reuses, never re-queries
                 "transition_cache": dict(getattr(world.scripted_scenario, "transition_cache", {}) or {}),
+                # M3 (L4): director audit ledger — own field, never inside state.
+                "director_ledger": list(getattr(world.scripted_scenario, "director_ledger", []) or []),
             }
         
         # 写入文件

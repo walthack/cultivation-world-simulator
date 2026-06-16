@@ -10,6 +10,7 @@ from src.classes.language import language_manager
 from src.scenario.event_dispatcher import EventDispatcher
 from src.scenario.narration_cache import narration_cache_key, resolved_outcome
 from src.scenario.narrative_transition import apply_narrative_transition
+from src.scenario.narrative_director import apply_narrative_director
 from src.scenario.event_handlers import (
     handle_branch,
     handle_character_introduction,
@@ -124,6 +125,10 @@ async def phase_scripted_scenario_tick(world: Any, ctx: Any) -> list[Event]:
     # `world.transition_generator` is injected and this is a gap tick.
     fired_ids = {str(se.get("id") or "") for se in dispatched}
     events.extend(await apply_narrative_transition(world, dispatch_state, fired_ids))
+    # v1.9 M0 (L4 bootstrap): after anchors (incl. mandatory) and L3 transitions,
+    # the Narrative Director may propose plot. No-op unless `world.director_generator`
+    # is injected; in bootstrap it can only record scoped facts (zero mechanics).
+    events.extend(await apply_narrative_director(world, dispatch_state, fired_ids))
     return events
 
 

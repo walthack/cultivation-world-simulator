@@ -814,11 +814,20 @@ def _validate_narrative_fill(event: dict[str, Any], path: str) -> None:
 def _validate_anchor(event: dict[str, Any], path: str) -> None:
     """v1.8 M0 (L3): `anchor` is an explicit boolean. Anchors are the
     deterministic backbone the LLM may not cross; transition beats fill the gaps
-    BETWEEN them. (Timed/conditional anchor-chain reachability is M1.)"""
-    if "anchor" not in event:
-        return
-    if not isinstance(event["anchor"], bool):
+    BETWEEN them. (Timed/conditional anchor-chain reachability is M1.)
+
+    v1.9 M0 (L4): `mandatory` is an explicit boolean marking a backbone anchor the
+    Narrative Director must still let fire. A mandatory event is an anchor by
+    definition, so `mandatory: true` requires `anchor: true`."""
+    if "anchor" in event and not isinstance(event["anchor"], bool):
         raise ScenarioValidationError(f"{path}.anchor", "boolean", event["anchor"])
+    if "mandatory" in event:
+        if not isinstance(event["mandatory"], bool):
+            raise ScenarioValidationError(f"{path}.mandatory", "boolean", event["mandatory"])
+        if event["mandatory"] and not event.get("anchor"):
+            raise ScenarioValidationError(
+                f"{path}.mandatory", "mandatory events must also be anchors (anchor: true)", event.get("anchor")
+            )
 
 
 def _validate_anchor_reachability(events: list[dict[str, Any]]) -> None:
