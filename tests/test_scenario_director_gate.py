@@ -112,22 +112,17 @@ async def test_on_run_is_non_vacuous(base_world):
     assert all(e.id.startswith("director:") for e in director_events)
 
 
-@pytest.mark.asyncio
-async def test_forward_replay_exercises_a_mandatory_anchor_sensitive_to_director_writes(base_world):
-    # m2 fires only while flag "blocker" is unset. The director proposes a (rejected)
-    # set_flag that WOULD set it — so the harness exercises a mandatory anchor that
-    # reads director-writable state. In M0 the over-reach command is rejected, so m2
-    # still fires; once M1 opens such a command WITHOUT a reachability guard, this
-    # same gate goes RED (m2 would be starved). This is the non-vacuity sentinel.
-    timeline = [
+def _sentinel_timeline(m2_condition):
+    return [
         {"id": "m1", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
-        {"id": "m2", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 4, "condition": {"world_flag": {"flag": "blocker", "value": False}}}},
+        {"id": "m2", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 4, "condition": m2_condition}},
     ]
+
+
+async def _run_timeline(base_world, timeline, director):
     base_world.world_flags.clear()
-    base_world.director_generator = _director([
-        {"id": "x", "narration": "试图设阻", "command": {"command": "set_flag", "flag": "blocker"}},
-    ])
-    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="sentinel", timeline=timeline)
+    base_world.director_generator = director
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="m1", timeline=timeline)
     fired: set[str] = set()
     for month in MONTHS:
         stamp = create_month_stamp(Year(1), month)
@@ -135,8 +130,51 @@ async def test_forward_replay_exercises_a_mandatory_anchor_sensitive_to_director
         for ev in await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp)):
             if ev.id in MANDATORY:
                 fired.add(ev.id)
-    assert fired == MANDATORY                          # the sensitive mandatory anchor still fires
-    assert "blocker" not in base_world.world_flags     # the over-reach command was rejected
+    return fired
+
+
+@pytest.mark.asyncio
+async def test_reachability_gate_rejects_a_flag_that_would_starve_a_mandatory_anchor(base_world):
+    # m2 fires only while "blocker" is unset. director_set_flag(blocker) is now
+    # WHITELISTED — but the forward-replay gate replays and sees m2 would be starved,
+    # so it rejects the command. m2 still fires; the flag is never set.
+    fired = await _run_timeline(
+        base_world,
+        _sentinel_timeline({"world_flag": {"flag": "blocker", "value": False}}),
+        _director([{"id": "x", "narration": "试图设阻", "command": {"command": "director_set_flag", "flag": "blocker"}}]),
+    )
+    assert fired == MANDATORY
+    assert "blocker" not in base_world.world_flags
+    sc = base_world.scripted_scenario
+    assert any(not r["accepted"] and "mandatory" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_reachability_gate_allows_a_flag_no_mandatory_anchor_reads(base_world):
+    # a harmless flag (no mandatory condition reads it) passes the gate → applied.
+    fired = await _run_timeline(
+        base_world,
+        _sentinel_timeline({"always": {}}),
+        _director([{"id": "ok", "narration": "传闻渐起", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+    )
+    assert fired == MANDATORY
+    assert base_world.world_flags.get("rumor") is True       # gate passed → real effect applied
+    sc = base_world.scripted_scenario
+    assert any(r["accepted"] and r.get("command", {}).get("flag") == "rumor" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_reachability_gate_fails_closed_on_a_non_modellable_horizon(base_world):
+    # a horizon event with a non-modellable predicate (player_stat) → the gate can't
+    # prove reachability → fail closed → even a harmless director flag is rejected.
+    timeline = _sentinel_timeline({"always": {}})
+    timeline.append({"id": "b", "trigger": {"year": 1, "month": 2, "condition": {"player_stat": {"stat": "qi", "value": 5}}}})
+    fired = await _run_timeline(
+        base_world, timeline,
+        _director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags             # fail-closed → not applied
 
 
 @pytest.mark.asyncio
