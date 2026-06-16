@@ -113,6 +113,44 @@ async def test_on_run_is_non_vacuous(base_world):
 
 
 @pytest.mark.asyncio
+async def test_forward_replay_exercises_a_mandatory_anchor_sensitive_to_director_writes(base_world):
+    # m2 fires only while flag "blocker" is unset. The director proposes a (rejected)
+    # set_flag that WOULD set it — so the harness exercises a mandatory anchor that
+    # reads director-writable state. In M0 the over-reach command is rejected, so m2
+    # still fires; once M1 opens such a command WITHOUT a reachability guard, this
+    # same gate goes RED (m2 would be starved). This is the non-vacuity sentinel.
+    timeline = [
+        {"id": "m1", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+        {"id": "m2", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 4, "condition": {"world_flag": {"flag": "blocker", "value": False}}}},
+    ]
+    base_world.world_flags.clear()
+    base_world.director_generator = _director([
+        {"id": "x", "narration": "试图设阻", "command": {"command": "set_flag", "flag": "blocker"}},
+    ])
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="sentinel", timeline=timeline)
+    fired: set[str] = set()
+    for month in MONTHS:
+        stamp = create_month_stamp(Year(1), month)
+        base_world.month_stamp = stamp
+        for ev in await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp)):
+            if ev.id in MANDATORY:
+                fired.add(ev.id)
+    assert fired == MANDATORY                          # the sensitive mandatory anchor still fires
+    assert "blocker" not in base_world.world_flags     # the over-reach command was rejected
+
+
+@pytest.mark.asyncio
+async def test_director_events_are_story_and_empty_content_so_chronicle_excludes_them(base_world):
+    # director events must carry the properties that the exclude_story chronicle
+    # query relies on, so a burst of them can't crowd out authored facts.
+    _, director_events = await _run(base_world, director=_director([
+        {"id": "p", "narration": "导演事实", "command": {"command": "director_fact", "text": "t"}},
+    ]))
+    assert director_events
+    assert all(e.is_story and (e.content or "") == "" for e in director_events)
+
+
+@pytest.mark.asyncio
 async def test_rejected_proposal_records_reason_and_emits_no_event(base_world):
     _, director_events = await _run(base_world, director=_director([
         {"id": "bad", "narration": "越权", "command": {"command": "set_flag", "flag": "x"}},
