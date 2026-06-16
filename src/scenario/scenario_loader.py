@@ -192,13 +192,46 @@ def _validate_scenario_top_level(data: dict[str, Any]) -> str:
     return preset_id
 
 
+# v1.9 M1b: backbone predicates are HARD gates decided by a SINGLE dry evaluation,
+# so they must be DETERMINISTIC — a coin-flip predicate (random_chance) would let a
+# prohibited/irreversible gate pass at random instead of failing closed (codex P0).
+# We allow only deterministic builtin predicates; random_chance and mod/registered
+# predicates (unknown determinism at load) are rejected here. Predicates that are
+# deterministic but unevaluable against the director's bounded dry state (e.g. npc
+# state) still fail closed at runtime in narrative_director._backbone_reason.
+_BACKBONE_DETERMINISTIC_PREDICATES = {
+    "always", "controlled_avatar_is", "player_realm", "player_sect", "player_has_skill",
+    "player_stat", "player_relation", "world_year", "world_month", "world_flag",
+    "npc_alive", "npc_realm", "npc_relation", "event_triggered", "var_equals",
+}
+
+
+def _validate_backbone_predicate(expr: Any, *, path: str) -> None:
+    if not isinstance(expr, dict) or len(expr) != 1:
+        raise ScenarioValidationError(path, "single-key condition expression", expr)
+    key, value = next(iter(expr.items()))
+    if key in ("all", "any"):
+        if not isinstance(value, list):
+            raise ScenarioValidationError(f"{path}.{key}", "list", value)
+        for idx, item in enumerate(value):
+            _validate_backbone_predicate(item, path=f"{path}.{key}[{idx}]")
+        return
+    if key == "not":
+        _validate_backbone_predicate(value, path=f"{path}.not")
+        return
+    if key not in _BACKBONE_DETERMINISTIC_PREDICATES:
+        raise ScenarioValidationError(
+            path, f"deterministic builtin predicate (one of {sorted(_BACKBONE_DETERMINISTIC_PREDICATES)})", key
+        )
+
+
 def _validate_backbone(data: dict[str, Any]) -> None:
     """v1.9 M1b (L4 Q1/Q4): the immutable backbone's machine-checkable hard gates.
     `prohibited_predicates` are condition expressions the director must never make
     true; `irreversible_facts` are condition expressions that, once true, the director
-    must never reverse (e.g. a death/faction-fall flag). Both are single-key condition
-    expressions evaluated against world state at director apply time. Shape-only here;
-    unknown predicate names surface at runtime and fail the gate closed."""
+    must never reverse (e.g. a death/faction-fall flag). Both are deterministic
+    single-key condition expressions evaluated against world state at director apply
+    time. Nondeterministic / non-builtin predicates are rejected (see above)."""
     backbone = data.get("backbone")
     if backbone is None:
         return
@@ -211,10 +244,7 @@ def _validate_backbone(data: dict[str, Any]) -> None:
         if not isinstance(value, list):
             raise ScenarioValidationError(f"scenario.backbone.{key}", "list", value)
         for idx, predicate in enumerate(value):
-            if not isinstance(predicate, dict) or len(predicate) != 1:
-                raise ScenarioValidationError(
-                    f"scenario.backbone.{key}[{idx}]", "single-key condition expression", predicate
-                )
+            _validate_backbone_predicate(predicate, path=f"scenario.backbone.{key}[{idx}]")
 
 
 def _validate_optional_metadata(data: dict[str, Any]) -> None:
@@ -1205,6 +1235,7 @@ def validate_scenario_dir(scenario_dir: Path) -> ScenarioDirectoryValidationResu
         "world_preset",
         "generation_sources",
         "initial_state",
+        "backbone",
     }
     unknown_keys = sorted(str(key) for key in scenario if key not in known_keys)
     if unknown_keys:

@@ -268,12 +268,15 @@ async def test_rejected_proposal_records_reason_and_emits_no_event(base_world):
 # --- M1b: director_clear_flag + structured backbone gate (Q1/Q4) --------------
 
 
-async def _run_backbone(base_world, *, timeline, director, backbone, preset_flags=None):
+async def _run_backbone(base_world, *, timeline, director, backbone, preset_flags=None, scenario_state=None):
     base_world.world_flags.clear()
     if preset_flags:
         base_world.world_flags.update(preset_flags)
     base_world.director_generator = director
-    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="bb", timeline=timeline, backbone=backbone)
+    sc = ScriptedScenarioState(scenario_id="bb", timeline=timeline, backbone=backbone)
+    if scenario_state:
+        sc.state.update(scenario_state)
+    base_world.scripted_scenario = sc
     fired: set[str] = set()
     for month in MONTHS:
         stamp = create_month_stamp(Year(1), month)
@@ -342,6 +345,37 @@ async def test_backbone_prohibited_predicate_blocks_setting_a_forbidden_flag(bas
     assert "demon_wins" not in base_world.world_flags
     sc = base_world.scripted_scenario
     assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_director_flag_set_is_persisted_in_scenario_state(base_world):
+    # the durable scenario-flag store is sc.state["world_flags"] (the only one saved);
+    # a director set must land THERE, not just the ephemeral world.world_flags, or it
+    # silently reverts on reload (codex P0). A persisted death flag is what makes an
+    # irreversible fact actually irreversible across a save.
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "传闻渐起", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+        backbone={},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state.get("world_flags", {}).get("rumor") is True
+
+
+@pytest.mark.asyncio
+async def test_director_flag_clear_is_persisted_in_scenario_state(base_world):
+    # a clear must also reach the durable store: a flag seeded in sc.state must be gone
+    # from sc.state after the director clears it (not just the ephemeral copy).
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "平息流言", "command": {"command": "director_clear_flag", "flag": "rumor"}}]),
+        backbone={},
+        scenario_state={"world_flags": {"rumor": True}},
+    )
+    sc = base_world.scripted_scenario
+    assert "rumor" not in sc.state.get("world_flags", {})
 
 
 @pytest.mark.asyncio

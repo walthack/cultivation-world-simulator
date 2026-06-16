@@ -306,6 +306,12 @@ def make_director(*, call_llm_json=call_llm_json, mode: LLMMode = LLMMode.NORMAL
     return generate
 
 
+# NOTE (M1b scope): the PRODUCTION prompt below intentionally stays bootstrap (scoped
+# facts only) and does NOT advertise the gated hard commands (director_set_flag /
+# director_clear_flag). The snapshot carries no flag vocabulary yet, so a real LLM
+# couldn't name flags meaningfully — wiring the enriched snapshot + hard-command prompt
+# is M1c. The whitelisted hard-command path + its backbone/reachability gates are fully
+# built and exercised via injected generators/tests until then (same pattern as M0/M1a).
 _DIRECTOR_INSTRUCTION = (
     "你是「剧情总导演」。据世界状态,提议 0 到 3 段推动剧情的叙事 beat。"
     "本阶段(bootstrap)每个 beat 只含 {\"id\",\"narration\"},可选 "
@@ -411,7 +417,20 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
                     ledger.append(record)
                     continue
                 apply_effects(state, effects)  # real mechanical effect, post-gate
-                record["command"] = {"command": name, "flag": str(command.get("flag") or "").strip()}
+                # apply_effects writes the EPHEMERAL world.world_flags; the durable
+                # scenario flag store is sc.state["world_flags"] (re-seeded into the
+                # world each tick + the only thing saved). Mirror the touched flag's
+                # resulting value there so the director's change survives reload — else
+                # an "irreversible" flag silently reverts on load (codex P0).
+                flag = str(command.get("flag") or "").strip()
+                persisted = sc.state.setdefault("world_flags", {})
+                if isinstance(persisted, dict):
+                    live = get_world_flags(state)
+                    if flag in live:
+                        persisted[flag] = live[flag]
+                    else:
+                        persisted.pop(flag, None)
+                record["command"] = {"command": name, "flag": flag}
         ledger.append(record)
         events.append(_director_event(world, engine_id, narration))
 
