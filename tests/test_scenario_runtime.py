@@ -30,6 +30,7 @@ def _resolved(scenario_id: str, timeline: list[dict] | None = None, *, year: int
         version="0.1",
         preset_id="default",
         timeline=list(timeline or []),
+        backbone={},  # v1.9 M1b: real ResolvedScenario exposes this; fake must too
         scenario={
             "scenario_id": scenario_id,
             "title": scenario_id,

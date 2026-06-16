@@ -57,6 +57,7 @@ def inject_scenario_into_world(world: Any, resolved: ResolvedScenario) -> None:
         timeline=list(resolved.timeline or []),
         generation_profile=resolved.generation_profile,
         state=_build_initial_scenario_state(resolved),
+        backbone=resolved.backbone,
     )
     from src.scenario.narrative_fill import attach_default_narrative_filler
     from src.scenario.narrative_transition import attach_default_transition_generator

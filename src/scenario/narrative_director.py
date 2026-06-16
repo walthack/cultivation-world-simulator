@@ -30,6 +30,7 @@ from src.classes.event import Event
 from src.utils.llm.client import LLMMode, call_llm_json
 from src.utils.llm.config import LLMConfig
 
+from .condition_evaluator import evaluate_condition
 from .effect_applier import apply_effects
 from .event_dispatcher import EventDispatcher
 from .narrative_transition import _anchor_when, _llm_available, _now
@@ -48,10 +49,27 @@ LOGGER = logging.getLogger(__name__)
 # M0 bootstrap whitelist: a scoped narrative fact with ZERO mechanical read-back.
 DIRECTOR_COMMAND_WHITELIST = {"director_fact"}
 
-# M1a: the first bounded-HARD command — sets a real world flag. Unlike a scoped
-# fact this CAN change direction, so every such command is gated at apply time by
-# the forward-replay reachability check below (Q3). More commands open in M1b.
-DIRECTOR_HARD_COMMAND_WHITELIST = {"director_set_flag"}
+# Bounded-HARD commands — each writes a REAL world flag (can change direction), so
+# every one is gated at apply time by the structured backbone check (Q1/Q4) AND the
+# forward-replay reachability check (Q3) below.
+#   M1a: director_set_flag (set a flag True)
+#   M1b: director_clear_flag (clear a flag) — the canonical REVERSAL the backbone's
+#        irreversible_facts set must block (e.g. clearing a death flag = resurrection).
+DIRECTOR_HARD_COMMAND_WHITELIST = {"director_set_flag", "director_clear_flag"}
+
+
+def _command_effects(command: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """Map a bounded-HARD director command to the CANONICAL effects it stands for.
+    The same effects drive both the dry-run gates and the real application — single
+    source of truth (the real apply_effects handlers), so no model/apply drift.
+    Returns None for an unmappable / malformed command (→ rejected by the caller)."""
+    name = str(command.get("command", ""))
+    flag = str(command.get("flag") or "").strip()
+    if name == "director_set_flag" and flag:
+        return [{"type": "set_flag", "flag": flag}]
+    if name == "director_clear_flag" and flag:
+        return [{"type": "clear_flag", "flag": flag}]
+    return None
 
 # --- forward-replay reachability gate (Q3, bounded condition-state dry-run) ----
 # We replay forward over a COPIED condition state (flags / vars / relations /
@@ -121,9 +139,59 @@ def _dry_handler(state: Any, event: dict[str, Any]) -> None:
     return None
 
 
-async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str], now: tuple[int, int]) -> bool:
-    """Q3 gate: would every pending mandatory anchor still fire (at the same month)
-    if the director's flag writes were applied? Bounded forward-replay reusing the
+def _build_dry_state(state: Any) -> dict[str, Any]:
+    """A COPIED condition-state in production dispatch-state SHAPE: _build_dispatch_state
+    spreads the scenario state to top level (so placeholders like {controlled_avatar}
+    and other top-level reads resolve identically), plus the explicit keys below. Used
+    by both gates so the director's CANONICAL effects can be dry-applied via the real
+    apply_effects and read back via the real evaluate_condition — no model drift. World
+    flags/relations are copies, so dry mutation never touches the live world."""
+    scenario_vars = copy.deepcopy(get_scenario_vars(state))
+    runtime = get_scenario_runtime(state)
+    return {
+        **scenario_vars,
+        "scripted_scenario_state": scenario_vars,
+        "relations": dict(get_relations(state)),
+        "scenario_runtime": {
+            "triggered_event_ids": list(str(t) for t in runtime.get("triggered_event_ids", []) or []),
+            "blocked_event_ids": list(runtime.get("blocked_event_ids", []) or []),
+        },
+        "world": SimpleNamespace(world_flags=dict(get_world_flags(state))),
+        "player": {"id": as_id(get_value(get_player(state), "id"))},
+    }
+
+
+def _backbone_reason(world: Any, state: Any, director_effects: list[dict[str, Any]]) -> str | None:
+    """Q1/Q4 hard gate: would applying the director's CANONICAL effects (dry) make a
+    backbone `prohibited_predicate` true, or REVERSE a currently-held `irreversible_fact`
+    (e.g. resurrect a dead character, undo a faction's fall)? Returns a reason or None.
+    Reuses the real apply_effects + real evaluate_condition; FAIL CLOSED (reject) on any
+    evaluation error — a backbone gate we can't evaluate must never pass."""
+    sc = getattr(world, "scripted_scenario", None)
+    backbone = getattr(sc, "backbone", None) or {}
+    prohibited = backbone.get("prohibited_predicates") or []
+    irreversible = backbone.get("irreversible_facts") or []
+    if not prohibited and not irreversible:
+        return None
+    try:
+        dry = _build_dry_state(state)
+        held = [fact for fact in irreversible if evaluate_condition(dry, fact)]
+        apply_effects(dry, director_effects)
+        for predicate in prohibited:
+            if evaluate_condition(dry, predicate):
+                return "would satisfy a backbone prohibited predicate"
+        for fact in held:
+            if not evaluate_condition(dry, fact):
+                return "would reverse a backbone irreversible fact"
+        return None
+    except Exception:  # noqa: BLE001 — any backbone eval error → FAIL CLOSED (reject)
+        LOGGER.warning("backbone check errored; failing closed", exc_info=True)
+        return "backbone gate could not be evaluated"
+
+
+async def mandatory_reachable_after(world: Any, state: Any, director_effects: list[dict[str, Any]], now: tuple[int, int]) -> bool:
+    """Q3 gate: would every pending mandatory anchor still fire (at the same month) if
+    the director's CANONICAL effects were applied? Bounded forward-replay reusing the
     real dispatcher + apply_effects over a copied condition-state; FAIL CLOSED on any
     non-modellable horizon event."""
     sc = getattr(world, "scripted_scenario", None)
@@ -144,28 +212,12 @@ async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str]
         if now <= _anchor_when(event) <= last and not _event_fully_modellable(event):
             return False
 
-    player_id = as_id(get_value(get_player(state), "id"))
     handlers = {t: _dry_handler for t in _MODELLABLE_EVENT_TYPES}
 
-    async def _run(extra_flags: list[str]) -> dict[str, tuple[int, int]]:
-        flags = dict(get_world_flags(state))
-        for f in extra_flags:
-            flags[str(f)] = True
-        scenario_vars = copy.deepcopy(get_scenario_vars(state))
-        # mirror production dispatch-state SHAPE: _build_dispatch_state spreads the
-        # scenario state to top level (so placeholders like {controlled_avatar} and
-        # other top-level reads resolve identically), plus the explicit keys below.
-        dry = {
-            **scenario_vars,
-            "scripted_scenario_state": scenario_vars,
-            "relations": dict(get_relations(state)),
-            "scenario_runtime": {
-                "triggered_event_ids": list(triggered0),
-                "blocked_event_ids": list(get_scenario_runtime(state).get("blocked_event_ids", []) or []),
-            },
-            "world": SimpleNamespace(world_flags=flags),
-            "player": {"id": player_id},
-        }
+    async def _run(extra_effects: list[dict[str, Any]]) -> dict[str, tuple[int, int]]:
+        dry = _build_dry_state(state)
+        if extra_effects:
+            apply_effects(dry, extra_effects)  # the director's canonical effects
         dispatcher = EventDispatcher(timeline, handlers=handlers)
         fired: dict[str, tuple[int, int]] = {}
         ym = now
@@ -179,7 +231,7 @@ async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str]
         return fired
 
     try:
-        return (await _run([])) == (await _run(list(set_flags)))
+        return (await _run([])) == (await _run(director_effects))
     except Exception:  # noqa: BLE001 — any replay error → FAIL CLOSED (reject the command)
         LOGGER.warning("reachability replay errored; failing closed", exc_info=True)
         return False
@@ -202,8 +254,8 @@ def validate_director_proposal(proposal: dict[str, Any]) -> tuple[bool, str | No
     name = str(command.get("command", ""))
     if name not in (DIRECTOR_COMMAND_WHITELIST | DIRECTOR_HARD_COMMAND_WHITELIST):
         return False, f"command not whitelisted: {name}"
-    if name == "director_set_flag" and not str(command.get("flag") or "").strip():
-        return False, "director_set_flag requires a non-empty flag"
+    if name in ("director_set_flag", "director_clear_flag") and not str(command.get("flag") or "").strip():
+        return False, f"{name} requires a non-empty flag"
     return True, None
 
 
@@ -341,16 +393,25 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
             if name == "director_fact":
                 # scoped fact: recorded only — ZERO mechanical read-back.
                 record["fact"] = str(command.get("text") or "")[:DIRECTOR_TEXT_CAP]
-            elif name == "director_set_flag":
-                # bounded-HARD: gate on forward-replay mandatory reachability (Q3).
-                flag = str(command.get("flag"))
-                if not await mandatory_reachable_after(world, state, [flag], now):
+            elif name in DIRECTOR_HARD_COMMAND_WHITELIST:
+                # bounded-HARD: gate on the backbone (Q1/Q4) AND forward-replay
+                # mandatory reachability (Q3); the SAME canonical effects drive both
+                # gates and the real application (no model/apply drift).
+                effects = _command_effects(command)
+                reason = None
+                if effects is None:
+                    reason = "unmappable bounded-hard command"
+                else:
+                    reason = _backbone_reason(world, state, effects)
+                    if reason is None and not await mandatory_reachable_after(world, state, effects, now):
+                        reason = "would starve a mandatory anchor (or horizon not analyzable)"
+                if reason is not None:
                     record["accepted"] = False
-                    record["reason"] = "would starve a mandatory anchor (or horizon not analyzable)"
+                    record["reason"] = reason
                     ledger.append(record)
                     continue
-                get_world_flags(state)[flag] = True  # real mechanical effect, post-gate
-                record["command"] = {"command": "director_set_flag", "flag": flag}
+                apply_effects(state, effects)  # real mechanical effect, post-gate
+                record["command"] = {"command": name, "flag": str(command.get("flag") or "").strip()}
         ledger.append(record)
         events.append(_director_event(world, engine_id, narration))
 

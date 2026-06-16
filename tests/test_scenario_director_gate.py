@@ -263,3 +263,98 @@ async def test_rejected_proposal_records_reason_and_emits_no_event(base_world):
     bad = next(r for r in sc.director_ledger if r["proposal_id"] == "bad")
     assert not bad["accepted"] and "whitelist" in bad["reason"]
     assert "x" not in base_world.world_flags  # nothing mechanical happened
+
+
+# --- M1b: director_clear_flag + structured backbone gate (Q1/Q4) --------------
+
+
+async def _run_backbone(base_world, *, timeline, director, backbone, preset_flags=None):
+    base_world.world_flags.clear()
+    if preset_flags:
+        base_world.world_flags.update(preset_flags)
+    base_world.director_generator = director
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="bb", timeline=timeline, backbone=backbone)
+    fired: set[str] = set()
+    for month in MONTHS:
+        stamp = create_month_stamp(Year(1), month)
+        base_world.month_stamp = stamp
+        for ev in await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp)):
+            if ev.id in MANDATORY:
+                fired.add(ev.id)
+    return fired
+
+
+def test_clear_flag_is_a_whitelisted_hard_command():
+    from src.scenario.narrative_director import DIRECTOR_HARD_COMMAND_WHITELIST
+    assert DIRECTOR_HARD_COMMAND_WHITELIST == {"director_set_flag", "director_clear_flag"}
+
+
+def test_clear_flag_requires_a_non_empty_flag():
+    accepted, reason = validate_director_proposal({"command": {"command": "director_clear_flag", "flag": ""}})
+    assert not accepted and "flag" in reason
+
+
+@pytest.mark.asyncio
+async def test_backbone_irreversible_fact_blocks_clearing_a_death_flag(base_world):
+    # "lin_dead" is an irreversible fact (a death). director_clear_flag(lin_dead) is a
+    # RESURRECTION → the backbone gate rejects it; the flag survives.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_timeline(),
+        director=_director([{"id": "res", "narration": "欲令死者复生", "command": {"command": "director_clear_flag", "flag": "lin_dead"}}]),
+        backbone={"irreversible_facts": [{"world_flag": {"flag": "lin_dead", "value": True}}]},
+        preset_flags={"lin_dead": True},
+    )
+    assert fired == MANDATORY
+    assert base_world.world_flags.get("lin_dead") is True  # NOT resurrected
+    sc = base_world.scripted_scenario
+    assert any(not r["accepted"] and "irreversible" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_clear_flag_allowed_when_not_irreversible_and_no_mandatory_reads_it(base_world):
+    # "rumor" isn't in the backbone and no mandatory anchor reads it → both gates pass,
+    # the flag is really cleared.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "平息流言", "command": {"command": "director_clear_flag", "flag": "rumor"}}]),
+        backbone={"irreversible_facts": [{"world_flag": {"flag": "lin_dead", "value": True}}]},
+        preset_flags={"rumor": True},
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags  # gates passed → really cleared
+    sc = base_world.scripted_scenario
+    assert any(r["accepted"] and r.get("command", {}).get("command") == "director_clear_flag" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_backbone_prohibited_predicate_blocks_setting_a_forbidden_flag(base_world):
+    # a sentinel (modellable) timeline so that, absent the backbone gate, the set would
+    # pass reachability and wrongly apply. The prohibited predicate must reject it.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "evil", "narration": "魔头当道", "command": {"command": "director_set_flag", "flag": "demon_wins"}}]),
+        backbone={"prohibited_predicates": [{"world_flag": {"flag": "demon_wins", "value": True}}]},
+    )
+    assert fired == MANDATORY
+    assert "demon_wins" not in base_world.world_flags
+    sc = base_world.scripted_scenario
+    assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_backbone_gate_fails_closed_on_an_unevaluable_predicate(base_world):
+    # a prohibited predicate the evaluator can't resolve (unknown npc) → the backbone
+    # gate can't be evaluated → fail closed → even a harmless flag is rejected.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+        backbone={"prohibited_predicates": [{"npc_alive": {"npc_id": "ghost"}}]},
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags  # fail-closed → not applied
+    sc = base_world.scripted_scenario
+    assert any(not r["accepted"] and "backbone" in r.get("reason", "") for r in sc.director_ledger)

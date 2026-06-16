@@ -73,6 +73,7 @@ async def activate_scenario(
         timeline=list(resolved.timeline or []),
         state={},
         triggered_events=set(),
+        backbone=resolved.backbone,
     )
     world.month_stamp = month_stamp
     _replace_active_scenario(runtime, resolved)
@@ -104,6 +105,7 @@ def reload_scenario(runtime: Any) -> dict[str, Any]:
         state=preserved_state,
         triggered_events=preserved_triggered,
         dispatch_log=preserved_dispatch_log[-50:],
+        backbone=resolved.backbone,
     )
     _replace_active_scenario(runtime, resolved)
     return {"ok": True}

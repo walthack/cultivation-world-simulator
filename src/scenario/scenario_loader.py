@@ -96,6 +96,11 @@ class ResolvedScenario:
         initial_state = self.scenario.get("initial_state", {}) or {}
         return dict(initial_state.get("generation_profile", {}) or {})
 
+    @property
+    def backbone(self) -> dict[str, Any]:
+        # v1.9 M1b (L4): immutable backbone (prohibited_predicates / irreversible_facts).
+        return dict(self.scenario.get("backbone", {}) or {})
+
 
 @dataclass(slots=True)
 class ScenarioDirectoryValidationResult:
@@ -183,7 +188,33 @@ def _validate_scenario_top_level(data: dict[str, Any]) -> str:
     if not (get_presets_root() / preset_id).is_dir():
         raise MissingReferenceError("scenario.world_preset.preset_id", preset_id, "config/presets/<preset_id>")
     _validate_optional_metadata(data)
+    _validate_backbone(data)
     return preset_id
+
+
+def _validate_backbone(data: dict[str, Any]) -> None:
+    """v1.9 M1b (L4 Q1/Q4): the immutable backbone's machine-checkable hard gates.
+    `prohibited_predicates` are condition expressions the director must never make
+    true; `irreversible_facts` are condition expressions that, once true, the director
+    must never reverse (e.g. a death/faction-fall flag). Both are single-key condition
+    expressions evaluated against world state at director apply time. Shape-only here;
+    unknown predicate names surface at runtime and fail the gate closed."""
+    backbone = data.get("backbone")
+    if backbone is None:
+        return
+    if not isinstance(backbone, dict):
+        raise ScenarioValidationError("scenario.backbone", "object", backbone)
+    for key in ("prohibited_predicates", "irreversible_facts"):
+        value = backbone.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, list):
+            raise ScenarioValidationError(f"scenario.backbone.{key}", "list", value)
+        for idx, predicate in enumerate(value):
+            if not isinstance(predicate, dict) or len(predicate) != 1:
+                raise ScenarioValidationError(
+                    f"scenario.backbone.{key}[{idx}]", "single-key condition expression", predicate
+                )
 
 
 def _validate_optional_metadata(data: dict[str, Any]) -> None:

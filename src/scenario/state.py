@@ -34,3 +34,9 @@ class ScriptedScenarioState:
     # fact). Sibling of `state` like the others — director plans/facts must never be
     # var_equals-readable. (Plot-ledger formalization is M2.)
     director_ledger: list[dict[str, Any]] = field(default_factory=list)
+    # v1.9 M1b (L4 Q1/Q4): immutable backbone — `prohibited_predicates` (must never
+    # become true) + `irreversible_facts` (once true, never reversed). The hard gate
+    # the Narrative Director's bounded-hard commands are checked against. Loaded from
+    # scenario.json (immutable), so NOT persisted in the save — rebuilt by scenario id
+    # on load. Resurrection / faction-rollback are blocked here before reachability.
+    backbone: dict[str, Any] = field(default_factory=dict)

@@ -148,6 +148,7 @@ def load_game(
                 transition_ledger=list(saved_sc.get("transition_ledger", []) or []),
                 transition_cache=dict(saved_sc.get("transition_cache", {}) or {}),
                 director_ledger=list(saved_sc.get("director_ledger", []) or []),
+                backbone=resolved.backbone,  # immutable; rebuilt from scenario, not the save
             )
             from src.scenario.narrative_fill import attach_default_narrative_filler
             from src.scenario.narrative_transition import attach_default_transition_generator
