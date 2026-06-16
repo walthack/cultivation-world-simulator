@@ -151,14 +151,19 @@ async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str]
         flags = dict(get_world_flags(state))
         for f in extra_flags:
             flags[str(f)] = True
+        scenario_vars = copy.deepcopy(get_scenario_vars(state))
+        # mirror production dispatch-state SHAPE: _build_dispatch_state spreads the
+        # scenario state to top level (so placeholders like {controlled_avatar} and
+        # other top-level reads resolve identically), plus the explicit keys below.
         dry = {
-            "world": SimpleNamespace(world_flags=flags),
-            "scripted_scenario_state": copy.deepcopy(get_scenario_vars(state)),
+            **scenario_vars,
+            "scripted_scenario_state": scenario_vars,
             "relations": dict(get_relations(state)),
             "scenario_runtime": {
                 "triggered_event_ids": list(triggered0),
                 "blocked_event_ids": list(get_scenario_runtime(state).get("blocked_event_ids", []) or []),
             },
+            "world": SimpleNamespace(world_flags=flags),
             "player": {"id": player_id},
         }
         dispatcher = EventDispatcher(timeline, handlers=handlers)
@@ -173,7 +178,11 @@ async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str]
             ym = _next_month(ym)
         return fired
 
-    return (await _run([])) == (await _run(list(set_flags)))
+    try:
+        return (await _run([])) == (await _run(list(set_flags)))
+    except Exception:  # noqa: BLE001 — any replay error → FAIL CLOSED (reject the command)
+        LOGGER.warning("reachability replay errored; failing closed", exc_info=True)
+        return False
 
 DIRECTOR_TEXT_CAP = 800
 DIRECTOR_TIMEOUT_SECONDS = 30.0  # strict tick bound (inherits v1.8 rationale)

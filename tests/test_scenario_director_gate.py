@@ -179,6 +179,40 @@ async def test_reachability_gate_fails_closed_on_a_non_modellable_horizon(base_w
     assert "rumor" not in base_world.world_flags             # fail-closed → not applied
 
 
+async def _run_with_state(base_world, timeline, director, *, scenario_state=None):
+    base_world.world_flags.clear()
+    base_world.director_generator = director
+    sc = ScriptedScenarioState(scenario_id="ph", timeline=timeline)
+    if scenario_state:
+        sc.state.update(scenario_state)
+    base_world.scripted_scenario = sc
+    fired: set[str] = set()
+    for month in MONTHS:
+        stamp = create_month_stamp(Year(1), month)
+        base_world.month_stamp = stamp
+        for ev in await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp)):
+            if ev.id in MANDATORY:
+                fired.add(ev.id)
+    return fired
+
+
+@pytest.mark.asyncio
+async def test_gate_resolves_placeholder_when_controlled_avatar_present(base_world):
+    # a horizon event with a {controlled_avatar} placeholder must replay through the
+    # real apply_effects (production dispatch-state shape) — not crash. Here it's
+    # harmless, so the safe director flag is allowed.
+    timeline = _sentinel_timeline({"always": {}})
+    timeline.append({"id": "ph", "type": "side_event", "trigger": {"year": 1, "month": 2, "condition": {"always": {}}},
+                     "effects": [{"type": "set_flag", "flag": "seen_{controlled_avatar}"}]})
+    fired = await _run_with_state(
+        base_world, timeline,
+        _director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+        scenario_state={"controlled_avatar": "hero"},
+    )
+    assert fired == MANDATORY
+    assert base_world.world_flags.get("rumor") is True       # gate ran cleanly → flag applied
+
+
 @pytest.mark.asyncio
 async def test_gate_fails_closed_on_a_branch_event_in_horizon(base_world):
     # branch dispatch (selection / default_branch) isn't modelled → fail closed
