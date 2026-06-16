@@ -49,13 +49,16 @@ LOGGER = logging.getLogger(__name__)
 # M0 bootstrap whitelist: a scoped narrative fact with ZERO mechanical read-back.
 DIRECTOR_COMMAND_WHITELIST = {"director_fact"}
 
-# Bounded-HARD commands — each writes a REAL world flag (can change direction), so
-# every one is gated at apply time by the structured backbone check (Q1/Q4) AND the
+# Bounded-HARD commands — each makes a REAL mechanical change (can change direction),
+# so every one is gated at apply time by the structured backbone check (Q1/Q4) AND the
 # forward-replay reachability check (Q3) below.
 #   M1a: director_set_flag (set a flag True)
 #   M1b: director_clear_flag (clear a flag) — the canonical REVERSAL the backbone's
 #        irreversible_facts set must block (e.g. clearing a death flag = resurrection).
-DIRECTOR_HARD_COMMAND_WHITELIST = {"director_set_flag", "director_clear_flag"}
+#   M1c: director_relation_change (nudge a relation by delta) — same effect the authored
+#        relationship_event handler uses; bounded by the two gates (a relation swing that
+#        would starve a mandatory anchor or trip a prohibited predicate is rejected).
+DIRECTOR_HARD_COMMAND_WHITELIST = {"director_set_flag", "director_clear_flag", "director_relation_change"}
 
 
 def _command_effects(command: dict[str, Any]) -> list[dict[str, Any]] | None:
@@ -69,6 +72,12 @@ def _command_effects(command: dict[str, Any]) -> list[dict[str, Any]] | None:
         return [{"type": "set_flag", "flag": flag}]
     if name == "director_clear_flag" and flag:
         return [{"type": "clear_flag", "flag": flag}]
+    if name == "director_relation_change":
+        a = str(command.get("a") or "").strip()
+        b = str(command.get("b") or "").strip()
+        delta = command.get("delta")
+        if a and b and isinstance(delta, int) and not isinstance(delta, bool):
+            return [{"type": "relation_change", "a": a, "b": b, "delta": delta}]
     return None
 
 # --- forward-replay reachability gate (Q3, bounded condition-state dry-run) ----
@@ -256,6 +265,12 @@ def validate_director_proposal(proposal: dict[str, Any]) -> tuple[bool, str | No
         return False, f"command not whitelisted: {name}"
     if name in ("director_set_flag", "director_clear_flag") and not str(command.get("flag") or "").strip():
         return False, f"{name} requires a non-empty flag"
+    if name == "director_relation_change":
+        if not str(command.get("a") or "").strip() or not str(command.get("b") or "").strip():
+            return False, "director_relation_change requires non-empty a and b"
+        delta = command.get("delta")
+        if not isinstance(delta, int) or isinstance(delta, bool):
+            return False, "director_relation_change requires an integer delta"
     return True, None
 
 
@@ -417,20 +432,34 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
                     ledger.append(record)
                     continue
                 apply_effects(state, effects)  # real mechanical effect, post-gate
-                # apply_effects writes the EPHEMERAL world.world_flags; the durable
-                # scenario flag store is sc.state["world_flags"] (re-seeded into the
-                # world each tick + the only thing saved). Mirror the touched flag's
-                # resulting value there so the director's change survives reload — else
-                # an "irreversible" flag silently reverts on load (codex P0).
-                flag = str(command.get("flag") or "").strip()
-                persisted = sc.state.setdefault("world_flags", {})
-                if isinstance(persisted, dict):
-                    live = get_world_flags(state)
-                    if flag in live:
-                        persisted[flag] = live[flag]
-                    else:
-                        persisted.pop(flag, None)
-                record["command"] = {"command": name, "flag": flag}
+                # Persist the director's write into the DURABLE sc.state (the only thing
+                # saved + re-seeded into the dispatch state each tick); the live dispatch
+                # state is ephemeral.
+                if name in ("director_set_flag", "director_clear_flag"):
+                    # flags resolve to world.world_flags, which is NEVER serialized — mirror
+                    # the touched flag's resulting value into sc.state["world_flags"], else
+                    # an "irreversible" flag silently reverts on reload (codex P0).
+                    flag = str(command.get("flag") or "").strip()
+                    persisted = sc.state.setdefault("world_flags", {})
+                    if isinstance(persisted, dict):
+                        live = get_world_flags(state)
+                        if flag in live:
+                            persisted[flag] = live[flag]
+                        else:
+                            persisted.pop(flag, None)
+                    record["command"] = {"command": name, "flag": flag}
+                else:  # director_relation_change
+                    # scenario relations live in sc.state["relations"] (it IS saved), but a
+                    # scenario built with state={} has no "relations" key, so the write may
+                    # have landed on the ephemeral dispatch dict — point sc.state at the
+                    # post-apply dict so it persists regardless of how sc was constructed.
+                    sc.state["relations"] = get_relations(state)
+                    record["command"] = {
+                        "command": name,
+                        "a": str(command.get("a") or "").strip(),
+                        "b": str(command.get("b") or "").strip(),
+                        "delta": command.get("delta"),
+                    }
         ledger.append(record)
         events.append(_director_event(world, engine_id, narration))
 

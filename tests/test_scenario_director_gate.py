@@ -287,9 +287,11 @@ async def _run_backbone(base_world, *, timeline, director, backbone, preset_flag
     return fired
 
 
-def test_clear_flag_is_a_whitelisted_hard_command():
+def test_hard_command_whitelist_is_the_expected_set():
     from src.scenario.narrative_director import DIRECTOR_HARD_COMMAND_WHITELIST
-    assert DIRECTOR_HARD_COMMAND_WHITELIST == {"director_set_flag", "director_clear_flag"}
+    assert DIRECTOR_HARD_COMMAND_WHITELIST == {
+        "director_set_flag", "director_clear_flag", "director_relation_change",
+    }
 
 
 def test_clear_flag_requires_a_non_empty_flag():
@@ -392,3 +394,70 @@ async def test_backbone_gate_fails_closed_on_an_unevaluable_predicate(base_world
     assert "rumor" not in base_world.world_flags  # fail-closed → not applied
     sc = base_world.scripted_scenario
     assert any(not r["accepted"] and "backbone" in r.get("reason", "") for r in sc.director_ledger)
+
+
+# --- M1c: director_relation_change (3rd hard command) -------------------------
+
+
+def test_relation_change_validation():
+    ok = {"command": "director_relation_change", "a": "x", "b": "y", "delta": 5}
+    assert validate_director_proposal({"command": ok}) == (True, None)
+    # missing endpoints / non-int delta are rejected
+    bad_cases = [
+        {"command": "director_relation_change", "a": "", "b": "y", "delta": 5},
+        {"command": "director_relation_change", "a": "x", "b": "y"},
+        {"command": "director_relation_change", "a": "x", "b": "y", "delta": 1.5},
+        {"command": "director_relation_change", "a": "x", "b": "y", "delta": True},
+    ]
+    for bad in bad_cases:
+        accepted, reason = validate_director_proposal({"command": bad})
+        assert not accepted and reason
+
+
+@pytest.mark.asyncio
+async def test_relation_change_rejected_when_it_would_starve_a_mandatory_anchor(base_world):
+    # m2 fires only while rel(x,y) >= 10. A director relation_change of -20 would drop it
+    # below the threshold → the reachability gate replays, sees m2 starved, rejects.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"npc_relation": {"a": "x", "b": "y", "value": 10, "op": ">="}}),
+        director=_director([{"id": "rc", "narration": "挑拨离间", "command": {"command": "director_relation_change", "a": "x", "b": "y", "delta": -20}}]),
+        backbone={},
+        scenario_state={"relations": {"x:y": 10}},
+    )
+    assert fired == MANDATORY
+    assert base_world.scripted_scenario.state["relations"]["x:y"] == 10  # unchanged
+    sc = base_world.scripted_scenario
+    assert any(not r["accepted"] and "mandatory" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_relation_change_allowed_persists_into_scenario_state(base_world):
+    # no mandatory anchor reads this relation and no backbone forbids it → both gates
+    # pass, the change is applied AND lands in the durable sc.state["relations"] even
+    # though this scenario started with no "relations" key (the mirror covers that).
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "义结金兰", "command": {"command": "director_relation_change", "a": "x", "b": "y", "delta": 5}}]),
+        backbone={},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state.get("relations", {}).get("x:y") == 5
+    assert any(r["accepted"] and r.get("command", {}).get("command") == "director_relation_change" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_relation_change_blocked_by_backbone_prohibited_predicate(base_world):
+    # a prohibited predicate on the relation (>= 100) → a +200 swing would satisfy it
+    # → backbone gate rejects; the relation stays put.
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "evil", "narration": "结成死党", "command": {"command": "director_relation_change", "a": "x", "b": "y", "delta": 200}}]),
+        backbone={"prohibited_predicates": [{"npc_relation": {"a": "x", "b": "y", "value": 100, "op": ">="}}]},
+        scenario_state={"relations": {"x:y": 0}},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state["relations"]["x:y"] == 0  # unchanged
+    assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
