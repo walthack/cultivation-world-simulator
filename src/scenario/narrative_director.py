@@ -23,7 +23,6 @@ import asyncio
 import copy
 import inspect
 import logging
-import random
 from types import SimpleNamespace
 from typing import Any
 
@@ -31,7 +30,8 @@ from src.classes.event import Event
 from src.utils.llm.client import LLMMode, call_llm_json
 from src.utils.llm.config import LLMConfig
 
-from .condition_evaluator import evaluate_condition
+from .effect_applier import apply_effects
+from .event_dispatcher import EventDispatcher
 from .narrative_transition import _anchor_when, _llm_available, _now
 from .state_access import (
     as_id,
@@ -41,7 +41,6 @@ from .state_access import (
     get_scenario_vars,
     get_value,
     get_world_flags,
-    relation_key,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -55,21 +54,29 @@ DIRECTOR_COMMAND_WHITELIST = {"director_fact"}
 DIRECTOR_HARD_COMMAND_WHITELIST = {"director_set_flag"}
 
 # --- forward-replay reachability gate (Q3, bounded condition-state dry-run) ----
-# We replay scenario dispatch forward over a COPIED condition state (flags / vars /
-# relations / triggered / storylines) to the last pending mandatory anchor, with vs
-# without the director's command, and require the mandatory firings to match. World
-# / NPC / player state is NOT copied: instead we FAIL CLOSED (reject the command)
-# whenever the horizon contains anything we can't model deterministically here —
-# a non-modellable predicate, a non-modellable effect, or a player choice. Sound by
-# construction: the director only acts when reachability is provable from this
-# bounded model.
+# We replay forward over a COPIED condition state (flags / vars / relations /
+# triggered / storylines) to the last pending mandatory anchor, with vs without the
+# director's command, and require the mandatory firings to match. To avoid any
+# dry-run/production drift (codex M1a P0s) we reuse the REAL EventDispatcher for
+# gating and the REAL apply_effects for effects; we only model events whose entire
+# mechanical outcome IS "apply the literal top-level effects" — and FAIL CLOSED on
+# everything else (branches, choices, handler-shorthand types like relation_change /
+# character_introduction, random_chance, non-canonical effects). World/NPC/player
+# state is frozen at the snapshot; events that would mutate it are non-modellable
+# and fail closed. Sound by construction.
+#
+# Event types whose handler simply applies top-level effects (no choices/branches):
+# side_event/sect_event/world_event/main. relation_change (a/b/delta shorthand),
+# branch, character_introduction (spawn), ending, etc. are NOT here → fail closed.
+_MODELLABLE_EVENT_TYPES = {"side_event", "sect_event", "world_event", "main"}
+# random_chance is deliberately EXCLUDED: a fixed-seed sample can't soundly stand in
+# for production's un-seeded global RNG (codex P0). Horizon randomness → fail closed.
 _MODELLABLE_PREDICATES = {
-    "always", "world_flag", "var_equals", "event_triggered", "npc_relation", "player_relation", "random_chance",
+    "always", "world_flag", "var_equals", "event_triggered", "npc_relation", "player_relation",
 }
 _MODELLABLE_EFFECTS = {
     "set_flag", "clear_flag", "set_var", "relation_change", "npc_set_relation", "world_event_trigger", "activate_storyline",
 }
-_REPLAY_SEED = 0x5731  # fixed: random_chance resolves identically in both runs, so only the command differs
 
 
 def _predicates_modellable(expr: Any) -> bool:
@@ -90,78 +97,15 @@ def _effects_modellable(effects: Any) -> bool:
 
 
 def _event_fully_modellable(event: dict[str, Any]) -> bool:
-    if event.get("choices"):
-        return False  # player choice can't be predicted in a dry-run
+    # only "plain top-level effects" event types, with no choices/branches, a
+    # modellable condition, and modellable effects. Anything else → fail closed.
+    if str(event.get("type", "")) not in _MODELLABLE_EVENT_TYPES:
+        return False
+    if event.get("choices") or event.get("branches"):
+        return False
     if not _predicates_modellable((event.get("trigger", {}) or {}).get("condition")):
         return False
-    if not _effects_modellable(event.get("effects")):
-        return False
-    for branch in event.get("branches") or []:
-        if not _predicates_modellable(branch.get("condition")) or not _effects_modellable(branch.get("effects")):
-            return False
-    return True
-
-
-def _apply_dry(state: dict[str, Any], effects: Any) -> None:
-    """Apply ONLY the modellable scenario-state effects to the dry condition-state."""
-    flags = state["world"].world_flags
-    vars_ = state["scripted_scenario_state"]
-    relations = state["relations"]
-    triggered = state["scenario_runtime"]["triggered_event_ids"]
-    for eff in effects or []:
-        t = str(eff.get("type", ""))
-        if t == "set_flag":
-            flags[str(eff.get("flag"))] = True
-        elif t == "clear_flag":
-            flags.pop(str(eff.get("flag")), None)
-        elif t == "set_var":
-            vars_[str(eff.get("name"))] = eff.get("value")
-        elif t == "relation_change":
-            k = relation_key(eff.get("a"), eff.get("b"))
-            relations[k] = int(relations.get(k, 0)) + int(eff.get("delta", 0))
-        elif t == "npc_set_relation":
-            relations[relation_key(eff.get("a"), eff.get("b"))] = int(eff.get("value", 0))
-        elif t == "world_event_trigger":
-            tid = as_id(eff.get("event_id"))
-            if tid and tid not in triggered:
-                triggered.append(tid)
-        elif t == "activate_storyline":
-            active = vars_.setdefault("active_storylines", [])
-            sl = str(eff.get("storyline"))
-            if sl not in active:
-                active.append(sl)
-
-
-def _dispatch_dry(timeline: list[dict[str, Any]], state: dict[str, Any], year: int, month: int, rng: random.Random) -> None:
-    """One month of deterministic scenario dispatch over the dry condition-state."""
-    runtime = state["scenario_runtime"]
-    triggered = runtime["triggered_event_ids"]
-    blocked = set(runtime["blocked_event_ids"])
-    active = state["scripted_scenario_state"].get("active_storylines", []) or []
-    for event in timeline:
-        eid = str(event.get("id", "") or "")
-        if not eid or eid in triggered or eid in blocked:
-            continue
-        tr = event.get("trigger", {}) or {}
-        if int(tr.get("year", -1)) != year or int(tr.get("month", -1)) != month:
-            continue
-        if any(r not in triggered for r in event.get("requires_events", []) or []):
-            continue
-        sl = event.get("storyline")
-        if sl is not None and sl not in active:
-            continue
-        if not evaluate_condition(state, tr.get("condition"), rng=rng):
-            continue
-        _apply_dry(state, event.get("effects"))
-        for branch in event.get("branches") or []:
-            if evaluate_condition(state, branch.get("condition"), rng=rng):
-                _apply_dry(state, branch.get("effects"))
-                break
-        triggered.append(eid)
-        for b in event.get("blocks_events", []) or []:
-            blocked.add(b)
-        runtime["blocked_event_ids"] = sorted(blocked)
-        active = state["scripted_scenario_state"].get("active_storylines", []) or []
+    return _effects_modellable(event.get("effects"))
 
 
 def _next_month(now: tuple[int, int]) -> tuple[int, int]:
@@ -169,10 +113,19 @@ def _next_month(now: tuple[int, int]) -> tuple[int, int]:
     return (y + 1, 1) if m >= 12 else (y, m + 1)
 
 
-def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str], now: tuple[int, int]) -> bool:
+def _dry_handler(state: Any, event: dict[str, Any]) -> None:
+    # mirrors side/world/main(no-choice) production handlers exactly: apply the
+    # literal top-level effects through the REAL apply_effects (placeholder
+    # substitution, relations, etc. — no reimplementation drift).
+    apply_effects(state, event.get("effects", []) or [])
+    return None
+
+
+async def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str], now: tuple[int, int]) -> bool:
     """Q3 gate: would every pending mandatory anchor still fire (at the same month)
-    if the director's flag writes were applied? Bounded forward-replay over a copied
-    condition-state; FAIL CLOSED on any non-modellable horizon event."""
+    if the director's flag writes were applied? Bounded forward-replay reusing the
+    real dispatcher + apply_effects over a copied condition-state; FAIL CLOSED on any
+    non-modellable horizon event."""
     sc = getattr(world, "scripted_scenario", None)
     if sc is None:
         return True
@@ -192,8 +145,9 @@ def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str], now:
             return False
 
     player_id = as_id(get_value(get_player(state), "id"))
+    handlers = {t: _dry_handler for t in _MODELLABLE_EVENT_TYPES}
 
-    def _run(extra_flags: list[str]) -> dict[str, tuple[int, int]]:
+    async def _run(extra_flags: list[str]) -> dict[str, tuple[int, int]]:
         flags = dict(get_world_flags(state))
         for f in extra_flags:
             flags[str(f)] = True
@@ -207,19 +161,19 @@ def mandatory_reachable_after(world: Any, state: Any, set_flags: list[str], now:
             },
             "player": {"id": player_id},
         }
-        rng = random.Random(_REPLAY_SEED)
+        dispatcher = EventDispatcher(timeline, handlers=handlers)
         fired: dict[str, tuple[int, int]] = {}
         ym = now
         while ym <= last:
-            before = set(dry["scenario_runtime"]["triggered_event_ids"])
-            _dispatch_dry(timeline, dry, ym[0], ym[1], rng)
-            for eid in set(dry["scenario_runtime"]["triggered_event_ids"]) - before:
-                if eid in pending_mandatory:
+            dispatched = await dispatcher.dispatch_month(dry, year=ym[0], month=ym[1])
+            for ev in dispatched:
+                eid = str(ev.get("id", ""))
+                if eid in pending_mandatory and eid not in fired:
                     fired[eid] = ym
             ym = _next_month(ym)
         return fired
 
-    return _run([]) == _run(list(set_flags))
+    return (await _run([])) == (await _run(list(set_flags)))
 
 DIRECTOR_TEXT_CAP = 800
 DIRECTOR_TIMEOUT_SECONDS = 30.0  # strict tick bound (inherits v1.8 rationale)
@@ -381,7 +335,7 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
             elif name == "director_set_flag":
                 # bounded-HARD: gate on forward-replay mandatory reachability (Q3).
                 flag = str(command.get("flag"))
-                if not mandatory_reachable_after(world, state, [flag], now):
+                if not await mandatory_reachable_after(world, state, [flag], now):
                     record["accepted"] = False
                     record["reason"] = "would starve a mandatory anchor (or horizon not analyzable)"
                     ledger.append(record)

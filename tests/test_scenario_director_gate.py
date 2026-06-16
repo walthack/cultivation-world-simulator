@@ -113,9 +113,11 @@ async def test_on_run_is_non_vacuous(base_world):
 
 
 def _sentinel_timeline(m2_condition):
+    # modellable event type (side_event = plain top-level effects) so the gate's
+    # bounded dry-run can replay these mandatory anchors rather than fail closed.
     return [
-        {"id": "m1", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
-        {"id": "m2", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 4, "condition": m2_condition}},
+        {"id": "m1", "type": "side_event", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+        {"id": "m2", "type": "side_event", "anchor": True, "mandatory": True, "trigger": {"year": 1, "month": 4, "condition": m2_condition}},
     ]
 
 
@@ -168,13 +170,42 @@ async def test_reachability_gate_fails_closed_on_a_non_modellable_horizon(base_w
     # a horizon event with a non-modellable predicate (player_stat) → the gate can't
     # prove reachability → fail closed → even a harmless director flag is rejected.
     timeline = _sentinel_timeline({"always": {}})
-    timeline.append({"id": "b", "trigger": {"year": 1, "month": 2, "condition": {"player_stat": {"stat": "qi", "value": 5}}}})
+    timeline.append({"id": "b", "type": "side_event", "trigger": {"year": 1, "month": 2, "condition": {"player_stat": {"stat": "qi", "value": 5}}}})
     fired = await _run_timeline(
         base_world, timeline,
         _director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
     )
     assert fired == MANDATORY
     assert "rumor" not in base_world.world_flags             # fail-closed → not applied
+
+
+@pytest.mark.asyncio
+async def test_gate_fails_closed_on_a_branch_event_in_horizon(base_world):
+    # branch dispatch (selection / default_branch) isn't modelled → fail closed
+    timeline = _sentinel_timeline({"always": {}})
+    timeline.append({"id": "bp", "type": "branch", "trigger": {"year": 1, "month": 2, "condition": {"always": {}}},
+                     "branches": [{"id": "x", "condition": {"always": {}}, "effects": []}], "default_branch": "x"})
+    fired = await _run_timeline(
+        base_world, timeline,
+        _director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags
+
+
+@pytest.mark.asyncio
+async def test_gate_fails_closed_on_relation_change_shorthand_in_horizon(base_world):
+    # relation_change synthesizes effects from a/b/delta — handler shorthand not
+    # modelled by "apply top-level effects" → fail closed
+    timeline = _sentinel_timeline({"always": {}})
+    timeline.append({"id": "rc", "type": "relation_change", "a": "x", "b": "y", "delta": 3,
+                     "trigger": {"year": 1, "month": 2, "condition": {"always": {}}}})
+    fired = await _run_timeline(
+        base_world, timeline,
+        _director([{"id": "ok", "narration": "传闻", "command": {"command": "director_set_flag", "flag": "rumor"}}]),
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags
 
 
 @pytest.mark.asyncio
