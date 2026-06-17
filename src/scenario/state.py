@@ -39,6 +39,10 @@ class ScriptedScenarioState:
     # instead of re-querying the LLM; a cache hit replays narration only (mechanical
     # effects already live in `state`, restored on load). Sibling of `state`, persisted.
     director_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    # v1.9 M3 (Q9): total-month stamp (year*12+month) of the last tick the director
+    # was invoked — drives the cadence throttle (don't query the LLM every month).
+    # Sibling of `state`, persisted, mirrors transition_last_gen_month.
+    director_last_gen_month: int = -10**9
     # v1.9 M1b (L4 Q1/Q4): immutable backbone — `prohibited_predicates` (must never
     # become true) + `irreversible_facts` (once true, never reversed). The hard gate
     # the Narrative Director's bounded-hard commands are checked against. Loaded from

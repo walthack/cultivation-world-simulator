@@ -149,6 +149,7 @@ def load_game(
                 transition_cache=dict(saved_sc.get("transition_cache", {}) or {}),
                 director_ledger=list(saved_sc.get("director_ledger", []) or []),
                 director_cache=dict(saved_sc.get("director_cache", {}) or {}),
+                director_last_gen_month=int(saved_sc.get("director_last_gen_month", -10**9)),
                 backbone=resolved.backbone,  # immutable; rebuilt from scenario, not the save
             )
             from src.scenario.narrative_fill import attach_default_narrative_filler

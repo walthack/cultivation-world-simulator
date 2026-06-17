@@ -251,6 +251,7 @@ async def mandatory_reachable_after(world: Any, state: Any, director_effects: li
 DIRECTOR_TEXT_CAP = 800
 DIRECTOR_TIMEOUT_SECONDS = 30.0  # strict tick bound (inherits v1.8 rationale)
 DIRECTOR_BUDGET = 3  # max proposals considered per director turn
+DIRECTOR_CADENCE_MONTHS = 1  # M3 (Q9): generate at most once per this many months (1 = monthly)
 
 
 def validate_director_proposal(proposal: dict[str, Any]) -> tuple[bool, str | None]:
@@ -470,6 +471,17 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
     generator = getattr(world, "director_generator", None)
     if generator is None:
         return []
+
+    # M3 cadence (Q9): throttle NEW generation to at most once per director_cadence_months.
+    # The frozen-replay check above already handles re-runs of a decided month; this only
+    # limits fresh LLM queries so the director isn't asked every single month. Consuming
+    # the slot here (before query) mirrors L3 — a failed/empty generation still waits out
+    # the cadence rather than retrying next month.
+    total_now = now[0] * 12 + now[1]
+    cadence = max(1, int(getattr(world, "director_cadence_months", DIRECTOR_CADENCE_MONTHS)))
+    if total_now - int(getattr(sc, "director_last_gen_month", -10**9)) < cadence:
+        return []
+    sc.director_last_gen_month = total_now
 
     triggered = set(str(t) for t in getattr(sc, "triggered_events", set()) or set())
     pending_mandatory = [

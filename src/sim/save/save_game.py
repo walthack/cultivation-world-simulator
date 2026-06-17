@@ -264,6 +264,8 @@ def save_game(
                 "director_ledger": list(getattr(world.scripted_scenario, "director_ledger", []) or []),
                 # M2a (L4 Q5): frozen director turns — reload replays, never re-queries.
                 "director_cache": dict(getattr(world.scripted_scenario, "director_cache", {}) or {}),
+                # M3 (L4 Q9): director cadence cursor — persist so reload keeps the throttle.
+                "director_last_gen_month": int(getattr(world.scripted_scenario, "director_last_gen_month", -10**9)),
             }
         
         # 写入文件

@@ -529,3 +529,30 @@ async def test_frozen_turn_replays_even_with_no_generator_attached(base_world):
     events = await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
     replayed = [e.narration for e in events if (e.id or "").startswith("director:")]
     assert replayed == ["无导演亦重放"]
+
+
+# --- M3: director cadence throttle (Q9) ---------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_director_cadence_throttles_generation(base_world):
+    # with director_cadence_months=3 the director generates only every 3rd month
+    # (months 1, 4, 7 over a 9-month run), not every month.
+    calls = {"n": 0}
+
+    def gen(snapshot):
+        calls["n"] += 1
+        return [{"id": f"b{calls['n']}", "narration": f"beat{calls['n']}"}]
+
+    base_world.world_flags.clear()
+    base_world.director_generator = gen
+    base_world.director_cadence_months = 3
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="cad", timeline=_sentinel_timeline({"always": {}}))
+
+    for month in list(Month)[:9]:
+        stamp = create_month_stamp(Year(1), month)
+        base_world.month_stamp = stamp
+        await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+
+    assert calls["n"] == 3                                            # months 1, 4, 7 only
+    assert base_world.scripted_scenario.director_last_gen_month == 1 * 12 + 7  # last gen at y1m7
