@@ -391,16 +391,15 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
     narration only — NO LLM call, and NO re-applied mechanics (the mechanical effects
     were already persisted into ``sc.state`` when first generated and are restored on
     load; re-applying e.g. relation_change would double it)."""
-    generator = getattr(world, "director_generator", None)
-    if generator is None:
-        return []
     sc = getattr(world, "scripted_scenario", None)
     if sc is None:
         return []
 
-    triggered = set(str(t) for t in getattr(sc, "triggered_events", set()) or set())
     now = _now(world)
 
+    # Cache lookup BEFORE the generator guard (mirrors L3 narrative_transition): a frozen
+    # turn must replay on reload even into an environment that never re-attached a
+    # generator (codex P1). Replay re-emits frozen narration only — no LLM, no re-apply.
     locale = _run_locale(world)
     cache = getattr(sc, "director_cache", None)
     if not isinstance(cache, dict):
@@ -408,10 +407,13 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
     key = _director_key(now, getattr(sc, "backbone", {}) or {}, locale)
     frozen = cache.get(key)
     if isinstance(frozen, list):
-        # REPLAY: re-emit the frozen narration for already-accepted proposals; the
-        # generator is NOT called and effects are NOT re-applied (already in sc.state).
         return [_director_event(world, r["engine_id"], r.get("narration", "")) for r in frozen if r.get("accepted")]
 
+    generator = getattr(world, "director_generator", None)
+    if generator is None:
+        return []
+
+    triggered = set(str(t) for t in getattr(sc, "triggered_events", set()) or set())
     pending_mandatory = [
         str(e.get("id", ""))
         for e in sc.timeline

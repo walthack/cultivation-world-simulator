@@ -510,3 +510,22 @@ async def test_reloaded_director_cache_replays_without_calling_generator(base_wo
     events = await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
     replayed = [e.narration for e in events if (e.id or "").startswith("director:")]
     assert replayed == ["旧事重提"]
+
+
+@pytest.mark.asyncio
+async def test_frozen_turn_replays_even_with_no_generator_attached(base_world):
+    # codex P1: a reload into an environment with NO generator must still replay the
+    # frozen narration — the cache lookup precedes the generator guard.
+    stamp = create_month_stamp(Year(1), Month.JANUARY)
+    base_world.month_stamp = stamp
+    base_world.world_flags.clear()
+    sc = ScriptedScenarioState(scenario_id="ng", timeline=_sentinel_timeline({"always": {}}))
+    key = _director_key((1, 1), {}, _run_locale(base_world))
+    sc.director_cache = {key: [{"engine_id": "director:1:1:0", "accepted": True, "narration": "无导演亦重放"}]}
+    base_world.scripted_scenario = sc
+    if hasattr(base_world, "director_generator"):
+        del base_world.director_generator  # no generator at all
+
+    events = await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+    replayed = [e.narration for e in events if (e.id or "").startswith("director:")]
+    assert replayed == ["无导演亦重放"]
