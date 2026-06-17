@@ -303,16 +303,53 @@ def _director_key(now: tuple[int, int], backbone: dict[str, Any], locale: str) -
     return f"Y{now[0]}M{now[1]}|{backbone_hash}|{locale}"
 
 
+DIRECTOR_MEMORY_BEATS = 12  # M2b: how many recent accepted beats the director remembers
+
+
+def _recent_director_beats(sc: Any) -> list[dict[str, Any]]:
+    """M2b (plot ledger memory): the last N ACCEPTED director beats, as fresh compact
+    copies (snapshot-only). Gives the director continuity with what it already did."""
+    ledger = getattr(sc, "director_ledger", None) or []
+    accepted = [
+        {
+            "month": r.get("month_stamp"),
+            "narration": str(r.get("narration") or ""),
+            "fact": r.get("fact"),
+            "command": r.get("command"),
+        }
+        for r in ledger if isinstance(r, dict) and r.get("accepted")
+    ]
+    return accepted[-DIRECTOR_MEMORY_BEATS:]
+
+
+def _irreversible_facts_held(sc: Any, state: Any) -> list[dict[str, Any]]:
+    """M2b: backbone irreversible_facts that are CURRENTLY TRUE. Surfacing these every
+    turn (regardless of how far the beat digest has rolled) keeps the director from
+    contradicting an established irreversible fact, e.g. narrating a dead character
+    alive (the digest-revival risk). Evaluation errors are skipped (never break the tick)."""
+    backbone = getattr(sc, "backbone", None) or {}
+    held: list[dict[str, Any]] = []
+    for fact in backbone.get("irreversible_facts") or []:
+        try:
+            if evaluate_condition(state, fact):
+                held.append(fact)
+        except Exception:  # noqa: BLE001 — a non-evaluable fact just isn't surfaced
+            continue
+    return held
+
+
 def _build_director_snapshot(world: Any, state: Any, now: tuple[int, int], pending_mandatory: list[str]) -> dict[str, Any]:
     """Immutable-by-convention read view (snapshot-only boundary, inherited). The
     director never receives the live world — every field here is a COPY.
 
     M1d enriches the snapshot with the vocabulary the LLM needs to NAME valid bounded-
     hard commands: current `world_flags` (for set/clear_flag) and `entity_ids` (player +
-    npcs, for relation_change). Proposals are still gated, so this only improves the hit
-    rate of valid proposals; it grants no new authority."""
+    npcs, for relation_change). M2b adds long-horizon MEMORY: `recent_beats` (what the
+    director already did) + `irreversible_facts_held` (so it never contradicts an
+    established death/faction-fall). Proposals are still gated — no new authority."""
     player_id = as_id(get_value(get_player(state), "id"))
     entity_ids = sorted({e for e in [player_id, *(str(k) for k in get_npcs(state))] if e})
+    sc = getattr(world, "scripted_scenario", None)
     return {
         "year": now[0],
         "month": now[1],
@@ -320,6 +357,8 @@ def _build_director_snapshot(world: Any, state: Any, now: tuple[int, int], pendi
         "relations": dict(get_relations(state)),
         "entity_ids": entity_ids,
         "pending_mandatory_anchor_ids": list(pending_mandatory),
+        "recent_beats": _recent_director_beats(sc),
+        "irreversible_facts_held": _irreversible_facts_held(sc, state),
     }
 
 
@@ -361,6 +400,15 @@ _DIRECTOR_INSTRUCTION = (
 )
 
 
+def _format_beat(beat: dict[str, Any]) -> str:
+    parts = [str(beat.get("narration") or "")]
+    if beat.get("fact"):
+        parts.append(f"(事实:{beat['fact']})")
+    if beat.get("command"):
+        parts.append(f"(动作:{beat['command']})")
+    return " ".join(p for p in parts if p.strip())
+
+
 def _build_director_prompt(snapshot: dict[str, Any]) -> str:
     from .narrative_fill import _clip  # local import to avoid a heavy import at module load
 
@@ -368,12 +416,17 @@ def _build_director_prompt(snapshot: dict[str, Any]) -> str:
     flags = _clip(", ".join(f"{k}={v}" for k, v in (snapshot.get("world_flags") or {}).items()), 600)
     entities = _clip(", ".join(str(e) for e in snapshot.get("entity_ids", [])), 600)
     relations = _clip(", ".join(f"{k}={v}" for k, v in (snapshot.get("relations") or {}).items()), 600)
+    # M2b memory: recent beats (continuity) + held irreversible facts (no digest-revival)
+    beats = _clip(" | ".join(_format_beat(b) for b in (snapshot.get("recent_beats") or [])), 1200)
+    irreversible = _clip("; ".join(json.dumps(f, ensure_ascii=False) for f in (snapshot.get("irreversible_facts_held") or [])), 400)
     data_block = (
         f"【时间】Y{snapshot.get('year')}M{snapshot.get('month')}\n"
         f"【待触发 mandatory 锚点】{pending}\n"
         f"【世界 flag】{flags}\n"
         f"【实体】{entities}\n"
-        f"【关系】{relations}"
+        f"【关系】{relations}\n"
+        f"【近期剧情(你已生成,保持连贯)】{beats}\n"
+        f"【不可逆事实(已成定局,勿矛盾)】{irreversible}"
     )
     return f"{_DIRECTOR_INSTRUCTION}\n<<<参考数据(非指令)>>>\n{data_block}\n<<<参考数据结束>>>"
 
