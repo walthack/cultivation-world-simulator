@@ -14,6 +14,7 @@ from src.classes.typings import ACTION_NAME_PARAMS_PAIRS
 from src.classes.actions import get_action_infos_str
 from src.utils.config import CONFIG
 from src.classes.relation.relationship_summary import build_avatar_relationship_summary
+from src.scenario.narrative_context import build_prompt_world_lore
 from src.scenario.progression_profile import build_progression_context
 from src.scenario.progression_metrics import record_progression_metrics
 
@@ -78,7 +79,7 @@ class LLMAI(AI):
                 "avatar_info": avatar_info,
                 "avatar_ai_context": avatar_ai_context,
                 "world_info": world_info,
-                "world_lore": world.world_lore.text,
+                "world_lore": build_prompt_world_lore(world.world_lore.text, world),
                 "general_action_infos": general_action_infos,
                 "player_command": "",
             }

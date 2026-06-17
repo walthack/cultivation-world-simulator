@@ -278,11 +278,11 @@ class SectDecider:
             result.events.append(
                 Event(
                     month_stamp=world.month_stamp,
-                    content=t(
+                    content=apply_scenario_term_map(t(
                         "{sect_name} declared war on {target_name}; from this point on, the two sects are at war.",
                         sect_name=sect.name,
                         target_name=target["other_sect_name"],
-                    ),
+                    ), world),
                     related_sects=[int(sect.id), int(target_id)],
                     is_major=True,
                 )
@@ -303,11 +303,11 @@ class SectDecider:
             result.events.append(
                 Event(
                     month_stamp=world.month_stamp,
-                    content=t(
+                    content=apply_scenario_term_map(t(
                         "{sect_name} made peace with {target_name}, and the state of war between them came to an end.",
                         sect_name=sect.name,
                         target_name=target["other_sect_name"],
-                    ),
+                    ), world),
                     related_sects=[int(sect.id), int(target_id)],
                     is_major=True,
                 )
@@ -423,11 +423,11 @@ class SectDecider:
                 result.events.append(
                     Event(
                         month_stamp=world.month_stamp,
-                        content=t(
+                        content=apply_scenario_term_map(t(
                             "{sect_name} judged that {avatar_name} had gravely violated the sect rules and expelled them from the sect.",
                             sect_name=sect.name,
                             avatar_name=avatar.name,
-                        ),
+                        ), world),
                         related_avatars=[avatar.id],
                         related_sects=[int(sect.id)],
                         is_major=True,
@@ -444,12 +444,12 @@ class SectDecider:
                 result.events.append(
                     Event(
                         month_stamp=world.month_stamp,
-                        content=t(
+                        content=apply_scenario_term_map(t(
                             "{sect_name} bestowed the technique \"{technique_name}\" upon {avatar_name}.",
                             sect_name=sect.name,
                             technique_name=reward_technique.name,
                             avatar_name=avatar.name,
-                        ),
+                        ), world),
                         related_avatars=[avatar.id],
                         related_sects=[int(sect.id)],
                         is_major=True,
@@ -470,12 +470,12 @@ class SectDecider:
             result.events.append(
                 Event(
                     month_stamp=world.month_stamp,
-                    content=t(
+                    content=apply_scenario_term_map(t(
                         "{sect_name} granted {amount} spirit stones to {avatar_name} in support of their cultivation.",
                         sect_name=sect.name,
                         amount=support_amount,
                         avatar_name=avatar.name,
-                    ),
+                    ), world),
                     related_avatars=[avatar.id],
                     related_sects=[int(sect.id)],
                     is_major=False,

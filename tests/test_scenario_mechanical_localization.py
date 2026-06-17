@@ -149,6 +149,78 @@ def test_liuchao_cultivation_event_applies_term_map(dummy_avatar):
     assert "洞府" not in event.content
 
 
+def test_liuchao_diplomacy_events_apply_term_map(base_world):
+    # v1.4 M1 gap (codex audit): war/peace branches now route through term_map.
+    _attach_liuchao_scenario(base_world)
+    sect = MagicMock()
+    sect.id = 1
+    sect.name = "金丹盟"  # 金丹 → 气轮
+    decision_context = MagicMock()
+    decision_context.diplomacy_targets = [
+        {"other_sect_id": 2, "other_sect_name": "灵石阁", "status": "peace"},  # war target; 灵石 → 金铢
+        {"other_sect_id": 3, "other_sect_name": "洞府宗", "status": "war"},   # peace target; 洞府 → 驻地
+    ]
+    result = SectDecisionResult()
+    with patch.object(base_world, "declare_sect_war", create=True), patch.object(base_world, "make_sect_peace", create=True):
+        SectDecider._process_diplomacy(
+            sect=sect, decision_context=decision_context, world=base_world,
+            result=result, declare_target_ids={2}, peace_target_ids={3},
+        )
+
+    contents = " ".join(e.content for e in result.events)
+    assert len(result.events) == 2
+    assert "气轮盟" in contents and "金铢阁" in contents and "驻地宗" in contents
+    assert "金丹" not in contents and "灵石" not in contents and "洞府" not in contents
+
+
+def test_liuchao_member_expel_event_applies_term_map(base_world):
+    # v1.4 M1 gap (codex audit): expel branch now routes through term_map.
+    _attach_liuchao_scenario(base_world)
+    avatar = MagicMock()
+    avatar.id = "a1"
+    avatar.name = "金丹弟子"  # 金丹 → 气轮
+    avatar.is_dead = False
+    sect = MagicMock()
+    sect.id = 1
+    sect.name = "测试宗门"
+    sect.get_living_members_sorted_by_status.return_value = [avatar]
+    sect.is_member_rule_breaker.return_value = True
+    result = SectDecisionResult()
+
+    SectDecider._process_members(
+        sect=sect, world=base_world, support_amount=300, result=result,
+        expel_ids={"a1"}, reward_ids=set(), support_ids=set(),
+    )
+
+    assert result.events
+    content = result.events[0].content
+    assert "气轮弟子" in content and "金丹" not in content
+
+
+@pytest.mark.asyncio
+async def test_liuchao_ai_action_decision_world_lore_is_scenario_aware(dummy_avatar):
+    # v1.4 M2 gap (codex audit): the NPC action-decision prompt now goes through
+    # build_prompt_world_lore, so its world_lore is scenario-aware (was raw before).
+    from src.classes.ai import llm_ai
+
+    context = _attach_liuchao_scenario(dummy_avatar.world)
+    dummy_avatar.world.set_world_lore("默认修仙世界观。")
+    dummy_avatar.get_expanded_info = MagicMock(return_value={"name": dummy_avatar.name})
+    dummy_avatar.world.get_observable_avatars = MagicMock(return_value=[])
+
+    with patch("src.classes.ai.call_llm_with_task_name", new=AsyncMock(return_value={})) as mock_llm, patch(
+        "src.classes.ai.get_action_infos_str", return_value="MoveToDirection",
+    ), patch(
+        "src.classes.core.avatar.info_presenter.get_avatar_ai_context", return_value={},
+    ):
+        await llm_ai._decide(dummy_avatar.world, [dummy_avatar])
+
+    world_lore = mock_llm.await_args.args[2]["world_lore"]
+    assert world_lore.startswith(SCENARIO_NARRATIVE_INSTRUCTION)
+    assert context["background"] in world_lore
+    assert "默认修仙世界观" not in world_lore
+
+
 def test_no_scenario_mechanical_event_does_not_apply_term_map(dummy_avatar):
     dummy_avatar.world.scripted_scenario = None
     dummy_avatar.name = "金丹修士"
