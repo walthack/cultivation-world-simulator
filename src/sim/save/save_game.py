@@ -262,6 +262,8 @@ def save_game(
                 "transition_cache": dict(getattr(world.scripted_scenario, "transition_cache", {}) or {}),
                 # M3 (L4): director audit ledger — own field, never inside state.
                 "director_ledger": list(getattr(world.scripted_scenario, "director_ledger", []) or []),
+                # M2a (L4 Q5): frozen director turns — reload replays, never re-queries.
+                "director_cache": dict(getattr(world.scripted_scenario, "director_cache", {}) or {}),
             }
         
         # 写入文件

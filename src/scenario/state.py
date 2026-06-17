@@ -34,6 +34,11 @@ class ScriptedScenarioState:
     # fact). Sibling of `state` like the others — director plans/facts must never be
     # var_equals-readable. (Plot-ledger formalization is M2.)
     director_ledger: list[dict[str, Any]] = field(default_factory=list)
+    # v1.9 M2a (L4 Q5): frozen director turns for deterministic replay, keyed by
+    # _director_key (month + backbone hash + locale). A reload reuses frozen turns
+    # instead of re-querying the LLM; a cache hit replays narration only (mechanical
+    # effects already live in `state`, restored on load). Sibling of `state`, persisted.
+    director_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     # v1.9 M1b (L4 Q1/Q4): immutable backbone — `prohibited_predicates` (must never
     # become true) + `irreversible_facts` (once true, never reversed). The hard gate
     # the Narrative Director's bounded-hard commands are checked against. Loaded from

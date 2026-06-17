@@ -16,6 +16,8 @@ import pytest
 
 from src.scenario.narrative_director import (
     DIRECTOR_COMMAND_WHITELIST,
+    _director_key,
+    _run_locale,
     validate_director_proposal,
 )
 from src.scenario.state import ScriptedScenarioState
@@ -461,3 +463,50 @@ async def test_relation_change_blocked_by_backbone_prohibited_predicate(base_wor
     sc = base_world.scripted_scenario
     assert sc.state["relations"]["x:y"] == 0  # unchanged
     assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
+
+
+# --- M2a: deterministic director replay (frozen cache) ------------------------
+
+
+@pytest.mark.asyncio
+async def test_director_turn_is_frozen_replayed_not_requeried_or_reapplied(base_world):
+    # Re-running the SAME director month must hit the frozen cache: the generator is not
+    # called again and the mechanical effect (relation +5) is NOT re-applied (no double).
+    director = _director([{"id": "rc", "narration": "义结金兰", "command": {"command": "director_relation_change", "a": "x", "b": "y", "delta": 5}}])
+    base_world.world_flags.clear()
+    base_world.director_generator = director
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="rep", timeline=_sentinel_timeline({"always": {}}))
+    stamp = create_month_stamp(Year(1), Month.JANUARY)
+    base_world.month_stamp = stamp
+    ctx = SimpleNamespace(month_stamp=stamp)
+
+    ev1 = await phase_scripted_scenario_tick(base_world, ctx)
+    ev2 = await phase_scripted_scenario_tick(base_world, ctx)  # SAME month → replay
+
+    sc = base_world.scripted_scenario
+    assert director.state["calls"] == 1                       # 2nd tick hit the cache
+    assert sc.state["relations"]["x:y"] == 5                  # applied exactly once
+    d1 = [e.id for e in ev1 if (e.id or "").startswith("director:")]
+    d2 = [e.id for e in ev2 if (e.id or "").startswith("director:")]
+    assert d1 and d2 == d1                                    # same frozen event replayed
+
+
+@pytest.mark.asyncio
+async def test_reloaded_director_cache_replays_without_calling_generator(base_world):
+    # simulate a reload: a sc carrying a pre-frozen turn + a generator that explodes if
+    # called. The cached turn must replay (narration only) without invoking the generator.
+    stamp = create_month_stamp(Year(1), Month.JANUARY)
+    base_world.month_stamp = stamp
+    base_world.world_flags.clear()
+    sc = ScriptedScenarioState(scenario_id="rl", timeline=_sentinel_timeline({"always": {}}))
+    key = _director_key((1, 1), {}, _run_locale(base_world))
+    sc.director_cache = {key: [{"engine_id": "director:1:1:0", "accepted": True, "narration": "旧事重提"}]}
+    base_world.scripted_scenario = sc
+
+    def boom(snapshot):
+        raise AssertionError("generator must not be called on a cache hit")
+
+    base_world.director_generator = boom
+    events = await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+    replayed = [e.narration for e in events if (e.id or "").startswith("director:")]
+    assert replayed == ["旧事重提"]

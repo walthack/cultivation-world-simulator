@@ -21,7 +21,9 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import inspect
+import json
 import logging
 from types import SimpleNamespace
 from typing import Any
@@ -33,7 +35,7 @@ from src.utils.llm.config import LLMConfig
 from .condition_evaluator import evaluate_condition
 from .effect_applier import apply_effects
 from .event_dispatcher import EventDispatcher
-from .narrative_transition import _anchor_when, _llm_available, _now
+from .narrative_transition import _anchor_when, _llm_available, _now, _run_locale
 from .state_access import (
     as_id,
     get_npcs,
@@ -290,6 +292,17 @@ def _director_event(world: Any, engine_id: str, narration: str) -> Event:
     )
 
 
+def _director_key(now: tuple[int, int], backbone: dict[str, Any], locale: str) -> str:
+    """M2a (Q5) frozen-replay key for a director turn: month + backbone hash + locale.
+    A backbone change → different key → a fresh decision under the current backbone
+    (never reinterpret an old turn under a new backbone). Locale is the run's FROZEN
+    content locale so a mid-run language toggle can't shift the key."""
+    backbone_hash = hashlib.sha256(
+        json.dumps(backbone or {}, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()[:12]
+    return f"Y{now[0]}M{now[1]}|{backbone_hash}|{locale}"
+
+
 def _build_director_snapshot(world: Any, state: Any, now: tuple[int, int], pending_mandatory: list[str]) -> dict[str, Any]:
     """Immutable-by-convention read view (snapshot-only boundary, inherited). The
     director never receives the live world — every field here is a COPY.
@@ -371,7 +384,13 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
     dispatched, so anchors always take priority. No generator / failure → [].
 
     Every decision (accept/reject + reason) is recorded on the non-``state``
-    director ledger. Accepted proposals emit render-only narration events only."""
+    director ledger. Accepted proposals emit render-only narration events only.
+
+    M2a (Q5) deterministic replay: a turn's decisions are frozen in ``director_cache``
+    under ``_director_key`` the first time it runs. A cache HIT REPLAYS the frozen
+    narration only — NO LLM call, and NO re-applied mechanics (the mechanical effects
+    were already persisted into ``sc.state`` when first generated and are restored on
+    load; re-applying e.g. relation_change would double it)."""
     generator = getattr(world, "director_generator", None)
     if generator is None:
         return []
@@ -381,6 +400,18 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
 
     triggered = set(str(t) for t in getattr(sc, "triggered_events", set()) or set())
     now = _now(world)
+
+    locale = _run_locale(world)
+    cache = getattr(sc, "director_cache", None)
+    if not isinstance(cache, dict):
+        cache = {}
+    key = _director_key(now, getattr(sc, "backbone", {}) or {}, locale)
+    frozen = cache.get(key)
+    if isinstance(frozen, list):
+        # REPLAY: re-emit the frozen narration for already-accepted proposals; the
+        # generator is NOT called and effects are NOT re-applied (already in sc.state).
+        return [_director_event(world, r["engine_id"], r.get("narration", "")) for r in frozen if r.get("accepted")]
+
     pending_mandatory = [
         str(e.get("id", ""))
         for e in sc.timeline
@@ -481,4 +512,10 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
         events.append(_director_event(world, engine_id, narration))
 
     sc.director_ledger = ledger
+    # Freeze this turn's decisions for deterministic replay (M2a, Q5). Records carry the
+    # unique `turn`, so this turn's slice is exactly those with the current `turn`. An
+    # empty slice (no/zero proposals) is cached too → a reload won't re-query for a turn
+    # that was decided to do nothing. Records are JSON-safe (no model objects).
+    cache[key] = [r for r in ledger if r.get("turn") == turn]
+    sc.director_cache = cache
     return events
