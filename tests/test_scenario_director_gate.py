@@ -292,7 +292,7 @@ async def _run_backbone(base_world, *, timeline, director, backbone, preset_flag
 def test_hard_command_whitelist_is_the_expected_set():
     from src.scenario.narrative_director import DIRECTOR_HARD_COMMAND_WHITELIST
     assert DIRECTOR_HARD_COMMAND_WHITELIST == {
-        "director_set_flag", "director_clear_flag", "director_relation_change",
+        "director_set_flag", "director_clear_flag", "director_relation_change", "director_set_var",
     }
 
 
@@ -462,6 +462,67 @@ async def test_relation_change_blocked_by_backbone_prohibited_predicate(base_wor
     )
     sc = base_world.scripted_scenario
     assert sc.state["relations"]["x:y"] == 0  # unchanged
+    assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
+
+
+# --- M1e: director_set_var (4th hard command) ---------------------------------
+
+
+def test_set_var_validation():
+    ok = {"command": "director_set_var", "name": "mood", "value": "tense"}
+    assert validate_director_proposal({"command": ok}) == (True, None)
+    for bad in (
+        {"command": "director_set_var", "name": "", "value": "x"},
+        {"command": "director_set_var", "name": "mood"},                 # no value
+        {"command": "director_set_var", "name": "mood", "value": {"a": 1}},  # non-scalar
+        {"command": "director_set_var", "name": "mood", "value": None},
+    ):
+        accepted, reason = validate_director_proposal({"command": bad})
+        assert not accepted and reason
+
+
+@pytest.mark.asyncio
+async def test_set_var_rejected_when_it_would_starve_a_mandatory_anchor(base_world):
+    # m2 fires only while var phase=="open"; a director set_var phase="closed" would
+    # starve it → reachability gate rejects; the var is unchanged.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"var_equals": {"name": "phase", "value": "open"}}),
+        director=_director([{"id": "v", "narration": "时局突变", "command": {"command": "director_set_var", "name": "phase", "value": "closed"}}]),
+        backbone={},
+        scenario_state={"phase": "open"},
+    )
+    assert fired == MANDATORY
+    assert base_world.scripted_scenario.state["phase"] == "open"  # unchanged
+    assert any(not r["accepted"] and "mandatory" in r.get("reason", "") for r in base_world.scripted_scenario.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_set_var_allowed_persists_into_scenario_state(base_world):
+    # no mandatory reads `mood` and no backbone forbids it → applied; scenario vars live
+    # in sc.state directly (no mirror needed).
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "ok", "narration": "气氛凝重", "command": {"command": "director_set_var", "name": "mood", "value": "tense"}}]),
+        backbone={},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state.get("mood") == "tense"
+    assert any(r["accepted"] and r.get("command", {}).get("command") == "director_set_var" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_set_var_blocked_by_backbone_prohibited_predicate(base_world):
+    # a prohibited predicate on a var → setting it to the forbidden value is rejected.
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "doom", "narration": "天倾", "command": {"command": "director_set_var", "name": "ending", "value": "doom"}}]),
+        backbone={"prohibited_predicates": [{"var_equals": {"name": "ending", "value": "doom"}}]},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state.get("ending") != "doom"
     assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
 
 
