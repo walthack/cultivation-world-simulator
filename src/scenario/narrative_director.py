@@ -307,19 +307,24 @@ DIRECTOR_MEMORY_BEATS = 12  # M2b: how many recent accepted beats the director r
 
 
 def _recent_director_beats(sc: Any) -> list[dict[str, Any]]:
-    """M2b (plot ledger memory): the last N ACCEPTED director beats, as fresh compact
-    copies (snapshot-only). Gives the director continuity with what it already did."""
+    """M2b (plot ledger memory): the last N ACCEPTED director beats, as fresh DEEP copies
+    (snapshot-only — a consumer must not be able to mutate the ledger through them).
+    Scans from the tail and stops once N are collected, so cost stays O(N) on long runs."""
     ledger = getattr(sc, "director_ledger", None) or []
-    accepted = [
-        {
+    beats: list[dict[str, Any]] = []
+    for r in reversed(ledger):
+        if not (isinstance(r, dict) and r.get("accepted")):
+            continue
+        beats.append({
             "month": r.get("month_stamp"),
             "narration": str(r.get("narration") or ""),
-            "fact": r.get("fact"),
-            "command": r.get("command"),
-        }
-        for r in ledger if isinstance(r, dict) and r.get("accepted")
-    ]
-    return accepted[-DIRECTOR_MEMORY_BEATS:]
+            "fact": copy.deepcopy(r.get("fact")),
+            "command": copy.deepcopy(r.get("command")),
+        })
+        if len(beats) >= DIRECTOR_MEMORY_BEATS:
+            break
+    beats.reverse()  # back to chronological order
+    return beats
 
 
 def _irreversible_facts_held(sc: Any, state: Any) -> list[dict[str, Any]]:

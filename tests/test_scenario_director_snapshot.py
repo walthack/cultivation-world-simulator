@@ -101,6 +101,17 @@ def test_snapshot_recent_beats_bounded_and_copied():
     assert world.scripted_scenario.director_ledger[-1]["narration"] == "b29"
 
 
+def test_snapshot_recent_beat_command_is_deep_copied():
+    # codex P2: nested command/fact must be deep-copied so a consumer can't mutate the
+    # ledger entry through the snapshot.
+    ledger = [{"accepted": True, "month_stamp": "1", "narration": "动作",
+               "command": {"command": "director_set_flag", "flag": "rumor"}}]
+    world = _world_with(ledger=ledger)
+    snap = _build_director_snapshot(world, _state(), (1, 1), [])
+    snap["recent_beats"][0]["command"]["flag"] = "TAMPERED"
+    assert world.scripted_scenario.director_ledger[0]["command"]["flag"] == "rumor"
+
+
 def test_snapshot_irreversible_facts_held_only_currently_true():
     backbone = {"irreversible_facts": [
         {"world_flag": {"flag": "lin_dead", "value": True}},      # held (lin_dead is set)
