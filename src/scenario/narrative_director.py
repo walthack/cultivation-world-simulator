@@ -321,12 +321,13 @@ def make_director(*, call_llm_json=call_llm_json, mode: LLMMode = LLMMode.NORMAL
     return generate
 
 
-# NOTE (M1b scope): the PRODUCTION prompt below intentionally stays bootstrap (scoped
-# facts only) and does NOT advertise the gated hard commands (director_set_flag /
-# director_clear_flag). The snapshot carries no flag vocabulary yet, so a real LLM
-# couldn't name flags meaningfully — wiring the enriched snapshot + hard-command prompt
-# is M1c. The whitelisted hard-command path + its backbone/reachability gates are fully
-# built and exercised via injected generators/tests until then (same pattern as M0/M1a).
+# NOTE: the PRODUCTION prompt below intentionally stays bootstrap (scoped facts only)
+# and does NOT advertise the gated hard commands (director_set_flag / director_clear_flag
+# / director_relation_change). The snapshot carries no flag/entity vocabulary yet, so a
+# real LLM couldn't name them meaningfully — wiring the enriched snapshot + hard-command
+# prompt is a later milestone. The whitelisted hard-command paths + their backbone/
+# reachability gates are fully built and exercised via injected generators/tests until
+# then (same pattern as M0/M1a/M1b/M1c).
 _DIRECTOR_INSTRUCTION = (
     "你是「剧情总导演」。据世界状态,提议 0 到 3 段推动剧情的叙事 beat。"
     "本阶段(bootstrap)每个 beat 只含 {\"id\",\"narration\"},可选 "
