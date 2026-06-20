@@ -588,6 +588,16 @@ async def test_introduce_minor_npc_fails_closed_when_a_mandatory_reads_npc_state
     assert "stranger" not in base_world.scripted_scenario.state.get("npcs", {})  # fail-closed → not added
 
 
+def test_npc_id_taken_covers_controlled_avatar_not_in_npcs():
+    # codex P1: the controlled avatar's id may not be in state["npcs"], but introducing
+    # an npc with that id would hijack the player → it must count as taken.
+    from src.scenario.narrative_director import _npc_id_taken
+    state = {"player": {"id": "hero"}, "npcs": {"villain": {"id": "villain"}}}
+    assert _npc_id_taken(state, "hero") is True       # the player id
+    assert _npc_id_taken(state, "villain") is True     # an existing npc
+    assert _npc_id_taken(state, "stranger") is False   # a genuinely fresh id
+
+
 # --- M2a: deterministic director replay (frozen cache) ------------------------
 
 

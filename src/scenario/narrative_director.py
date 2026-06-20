@@ -102,6 +102,21 @@ def _command_effects(command: dict[str, Any]) -> list[dict[str, Any]] | None:
             return [{"type": "npc_spawn", "id": npc_id, "name": npc_name}]
     return None
 
+
+def _npc_id_taken(state: Any, npc_id: str) -> bool:
+    """True if `npc_id` already names an existing entity — an NPC OR the controlled
+    avatar (which may not be in the npcs map). director_introduce_minor_npc must only
+    create FRESH ids, else a reused id would hijack a real entity (codex P1)."""
+    if not npc_id:
+        return False
+    taken = set(get_npcs(state).keys())
+    player = get_player(state)
+    player_id = get_value(player, "id") if player is not None else None
+    if player_id is not None:
+        taken.add(str(player_id))
+        taken.add(as_id(player_id))
+    return npc_id in taken or as_id(npc_id) in taken
+
 # --- forward-replay reachability gate (Q3, bounded condition-state dry-run) ----
 # We replay forward over a COPIED condition state (flags / vars / relations /
 # triggered / storylines) to the last pending mandatory anchor, with vs without the
@@ -571,9 +586,10 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
                 reason = None
                 if effects is None:
                     reason = "unmappable bounded-hard command"
-                elif name == "director_introduce_minor_npc" and str(command.get("id") or "").strip() in get_npcs(state):
-                    # fresh-id only: a colliding id would raise in the real apply (and
-                    # hijack an existing entity) — reject before the gates run.
+                elif name == "director_introduce_minor_npc" and _npc_id_taken(state, str(command.get("id") or "").strip()):
+                    # fresh-id only: a colliding id (existing npc OR the controlled avatar)
+                    # would hijack a real entity / raise in the real apply — reject before
+                    # the gates run.
                     reason = "entity id already exists"
                 else:
                     reason = _backbone_reason(world, state, effects)
