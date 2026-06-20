@@ -293,7 +293,7 @@ def test_hard_command_whitelist_is_the_expected_set():
     from src.scenario.narrative_director import DIRECTOR_HARD_COMMAND_WHITELIST
     assert DIRECTOR_HARD_COMMAND_WHITELIST == {
         "director_set_flag", "director_clear_flag", "director_relation_change", "director_set_var",
-        "director_introduce_minor_npc",
+        "director_introduce_minor_npc", "director_local_crisis",
     }
 
 
@@ -689,3 +689,84 @@ async def test_director_cadence_throttles_generation(base_world):
 
     assert calls["n"] == 3                                            # months 1, 4, 7 only
     assert base_world.scripted_scenario.director_last_gen_month == 1 * 12 + 7  # last gen at y1m7
+
+
+# --- M1g: director_local_crisis (atomic bundle of primitives) -----------------
+
+
+def _crisis(actions):
+    return {"command": "director_local_crisis", "actions": actions}
+
+
+def test_local_crisis_validation():
+    ok = _crisis([
+        {"command": "director_set_flag", "flag": "feud"},
+        {"command": "director_relation_change", "a": "x", "b": "y", "delta": -5},
+    ])
+    assert validate_director_proposal({"command": ok}) == (True, None)
+    bad_cases = [
+        _crisis([]),                                                         # empty
+        _crisis([{"command": "director_set_flag", "flag": "a"}] * 6),         # too many (>5)
+        _crisis([{"command": "director_introduce_minor_npc", "id": "n", "name": "x"}]),  # non-bundle primitive
+        _crisis([_crisis([{"command": "director_set_flag", "flag": "a"}])]),  # nested crisis
+        _crisis([{"command": "director_set_flag", "flag": ""}]),              # invalid sub params
+        {"command": "director_local_crisis"},                                 # no actions list
+    ]
+    for bad in bad_cases:
+        accepted, reason = validate_director_proposal({"command": bad})
+        assert not accepted and reason
+
+
+@pytest.mark.asyncio
+async def test_local_crisis_applies_all_subeffects_atomically(base_world):
+    # a crisis bundling a flag + a relation + a var — all land durably in sc.state.
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "c", "narration": "门派内讧爆发", "command": _crisis([
+            {"command": "director_set_flag", "flag": "feud_active"},
+            {"command": "director_relation_change", "a": "x", "b": "y", "delta": -5},
+            {"command": "director_set_var", "name": "tension", "value": "high"},
+        ])}]),
+        backbone={},
+        scenario_state={"relations": {"x:y": 0}},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state["world_flags"].get("feud_active") is True
+    assert sc.state["relations"]["x:y"] == -5
+    assert sc.state.get("tension") == "high"
+    assert any(r["accepted"] and r.get("command", {}).get("command") == "director_local_crisis" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_local_crisis_is_rejected_atomically_if_any_subeffect_starves_a_mandatory(base_world):
+    # m2 fires only while "blocker" is unset; the crisis bundles a harmless flag AND a
+    # blocker-set. The gate sees the COMBINED set → rejects the WHOLE crisis → NEITHER
+    # flag is applied (atomicity).
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"world_flag": {"flag": "blocker", "value": False}}),
+        director=_director([{"id": "c", "narration": "试图断路", "command": _crisis([
+            {"command": "director_set_flag", "flag": "rumor"},
+            {"command": "director_set_flag", "flag": "blocker"},
+        ])}]),
+        backbone={},
+    )
+    assert fired == MANDATORY
+    assert "rumor" not in base_world.world_flags and "blocker" not in base_world.world_flags  # atomic: none applied
+    assert any(not r["accepted"] and "mandatory" in r.get("reason", "") for r in base_world.scripted_scenario.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_local_crisis_is_rejected_atomically_if_any_subeffect_trips_backbone(base_world):
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "c", "narration": "魔头借乱起势", "command": _crisis([
+            {"command": "director_set_flag", "flag": "rumor"},
+            {"command": "director_set_flag", "flag": "demon_wins"},
+        ])}]),
+        backbone={"prohibited_predicates": [{"world_flag": {"flag": "demon_wins", "value": True}}]},
+    )
+    assert "rumor" not in base_world.world_flags and "demon_wins" not in base_world.world_flags  # atomic
+    assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in base_world.scripted_scenario.director_ledger)
