@@ -634,7 +634,23 @@ async def apply_narrative_director(world: Any, state: Any, fired_ids: set[str]) 
                     record["reason"] = reason
                     ledger.append(record)
                     continue
-                apply_effects(state, effects)  # real mechanical effect, post-gate
+                # Atomic apply. apply_effects rolls back the state-dict ROLLBACK_KEYS on a
+                # mid-list raise, but flag writes land on world.world_flags (NOT a state
+                # key) — its rollback misses that store. Snapshot + restore it ourselves so
+                # a multi-effect bundle is truly all-or-nothing, and a failed apply rejects
+                # the command instead of crashing the tick (codex P1).
+                flags_snapshot = dict(get_world_flags(state))
+                try:
+                    apply_effects(state, effects)  # real mechanical effect, post-gate
+                except Exception:  # noqa: BLE001
+                    LOGGER.warning("director effect apply failed; rolled back", exc_info=True)
+                    live_flags = get_world_flags(state)
+                    live_flags.clear()
+                    live_flags.update(flags_snapshot)
+                    record["accepted"] = False
+                    record["reason"] = "effect application failed"
+                    ledger.append(record)
+                    continue
                 # Persist the director's write into the DURABLE sc.state (the only thing
                 # saved + re-seeded into the dispatch state each tick); the live dispatch
                 # state is ephemeral.

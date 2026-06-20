@@ -770,3 +770,30 @@ async def test_local_crisis_is_rejected_atomically_if_any_subeffect_trips_backbo
     )
     assert "rumor" not in base_world.world_flags and "demon_wins" not in base_world.world_flags  # atomic
     assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in base_world.scripted_scenario.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_failed_effect_apply_rolls_back_world_flags_and_rejects(base_world, monkeypatch):
+    # codex P1: if apply_effects raises mid-apply, world.world_flags (which apply_effects'
+    # own rollback misses) must be restored and the command rejected — not crash, not leave
+    # a partial flag write. No mandatory anchors → the gates skip the dry-run, so the real
+    # apply is first and the snapshot/restore guard is what protects atomicity.
+    import src.scenario.narrative_director as nd
+
+    base_world.world_flags.clear()
+    base_world.scripted_scenario = ScriptedScenarioState(scenario_id="rb", timeline=[
+        {"id": "e", "type": "side_event", "trigger": {"year": 1, "month": 1, "condition": {"always": {}}}},
+    ])
+    base_world.director_generator = _director([{"id": "c", "narration": "崩", "command": {"command": "director_set_flag", "flag": "rumor"}}])
+
+    def boom(state, effects):
+        nd.get_world_flags(state)["leaked"] = True  # partial mutation before failing
+        raise RuntimeError("apply blew up")
+
+    monkeypatch.setattr(nd, "apply_effects", boom)
+    stamp = create_month_stamp(Year(1), Month.JANUARY)
+    base_world.month_stamp = stamp
+    await phase_scripted_scenario_tick(base_world, SimpleNamespace(month_stamp=stamp))
+
+    assert "leaked" not in base_world.world_flags and "rumor" not in base_world.world_flags  # rolled back
+    assert any(not r["accepted"] and "failed" in r.get("reason", "") for r in base_world.scripted_scenario.director_ledger)
