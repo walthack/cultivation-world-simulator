@@ -293,6 +293,7 @@ def test_hard_command_whitelist_is_the_expected_set():
     from src.scenario.narrative_director import DIRECTOR_HARD_COMMAND_WHITELIST
     assert DIRECTOR_HARD_COMMAND_WHITELIST == {
         "director_set_flag", "director_clear_flag", "director_relation_change", "director_set_var",
+        "director_introduce_minor_npc",
     }
 
 
@@ -524,6 +525,67 @@ async def test_set_var_blocked_by_backbone_prohibited_predicate(base_world):
     sc = base_world.scripted_scenario
     assert sc.state.get("ending") != "doom"
     assert any(not r["accepted"] and "prohibited" in r.get("reason", "") for r in sc.director_ledger)
+
+
+# --- M1f: director_introduce_minor_npc (5th hard command) ---------------------
+
+
+def test_introduce_minor_npc_validation():
+    ok = {"command": "director_introduce_minor_npc", "id": "wanderer", "name": "无名游侠"}
+    assert validate_director_proposal({"command": ok}) == (True, None)
+    for bad in (
+        {"command": "director_introduce_minor_npc", "id": "", "name": "x"},
+        {"command": "director_introduce_minor_npc", "id": "x"},  # no name
+    ):
+        accepted, reason = validate_director_proposal({"command": bad})
+        assert not accepted and reason
+
+
+@pytest.mark.asyncio
+async def test_introduce_minor_npc_allowed_persists_into_scenario_state(base_world):
+    # a brand-new id no mandatory references → both gates pass; the npc lands durably in
+    # sc.state["npcs"] (so future relation_change / entity_ids can use it).
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "intro", "narration": "市井来了个生面孔", "command": {"command": "director_introduce_minor_npc", "id": "stranger", "name": "陌生人"}}]),
+        backbone={},
+    )
+    sc = base_world.scripted_scenario
+    npc = sc.state.get("npcs", {}).get("stranger")
+    assert npc and npc["name"] == "陌生人" and npc["alive"] is True
+    assert any(r["accepted"] and r.get("command", {}).get("command") == "director_introduce_minor_npc" for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_introduce_minor_npc_rejects_a_colliding_existing_id(base_world):
+    # the director must not hijack an existing entity — a colliding id is rejected and
+    # the existing npc is left untouched.
+    await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"always": {}}),
+        director=_director([{"id": "dup", "narration": "冒名顶替", "command": {"command": "director_introduce_minor_npc", "id": "hero", "name": "冒牌货"}}]),
+        backbone={},
+        scenario_state={"npcs": {"hero": {"id": "hero", "name": "主角", "alive": True}}},
+    )
+    sc = base_world.scripted_scenario
+    assert sc.state["npcs"]["hero"]["name"] == "主角"  # untouched
+    assert any(not r["accepted"] and "exists" in r.get("reason", "") for r in sc.director_ledger)
+
+
+@pytest.mark.asyncio
+async def test_introduce_minor_npc_fails_closed_when_a_mandatory_reads_npc_state(base_world):
+    # a horizon mandatory whose condition reads npc state (npc_alive) is non-modellable in
+    # the bounded dry-run (no npcs) → fail-closed → even a harmless new npc is rejected.
+    fired = await _run_backbone(
+        base_world,
+        timeline=_sentinel_timeline({"npc_alive": {"npc_id": "hero"}}),
+        director=_director([{"id": "intro", "narration": "新面孔", "command": {"command": "director_introduce_minor_npc", "id": "stranger", "name": "陌生人"}}]),
+        backbone={},
+        scenario_state={"npcs": {"hero": {"id": "hero", "name": "主角", "alive": True}}},
+    )
+    assert fired == MANDATORY
+    assert "stranger" not in base_world.scripted_scenario.state.get("npcs", {})  # fail-closed → not added
 
 
 # --- M2a: deterministic director replay (frozen cache) ------------------------

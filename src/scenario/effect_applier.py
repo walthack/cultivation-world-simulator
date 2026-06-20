@@ -157,6 +157,17 @@ def _apply_one(state: Any, effect: dict[str, Any]) -> None:
     if effect_type == "npc_set_relation":
         set_relation(state, _require(effect, "a"), _require(effect, "b"), int(_require(effect, "value")))
         return
+    if effect_type == "npc_spawn":
+        # introduce a NEW minor NPC. ensure_dict stores the npcs map so the write is
+        # durable; a colliding id is an error (callers must not hijack an existing entity).
+        npcs = ensure_dict(state, "npcs")
+        npc_id = as_id(_require(effect, "id"))
+        if not npc_id:
+            raise EffectError("npc_spawn requires a non-empty id")
+        if npc_id in npcs:
+            raise EffectError(f"NPC already exists: {npc_id}")
+        npcs[npc_id] = {"id": npc_id, "name": str(effect.get("name") or npc_id), "alive": True, "realm": None, "minor": True}
+        return
     if effect_type == "relation_change":
         a = _require(effect, "a")
         b = _require(effect, "b")

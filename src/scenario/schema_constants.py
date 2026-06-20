@@ -37,6 +37,7 @@ class ScenarioEffectType(StrEnum):
     NPC_DIE = "npc_die"
     NPC_SET_REALM = "npc_set_realm"
     NPC_SET_RELATION = "npc_set_relation"
+    NPC_SPAWN = "npc_spawn"
     RELATION_CHANGE = "relation_change"
     WORLD_EVENT_TRIGGER = "world_event_trigger"
     ECONOMY_EVENT = "economy_event"
