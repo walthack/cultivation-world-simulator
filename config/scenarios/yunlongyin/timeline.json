@@ -1,0 +1,200 @@
+{
+  "schema_version": "0.2",
+  "events": [
+    {
+      "id": "yunlong-arrive-linan",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 1,
+        "at_region_id": "linan",
+        "condition": { "always": {} }
+      },
+      "name": "入临安",
+      "description": "程宗扬携太乙传承入宋国临安，以客卿身份踏入朝堂与江湖交织的棋局（云龙吟临安篇起）。",
+      "effects": [
+        { "type": "set_flag", "flag": "arrived_linan" }
+      ]
+    },
+    {
+      "id": "lishishi-clan-massacre",
+      "type": "side_event",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 2,
+        "at_region_id": "linan",
+        "condition": { "world_flag": { "flag": "arrived_linan" } }
+      },
+      "name": "灭族",
+      "description": "李师师家族遭难（原著第2章·灭族）——此为定局、不可逆；程宗扬与李师师由此结盟。",
+      "narrative_fill": true,
+      "narration_fallback": "血色临安夜，李师师阖族罹难，唯余复仇之志与程宗扬之盟。",
+      "effects": [
+        { "type": "set_flag", "flag": "lishishi_clan_fallen" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "li-shishi", "delta": 20 }
+      ]
+    },
+    {
+      "id": "tulong-blade-emerges",
+      "type": "side_event",
+      "trigger": {
+        "year": 1,
+        "month": 3,
+        "at_region_id": "linan",
+        "condition": { "world_flag": { "flag": "arrived_linan" } }
+      },
+      "name": "宝刀屠龙",
+      "description": "屠龙刀现世，林冲、高俅与多方势力围绕神兵暗流涌动（第2集·宝刀屠龙）。",
+      "effects": [
+        { "type": "set_flag", "flag": "tulong_blade_seen" }
+      ]
+    },
+    {
+      "id": "cheng-song-office",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "song",
+      "trigger": {
+        "year": 1,
+        "month": 4,
+        "at_region_id": "linan",
+        "condition": { "world_flag": { "flag": "arrived_linan" } }
+      },
+      "name": "客卿入仕",
+      "description": "程宗扬受任工部屯田司员外郎、宝钞局主事，以准备金发行纸币、粮食承兑，盘江程氏商政之基初成。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬以现代金融之术执掌宝钞，临安商道为之一振。",
+      "effects": [
+        { "type": "set_flag", "flag": "cheng_song_office" },
+        { "type": "gain_stat", "stat": "social_office", "amount": 1 }
+      ]
+    },
+    {
+      "id": "linan-faction-branch",
+      "type": "branch",
+      "trigger": {
+        "year": 1,
+        "month": 5,
+        "condition": { "world_flag": { "flag": "cheng_song_office" } }
+      },
+      "name": "朝堂抉择",
+      "description": "立足临安，程宗扬当倚谁为援——拉拢禁军教头林冲走武人之路，还是与太尉高俅交易借其权势？",
+      "branches": [
+        {
+          "id": "ally_lin",
+          "condition": { "world_flag": { "flag": "cheng_court_lin_chong" } },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "ally_lin_chong" },
+            { "type": "set_var", "name": "linan_path", "value": "lin_chong" }
+          ]
+        },
+        {
+          "id": "deal_gao",
+          "condition": { "always": {} },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "deal_gao_qiu" },
+            { "type": "set_var", "name": "linan_path", "value": "gao_qiu" }
+          ]
+        }
+      ],
+      "default_branch": "deal_gao"
+    },
+    {
+      "id": "path-ally-lin-chong",
+      "type": "side_event",
+      "storyline": "ally_lin_chong",
+      "trigger": {
+        "year": 1,
+        "month": 7,
+        "at_region_id": "linan",
+        "condition": { "var_equals": { "name": "linan_path", "value": "lin_chong" } }
+      },
+      "name": "结交豹子头",
+      "description": "程宗扬与林冲结盟，借八十万禁军人脉立足，走刚直武人一路。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬与林冲把臂言欢，禁军一系引为奥援。",
+      "effects": [
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "lin-chong", "delta": 25 },
+        { "type": "set_flag", "flag": "allied_lin_chong" }
+      ]
+    },
+    {
+      "id": "path-deal-gao-qiu",
+      "type": "side_event",
+      "storyline": "deal_gao_qiu",
+      "trigger": {
+        "year": 1,
+        "month": 7,
+        "at_region_id": "linan",
+        "condition": { "var_equals": { "name": "linan_path", "value": "gao_qiu" } }
+      },
+      "name": "太尉交易",
+      "description": "程宗扬与高俅做政治交易，借太尉府权势行事，代价是卷入帝党倾轧。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬与高俅各取所需，临安权场暗结一线。",
+      "effects": [
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "gao-qiu", "delta": 20 },
+        { "type": "set_flag", "flag": "dealt_gao_qiu" }
+      ]
+    },
+    {
+      "id": "heimohai-jianyu-gambit",
+      "type": "side_event",
+      "anchor": true,
+      "trigger": {
+        "year": 1,
+        "month": 9,
+        "condition": { "world_flag": { "flag": "cheng_song_office" } }
+      },
+      "name": "黑魔海布局",
+      "description": "剑玉姬以御姬瞑寂之术布局（阮香凝被封记忆/修为），黑魔海之谋逼近程宗扬。此处仅作控制机制与势力事实记录，不含露骨描写。",
+      "narrative_fill": true,
+      "narration_fallback": "剑玉姬落子无声，黑魔海的阴影笼上临安。",
+      "effects": [
+        { "type": "set_flag", "flag": "heimohai_threat" },
+        { "type": "set_flag", "flag": "ruan_under_mingji" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "jian-yuji", "delta": -15 }
+      ]
+    },
+    {
+      "id": "jiangzhou-alliance",
+      "type": "side_event",
+      "anchor": true,
+      "trigger": {
+        "year": 1,
+        "month": 11,
+        "at_region_id": "jiangzhou",
+        "condition": { "world_flag": { "flag": "cheng_song_office" } }
+      },
+      "name": "江州之盟",
+      "description": "程宗扬与江州刺史萧遥逸结兄弟之盟，星月湖一系引为臂助，亦牵出赤阳圣果之争。",
+      "effects": [
+        { "type": "set_flag", "flag": "jiangzhou_ally" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "xiao-yaoyi", "delta": 20 }
+      ]
+    },
+    {
+      "id": "book-b-finale-to-han",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "trigger": {
+        "year": 2,
+        "month": 1,
+        "condition": { "world_flag": { "flag": "cheng_song_office" } }
+      },
+      "name": "北望",
+      "description": "云龙吟终章·北望：临安根基已立，程宗扬的目光转向汉国朝局（衔接《燕歌行》汉宫篇）。",
+      "effects": [
+        { "type": "set_flag", "flag": "book_b_complete" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,340 @@
+{
+  "schema_version": "1.2",
+  "scenario_id": "yunlongyin",
+  "title": "六朝·云龙吟",
+  "version": "1.0.0",
+  "author": "Chaldeas",
+  "description": "六朝共宇宙第二卷《云龙吟》临安篇：程宗扬入宋国官场，周旋于禁军、太尉、黑魔海与道佛诸宗之间。可与《六朝清羽记》(liuchao) 同世界、不同时期独立游玩。",
+  "world_preset": {
+    "preset_id": "liuchao"
+  },
+  "generation_sources": {
+    "regions": "scenario",
+    "dynasties": "scenario",
+    "sects": "scenario",
+    "npc_names": "scenario",
+    "personas": "scenario",
+    "weapons": "scenario",
+    "techniques": "scenario",
+    "roots": "scenario",
+    "relations": "scenario",
+    "initial_events": "scenario",
+    "fallback_to_default": false
+  },
+  "world_background": "清羽记之后，程宗扬已习太乙九阳、立身六朝，转入宋国临安。他以工部屯田司员外郎、宝钞局主事的客卿身份推行钱庄纸币，结交八十万禁军教头林冲、大孚灵鹫寺鲁智深，周旋于太尉高俅与朝堂；同时卷入黑魔海剑玉姬的布局、御姬瞑寂之术，以及屠龙刀、生死根、赤阳圣果之争。本卷为成人向原著的结构化改编，仅编码剧情/势力/人物/地理/关系事实，无露骨描写。",
+  "backbone": {
+    "prohibited_predicates": [
+      {
+        "world_flag": {
+          "flag": "cheng_dead",
+          "value": true
+        }
+      },
+      {
+        "world_flag": {
+          "flag": "taiyi_destroyed",
+          "value": true
+        }
+      },
+      {
+        "world_flag": {
+          "flag": "cheng_controlled_by_heimohai",
+          "value": true
+        }
+      }
+    ],
+    "irreversible_facts": [
+      {
+        "world_flag": {
+          "flag": "lishishi_clan_fallen",
+          "value": true
+        }
+      }
+    ]
+  },
+  "initial_state": {
+    "year": 1,
+    "month": 1,
+    "generation_profile": {
+      "random_npc_count": 3,
+      "random_sect_count": 1,
+      "generation_sources": {
+        "npc_names": "mixed",
+        "personas": "mixed",
+        "sects": "mixed",
+        "regions": "scenario"
+      },
+      "progression_profile": {
+        "id": "liuchao_novel_progression",
+        "label": "六朝生存、修行与立业",
+        "guidance": "长期成长应同时尊重太乙九境、程宗扬从奴隶到商人与两国官职的社会轨迹，以及由个人名望扩展为盘江程氏与盟友网络的势力轨迹。",
+        "axes": [
+          {
+            "id": "taiyi_cultivation",
+            "label": "太乙九境",
+            "description": "六朝武学修行的九境次序；真阳、九阳是九阳神功相关表述，不替代九境名称。",
+            "tiers": [
+              "第一境·筑基",
+              "第二境·内视",
+              "第三境·生象",
+              "第四境·入微",
+              "第五境·坐照",
+              "第六境·通幽",
+              "第七境·归元",
+              "第八境·至臻",
+              "第九境·入神"
+            ],
+            "optional": false
+          },
+          {
+            "id": "social_office",
+            "label": "身份与官职",
+            "description": "程宗扬从失去自由到经商立业，再进入宋、汉两国官场的身份上升线。",
+            "tiers": [
+              "奴隶",
+              "平民",
+              "商人",
+              "宋国工部屯田司员外郎",
+              "宋国宝钞局主事",
+              "汉国鸿胪寺大行令"
+            ],
+            "optional": false
+          },
+          {
+            "id": "reputation_power",
+            "label": "名望与势力",
+            "description": "从孤身求生到获得同伴、商会、军伍与官场盟友支持，最终形成盘江程氏网络。",
+            "tiers": [
+              "无名异乡人",
+              "商路立足",
+              "同伴追随",
+              "星月湖盟友",
+              "盘江程氏",
+              "六朝政商要人"
+            ],
+            "optional": false
+          }
+        ]
+      },
+      "term_map": {
+        "灵石": "金铢",
+        "宗门": "宗门",
+        "突破": "破境",
+        "修为": "修为",
+        "境界": "九境",
+        "炼丹": "制药",
+        "灵气": "真气",
+        "秘境": "古阵",
+        "丹药": "灵药",
+        "功法": "武学",
+        "金丹": "气轮",
+        "筑基": "筑基",
+        "元婴": "通幽",
+        "化神": "至臻",
+        "证道": "入神",
+        "洞府": "驻地",
+        "灵脉": "山门根基",
+        "飞升": "入神"
+      },
+      "narrative_context": {
+        "world_lore_mode": "replace",
+        "world_lore": "这是被先行穿越者改变过历史的六朝异世。秦军仍在草原与半兽人作战；宋国以临安为政治与商业中心，汉国以洛都为都；晴州维持中立商佣网络，南荒与碧鲮海湾分布花苗、鲛人等族群。太乙真宗由王哲掌教时号称天下第一宗门，九阳神功是镇教绝学，修行分筑基、内视、生象、入微、坐照、通幽、归元、至臻、入神九境。光明观堂以医术和光明三绝传世；岳鹏举留下岳家军、星月湖和武穆势力；殇侯门、黑魔海巫宗与毒宗围绕情报、传承和长期布局彼此角力。程宗扬凭现代知识、商业能力与太乙传功，从战场俘虏和奴隶身份起步，逐渐成为商人、宋国官员与汉国鸿胪寺大行令。",
+        "background": "六朝诸国、宗门、军伍、商会与异族并存的架空世界，开局从草原战场求生开始。",
+        "style": "以行动、阵营、官职、商路和武学为核心，叙事直接，保留乱世冒险与政治博弈感。",
+        "terminology": "优先使用金铢、真气、九境、太乙真宗、光明观堂、星月湖、晴州、宋国与汉国等原作术语；不使用泛化门阀史剧设定替代小说世界。"
+      }
+    },
+    "avatars": [
+      {
+        "id": "cheng-zongyang",
+        "surname": "程",
+        "given_name": "宗扬",
+        "gender": "男",
+        "age": 28,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "ZUO_ZHAO",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "清羽记后入宋国，太乙九阳在身、坐照境界，以客卿与商政手腕周旋临安。",
+        "persona_traits": [
+          "现代知识",
+          "商业谈判",
+          "临机权变"
+        ],
+        "long_term_objective": "在宋国站稳并构建保护同伴的商政与修行势力。",
+        "goldfinger_id": "SHENGSI-GEN"
+      },
+      {
+        "id": "li-shishi",
+        "surname": "李",
+        "given_name": "师师",
+        "gender": "女",
+        "age": 22,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "NEI_SHI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "光明观堂外堂弟子、随军医官；遭灭族之痛，与程宗扬结为暧昧盟友。",
+        "persona_traits": [
+          "医者仁心",
+          "忠义守诺"
+        ],
+        "long_term_objective": "为族人复仇并在乱世中立足。"
+      },
+      {
+        "id": "lin-chong",
+        "surname": "林",
+        "given_name": "冲",
+        "gender": "男",
+        "age": 38,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "ZUO_ZHAO",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "八十万禁军教头，屠龙刀相关、可被拉拢的强援。",
+        "persona_traits": [
+          "军伍果断",
+          "忠义守诺"
+        ],
+        "long_term_objective": "在朝堂倾轧中保全自身与所信之人。"
+      },
+      {
+        "id": "lu-zhishen",
+        "surname": "鲁",
+        "given_name": "智深",
+        "gender": "男",
+        "age": 40,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "TONG_YOU",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "大孚灵鹫寺挂单和尚，金钟罩与神力，程宗扬的佛门盟友。",
+        "persona_traits": [
+          "江湖侠义",
+          "军伍果断"
+        ],
+        "long_term_objective": "行走江湖、护持不平。"
+      },
+      {
+        "id": "gao-qiu",
+        "surname": "高",
+        "given_name": "俅",
+        "gender": "男",
+        "age": 45,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "宋国太尉，掌禁军与太尉府权势；与程宗扬合作或交易的政治变量。",
+        "persona_traits": [
+          "朝堂权术"
+        ],
+        "long_term_objective": "扩张太尉府权势。"
+      },
+      {
+        "id": "jian-yuji",
+        "surname": "剑",
+        "given_name": "玉姬",
+        "gender": "女",
+        "age": 32,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHI_ZHEN",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "黑魔海高层，传说修为直追王哲；操纵人心、持玄元仙剑，程宗扬的强敌。",
+        "persona_traits": [
+          "巫毒秘术",
+          "情报谋算"
+        ],
+        "long_term_objective": "以黑魔海之谋操弄六朝棋局。"
+      },
+      {
+        "id": "xiao-yaoyi",
+        "surname": "萧",
+        "given_name": "遥逸",
+        "gender": "男",
+        "age": 30,
+        "sect_id": null,
+        "location_region_id": "jiangzhou",
+        "realm": "RU_WEI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "晋国江州刺史、小侯爷，星月湖一系，与程宗扬兄弟相称。",
+        "persona_traits": [
+          "朝堂权术",
+          "情报谋算"
+        ],
+        "long_term_objective": "借赤阳圣果疗伤并稳固江州。"
+      },
+      {
+        "id": "ruan-xiangning",
+        "surname": "阮",
+        "given_name": "香凝",
+        "gender": "女",
+        "age": 26,
+        "sect_id": null,
+        "location_region_id": "linan",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "黑魔海御姬，凝玉姬；被瞑寂术封闭记忆与修为，处境复杂。",
+        "persona_traits": [
+          "巫毒秘术"
+        ],
+        "long_term_objective": "挣脱黑魔海的精神桎梏。"
+      }
+    ],
+    "sects": [],
+    "relationships": [
+      {
+        "a": "cheng-zongyang",
+        "b": "li-shishi",
+        "value": 40,
+        "tag": "暧昧盟友"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "lin-chong",
+        "value": 10,
+        "tag": "可拉拢"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "lu-zhishen",
+        "value": 30,
+        "tag": "佛门盟友"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "gao-qiu",
+        "value": 0,
+        "tag": "政治交易"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "jian-yuji",
+        "value": -30,
+        "tag": "强敌"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "xiao-yaoyi",
+        "value": 50,
+        "tag": "兄弟盟友"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "ruan-xiangning",
+        "value": 0,
+        "tag": "复杂"
+      }
+    ],
+    "world_flags": {}
+  }
+}
