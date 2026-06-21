@@ -22,7 +22,7 @@ from src.scenario.state import ScriptedScenarioState
 PACKAGES = [
     ("liuchao", "duan_qiang_fallen", "taiyi_destroyed", {"liuchao-opening", "duan-qiang-falls", "book-a-finale-onward"}),
     ("yunlongyin", "lishishi_clan_fallen", "taiyi_destroyed", {"yunlong-arrive-linan", "lishishi-clan-massacre", "book-b-finale-to-han"}),
-    ("yangexing", "liu_jian_slain", "dingtao_wang_dead", {"yange-han-court-arrive", "qin-hui-slays-liujian", "book-c-finale"}),
+    ("yangexing", "liu_jian_slain", "dingtao_wang_dead", {"yange-han-court-arrive", "qin-hui-slays-liujian", "dingtao-enthroned", "book-c-finale"}),
 ]
 
 

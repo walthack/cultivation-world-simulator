@@ -83,7 +83,7 @@
         "condition": { "world_flag": { "flag": "cheng_met_taiyi" } }
       },
       "name": "王哲传功",
-      "description": "太乙真宗掌教王哲将九阳神功与太一经传予程宗扬，奠定其修行根基（原著第5-9章）。",
+      "description": "太乙真宗掌教王哲将九阳神功传予程宗扬，奠定其修行根基（原著第5-9章）。（太一经为后卷黑魔海/西门庆一线之物，不在此处。）",
       "narrative_fill": true,
       "narration_fallback": "王哲于太一山静室授功，程宗扬初窥太乙九境门径。",
       "effects": [
@@ -183,6 +183,7 @@
       "id": "nanhuang-meet-xiaozi",
       "type": "side_event",
       "anchor": true,
+      "mandatory": true,
       "trigger": {
         "year": 1,
         "month": 11,

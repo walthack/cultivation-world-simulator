@@ -148,6 +148,7 @@
       "id": "heimohai-jianyu-gambit",
       "type": "side_event",
       "anchor": true,
+      "mandatory": true,
       "trigger": {
         "year": 1,
         "month": 9,
@@ -169,6 +170,7 @@
       "id": "jiangzhou-alliance",
       "type": "side_event",
       "anchor": true,
+      "mandatory": true,
       "trigger": {
         "year": 1,
         "month": 11,

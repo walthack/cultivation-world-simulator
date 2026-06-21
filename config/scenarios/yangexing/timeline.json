@@ -61,47 +61,19 @@
       ]
     },
     {
-      "id": "han-succession-branch",
-      "type": "branch",
+      "id": "dingtao-enthroned",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "han",
       "trigger": {
         "year": 1,
         "month": 4,
+        "at_region_id": "luodu",
         "condition": { "world_flag": { "flag": "liu_jian_slain" } }
       },
-      "name": "汉室更立",
-      "description": "伪帝既诛，程宗扬当如何收拾汉局——力主拥立幼主定陶王，还是与大将军霍子孟妥协分权？",
-      "branches": [
-        {
-          "id": "enthrone",
-          "condition": { "world_flag": { "flag": "cheng_back_dingtao" } },
-          "effects": [
-            { "type": "activate_storyline", "storyline": "enthrone_dingtao" },
-            { "type": "set_var", "name": "han_path", "value": "dingtao" }
-          ]
-        },
-        {
-          "id": "compromise",
-          "condition": { "always": {} },
-          "effects": [
-            { "type": "activate_storyline", "storyline": "compromise_huo" },
-            { "type": "set_var", "name": "han_path", "value": "huo" }
-          ]
-        }
-      ],
-      "default_branch": "compromise"
-    },
-    {
-      "id": "path-enthrone-dingtao",
-      "type": "side_event",
-      "storyline": "enthrone_dingtao",
-      "trigger": {
-        "year": 1,
-        "month": 6,
-        "at_region_id": "luodu",
-        "condition": { "var_equals": { "name": "han_path", "value": "dingtao" } }
-      },
       "name": "拥立定陶王",
-      "description": "程宗扬一系披麻戴孝、护送拥立幼主定陶王登基，立保皇之功。",
+      "description": "伪帝既诛，程宗扬一系披麻戴孝、护送拥立幼主定陶王登基（原著第602章）——此为本卷定局的载重结局，幼主得正大统。",
       "narrative_fill": true,
       "narration_fallback": "程宗扬拥立定陶王，汉室幼主得正大统。",
       "effects": [
@@ -110,21 +82,70 @@
       ]
     },
     {
-      "id": "path-compromise-huo",
+      "id": "huo-aftermath-branch",
+      "type": "branch",
+      "trigger": {
+        "year": 1,
+        "month": 5,
+        "condition": { "world_flag": { "flag": "dingtao_enthroned" } }
+      },
+      "name": "权柄归属",
+      "description": "幼主既立，程宗扬如何处置三面下注、伺机摘桃的大将军霍子孟——强势压制收其权，还是让其分权以换暂稳、养虎为患？",
+      "branches": [
+        {
+          "id": "curb",
+          "condition": { "world_flag": { "flag": "cheng_curb_huo" } },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "huo_curbed" },
+            { "type": "set_var", "name": "huo_path", "value": "curbed" }
+          ]
+        },
+        {
+          "id": "concede",
+          "condition": { "always": {} },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "huo_empowered" },
+            { "type": "set_var", "name": "huo_path", "value": "empowered" }
+          ]
+        }
+      ],
+      "default_branch": "concede"
+    },
+    {
+      "id": "path-huo-curbed",
       "type": "side_event",
-      "storyline": "compromise_huo",
+      "storyline": "huo_curbed",
       "trigger": {
         "year": 1,
         "month": 6,
         "at_region_id": "luodu",
-        "condition": { "var_equals": { "name": "han_path", "value": "huo" } }
+        "condition": { "var_equals": { "name": "huo_path", "value": "curbed" } }
       },
-      "name": "与大将军妥协",
-      "description": "程宗扬与霍子孟妥协分权，换取汉局暂稳，代价是养虎为患。",
+      "name": "强压大将军",
+      "description": "程宗扬借拥立之功强势压制霍子孟，削其兵权，汉局归己一系主导，但结下死仇。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬借拥立之功强压霍子孟，汉宫权柄收归一系。",
+      "effects": [
+        { "type": "set_flag", "flag": "huo_curbed" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "huo-zimeng", "delta": -20 }
+      ]
+    },
+    {
+      "id": "path-huo-empowered",
+      "type": "side_event",
+      "storyline": "huo_empowered",
+      "trigger": {
+        "year": 1,
+        "month": 6,
+        "at_region_id": "luodu",
+        "condition": { "var_equals": { "name": "huo_path", "value": "empowered" } }
+      },
+      "name": "与大将军分权",
+      "description": "程宗扬让霍子孟分权以换汉局暂稳，代价是养虎为患、后患难除。",
       "narrative_fill": true,
       "narration_fallback": "程宗扬与霍子孟各让一步，汉宫权柄暂归均势。",
       "effects": [
-        { "type": "set_flag", "flag": "huo_compromise" },
+        { "type": "set_flag", "flag": "huo_empowered" },
         { "type": "relation_change", "a": "cheng-zongyang", "b": "huo-zimeng", "delta": 15 }
       ]
     },
