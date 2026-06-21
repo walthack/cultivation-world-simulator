@@ -1,0 +1,182 @@
+{
+  "schema_version": "0.2",
+  "events": [
+    {
+      "id": "yange-han-court-arrive",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "han",
+      "trigger": {
+        "year": 1,
+        "month": 1,
+        "at_region_id": "luodu",
+        "condition": { "always": {} }
+      },
+      "name": "入汉宫",
+      "description": "程宗扬北入汉国，任鸿胪寺大行令，踏入汉宫权变的中心（燕歌行汉宫篇起）。",
+      "effects": [
+        { "type": "set_flag", "flag": "arrived_han_court" }
+      ]
+    },
+    {
+      "id": "liujian-usurps",
+      "type": "side_event",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "han",
+      "trigger": {
+        "year": 1,
+        "month": 2,
+        "at_region_id": "luodu",
+        "condition": { "world_flag": { "flag": "arrived_han_court" } }
+      },
+      "name": "刘建之乱",
+      "description": "江都王太子刘建作乱自立为帝，汉室倾危，幼主定陶王沦为各方争夺的人质。",
+      "effects": [
+        { "type": "set_flag", "flag": "liu_jian_revolt" }
+      ]
+    },
+    {
+      "id": "qin-hui-slays-liujian",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "dynasty_id": "han",
+      "trigger": {
+        "year": 1,
+        "month": 3,
+        "at_region_id": "luodu",
+        "condition": { "world_flag": { "flag": "liu_jian_revolt" } }
+      },
+      "name": "手刃伪帝",
+      "description": "程宗扬部属秦桧手刃刘建（原著第601章）——伪帝伏诛，此为定局、不可逆。",
+      "narrative_fill": true,
+      "narration_fallback": "兰台典校秦桧一击致命，伪帝刘建殒于汉宫，乱局骤转。",
+      "effects": [
+        { "type": "set_flag", "flag": "liu_jian_slain" },
+        { "type": "npc_die", "npc_id": "liu-jian" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "qin-hui", "delta": 15 }
+      ]
+    },
+    {
+      "id": "han-succession-branch",
+      "type": "branch",
+      "trigger": {
+        "year": 1,
+        "month": 4,
+        "condition": { "world_flag": { "flag": "liu_jian_slain" } }
+      },
+      "name": "汉室更立",
+      "description": "伪帝既诛，程宗扬当如何收拾汉局——力主拥立幼主定陶王，还是与大将军霍子孟妥协分权？",
+      "branches": [
+        {
+          "id": "enthrone",
+          "condition": { "world_flag": { "flag": "cheng_back_dingtao" } },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "enthrone_dingtao" },
+            { "type": "set_var", "name": "han_path", "value": "dingtao" }
+          ]
+        },
+        {
+          "id": "compromise",
+          "condition": { "always": {} },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "compromise_huo" },
+            { "type": "set_var", "name": "han_path", "value": "huo" }
+          ]
+        }
+      ],
+      "default_branch": "compromise"
+    },
+    {
+      "id": "path-enthrone-dingtao",
+      "type": "side_event",
+      "storyline": "enthrone_dingtao",
+      "trigger": {
+        "year": 1,
+        "month": 6,
+        "at_region_id": "luodu",
+        "condition": { "var_equals": { "name": "han_path", "value": "dingtao" } }
+      },
+      "name": "拥立定陶王",
+      "description": "程宗扬一系披麻戴孝、护送拥立幼主定陶王登基，立保皇之功。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬拥立定陶王，汉室幼主得正大统。",
+      "effects": [
+        { "type": "set_flag", "flag": "dingtao_enthroned" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "dingtao-wang", "delta": 25 }
+      ]
+    },
+    {
+      "id": "path-compromise-huo",
+      "type": "side_event",
+      "storyline": "compromise_huo",
+      "trigger": {
+        "year": 1,
+        "month": 6,
+        "at_region_id": "luodu",
+        "condition": { "var_equals": { "name": "han_path", "value": "huo" } }
+      },
+      "name": "与大将军妥协",
+      "description": "程宗扬与霍子孟妥协分权，换取汉局暂稳，代价是养虎为患。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬与霍子孟各让一步，汉宫权柄暂归均势。",
+      "effects": [
+        { "type": "set_flag", "flag": "huo_compromise" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "huo-zimeng", "delta": 15 }
+      ]
+    },
+    {
+      "id": "dongzhuo-hostage-standoff",
+      "type": "side_event",
+      "anchor": true,
+      "trigger": {
+        "year": 1,
+        "month": 7,
+        "condition": { "world_flag": { "flag": "liu_jian_slain" } }
+      },
+      "name": "凉州挟质",
+      "description": "凉州军董卓、谋士贾文和以定陶王为质、持错刀挟持谈判，索马匹与退路（原著第601-602章）。",
+      "narrative_fill": true,
+      "narration_fallback": "董卓拥兵挟质，贾文和错刀相逼，汉宫谈判剑拔弩张。",
+      "effects": [
+        { "type": "set_flag", "flag": "dongzhuo_standoff" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "dong-zhuo", "delta": -15 }
+      ]
+    },
+    {
+      "id": "guojie-aid",
+      "type": "side_event",
+      "anchor": true,
+      "trigger": {
+        "year": 1,
+        "month": 9,
+        "at_region_id": "luodu",
+        "condition": { "world_flag": { "flag": "liu_jian_slain" } }
+      },
+      "name": "千金一诺",
+      "description": "布衣大侠郭解信守然诺，于汉宫危局中相援护卫，不行偷袭之事。",
+      "effects": [
+        { "type": "set_flag", "flag": "guojie_aided" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "guo-jie", "delta": 20 }
+      ]
+    },
+    {
+      "id": "book-c-finale",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "trigger": {
+        "year": 1,
+        "month": 12,
+        "condition": { "world_flag": { "flag": "liu_jian_slain" } }
+      },
+      "name": "燕歌",
+      "description": "燕歌行终章：伪帝已诛、汉局初定，程宗扬一系在六朝棋局中再落一子，三卷故事于此收束又遥指更远。",
+      "effects": [
+        { "type": "set_flag", "flag": "book_c_complete" }
+      ]
+    }
+  ]
+}

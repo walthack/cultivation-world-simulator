@@ -1,0 +1,360 @@
+{
+  "schema_version": "1.2",
+  "scenario_id": "yangexing",
+  "title": "六朝·燕歌行",
+  "version": "1.0.0",
+  "author": "Chaldeas",
+  "description": "六朝共宇宙第三卷《燕歌行》汉宫篇：程宗扬任汉国鸿胪寺大行令，于刘建之乱、拥立定陶王、凉州军挟持谈判间纵横。与清羽记/云龙吟同世界、不同时期独立游玩。",
+  "world_preset": {
+    "preset_id": "liuchao"
+  },
+  "generation_sources": {
+    "regions": "scenario",
+    "dynasties": "scenario",
+    "sects": "scenario",
+    "npc_names": "scenario",
+    "personas": "scenario",
+    "weapons": "scenario",
+    "techniques": "scenario",
+    "roots": "scenario",
+    "relations": "scenario",
+    "initial_events": "scenario",
+    "fallback_to_default": false
+  },
+  "world_background": "云龙吟之后，程宗扬北入汉国，任鸿胪寺大行令。逢江都王太子刘建作乱自立，程宗扬一系（秦桧、吴三桂、赵充国）手刃刘建、拥立幼主定陶王，并与大将军霍子孟、凉州军董卓贾文和、布衣大侠郭解周旋于汉宫权变。本卷为成人向原著的结构化改编，仅编码剧情/势力/人物/地理/关系事实，无露骨描写。",
+  "backbone": {
+    "prohibited_predicates": [
+      {
+        "world_flag": {
+          "flag": "cheng_dead",
+          "value": true
+        }
+      },
+      {
+        "world_flag": {
+          "flag": "dingtao_wang_dead",
+          "value": true
+        }
+      },
+      {
+        "world_flag": {
+          "flag": "liu_jian_enthroned",
+          "value": true
+        }
+      }
+    ],
+    "irreversible_facts": [
+      {
+        "world_flag": {
+          "flag": "liu_jian_slain",
+          "value": true
+        }
+      }
+    ]
+  },
+  "initial_state": {
+    "year": 1,
+    "month": 1,
+    "generation_profile": {
+      "random_npc_count": 3,
+      "random_sect_count": 1,
+      "generation_sources": {
+        "npc_names": "mixed",
+        "personas": "mixed",
+        "sects": "mixed",
+        "regions": "scenario"
+      },
+      "progression_profile": {
+        "id": "liuchao_novel_progression",
+        "label": "六朝生存、修行与立业",
+        "guidance": "长期成长应同时尊重太乙九境、程宗扬从奴隶到商人与两国官职的社会轨迹，以及由个人名望扩展为盘江程氏与盟友网络的势力轨迹。",
+        "axes": [
+          {
+            "id": "taiyi_cultivation",
+            "label": "太乙九境",
+            "description": "六朝武学修行的九境次序；真阳、九阳是九阳神功相关表述，不替代九境名称。",
+            "tiers": [
+              "第一境·筑基",
+              "第二境·内视",
+              "第三境·生象",
+              "第四境·入微",
+              "第五境·坐照",
+              "第六境·通幽",
+              "第七境·归元",
+              "第八境·至臻",
+              "第九境·入神"
+            ],
+            "optional": false
+          },
+          {
+            "id": "social_office",
+            "label": "身份与官职",
+            "description": "程宗扬从失去自由到经商立业，再进入宋、汉两国官场的身份上升线。",
+            "tiers": [
+              "奴隶",
+              "平民",
+              "商人",
+              "宋国工部屯田司员外郎",
+              "宋国宝钞局主事",
+              "汉国鸿胪寺大行令"
+            ],
+            "optional": false
+          },
+          {
+            "id": "reputation_power",
+            "label": "名望与势力",
+            "description": "从孤身求生到获得同伴、商会、军伍与官场盟友支持，最终形成盘江程氏网络。",
+            "tiers": [
+              "无名异乡人",
+              "商路立足",
+              "同伴追随",
+              "星月湖盟友",
+              "盘江程氏",
+              "六朝政商要人"
+            ],
+            "optional": false
+          }
+        ]
+      },
+      "term_map": {
+        "灵石": "金铢",
+        "宗门": "宗门",
+        "突破": "破境",
+        "修为": "修为",
+        "境界": "九境",
+        "炼丹": "制药",
+        "灵气": "真气",
+        "秘境": "古阵",
+        "丹药": "灵药",
+        "功法": "武学",
+        "金丹": "气轮",
+        "筑基": "筑基",
+        "元婴": "通幽",
+        "化神": "至臻",
+        "证道": "入神",
+        "洞府": "驻地",
+        "灵脉": "山门根基",
+        "飞升": "入神"
+      },
+      "narrative_context": {
+        "world_lore_mode": "replace",
+        "world_lore": "这是被先行穿越者改变过历史的六朝异世。秦军仍在草原与半兽人作战；宋国以临安为政治与商业中心，汉国以洛都为都；晴州维持中立商佣网络，南荒与碧鲮海湾分布花苗、鲛人等族群。太乙真宗由王哲掌教时号称天下第一宗门，九阳神功是镇教绝学，修行分筑基、内视、生象、入微、坐照、通幽、归元、至臻、入神九境。光明观堂以医术和光明三绝传世；岳鹏举留下岳家军、星月湖和武穆势力；殇侯门、黑魔海巫宗与毒宗围绕情报、传承和长期布局彼此角力。程宗扬凭现代知识、商业能力与太乙传功，从战场俘虏和奴隶身份起步，逐渐成为商人、宋国官员与汉国鸿胪寺大行令。",
+        "background": "六朝诸国、宗门、军伍、商会与异族并存的架空世界，开局从草原战场求生开始。",
+        "style": "以行动、阵营、官职、商路和武学为核心，叙事直接，保留乱世冒险与政治博弈感。",
+        "terminology": "优先使用金铢、真气、九境、太乙真宗、光明观堂、星月湖、晴州、宋国与汉国等原作术语；不使用泛化门阀史剧设定替代小说世界。"
+      }
+    },
+    "avatars": [
+      {
+        "id": "cheng-zongyang",
+        "surname": "程",
+        "given_name": "宗扬",
+        "gender": "男",
+        "age": 30,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "TONG_YOU",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "入汉国任鸿胪寺大行令，以谈判与权术周旋汉宫。",
+        "persona_traits": [
+          "现代知识",
+          "商业谈判",
+          "朝堂权术"
+        ],
+        "long_term_objective": "平定汉乱、拥立幼主，巩固己方势力。",
+        "goldfinger_id": "SHENGSI-GEN"
+      },
+      {
+        "id": "xiao-zi",
+        "surname": "小",
+        "given_name": "紫",
+        "gender": "女",
+        "age": 20,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "巫宗/毒宗背景的神秘少女，程宗扬的谋伴。",
+        "persona_traits": [
+          "巫毒秘术",
+          "情报谋算"
+        ],
+        "long_term_objective": "随程宗扬搅动汉宫棋局。"
+      },
+      {
+        "id": "qin-hui",
+        "surname": "秦",
+        "given_name": "桧",
+        "gender": "男",
+        "age": 40,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "兰台典校，程宗扬部属，情报与暗杀之手，手刃刘建。",
+        "persona_traits": [
+          "情报谋算",
+          "朝堂权术"
+        ],
+        "long_term_objective": "以暗手为程氏扫除政敌。"
+      },
+      {
+        "id": "huo-zimeng",
+        "surname": "霍",
+        "given_name": "子孟",
+        "gender": "男",
+        "age": 50,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "汉国大将军，三面下注、伺机摘桃的权臣。",
+        "persona_traits": [
+          "朝堂权术",
+          "军伍果断"
+        ],
+        "long_term_objective": "借乱局攫取最大权柄。"
+      },
+      {
+        "id": "liu-jian",
+        "surname": "刘",
+        "given_name": "建",
+        "gender": "男",
+        "age": 35,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "江都王太子，作乱自立为帝的叛逆，程宗扬一系的首要敌手。",
+        "persona_traits": [
+          "朝堂权术"
+        ],
+        "long_term_objective": "篡位自立。"
+      },
+      {
+        "id": "dingtao-wang",
+        "surname": "定",
+        "given_name": "陶王",
+        "gender": "男",
+        "age": 8,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "汉室幼主、新帝候选，早慧而身陷人质危局，程宗扬一方的保护对象。",
+        "persona_traits": [],
+        "long_term_objective": "在权臣环伺中活下去并继位。"
+      },
+      {
+        "id": "dong-zhuo",
+        "surname": "董",
+        "given_name": "卓",
+        "gender": "男",
+        "age": 48,
+        "sect_id": null,
+        "location_region_id": "grassland_battlefield",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "凉州军首领，挟定陶王为质、割袍断义的枭雄。",
+        "persona_traits": [
+          "军伍果断"
+        ],
+        "long_term_objective": "以兵威与人质换取最大利益。"
+      },
+      {
+        "id": "guo-jie",
+        "surname": "郭",
+        "given_name": "解",
+        "gender": "男",
+        "age": 42,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "布衣大侠，千金一诺，汉宫篇承担侠义护卫。",
+        "persona_traits": [
+          "江湖侠义",
+          "忠义守诺"
+        ],
+        "long_term_objective": "守诺护人、不行偷袭之事。"
+      },
+      {
+        "id": "ruan-xiangning",
+        "surname": "阮",
+        "given_name": "香凝",
+        "gender": "女",
+        "age": 27,
+        "sect_id": null,
+        "location_region_id": "luodu",
+        "realm": "ZHU_JI",
+        "stage": "EARLY_STAGE",
+        "level": 1,
+        "backstory": "黑魔海旧线御姬，于汉宫成为定陶王姆娘，照护幼主、身世成谜。",
+        "persona_traits": [
+          "巫毒秘术"
+        ],
+        "long_term_objective": "守护幼主、了断旧日桎梏。"
+      }
+    ],
+    "sects": [],
+    "relationships": [
+      {
+        "a": "cheng-zongyang",
+        "b": "xiao-zi",
+        "value": 60,
+        "tag": "谋伴"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "qin-hui",
+        "value": 40,
+        "tag": "部属"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "dingtao-wang",
+        "value": 30,
+        "tag": "保护对象"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "huo-zimeng",
+        "value": -10,
+        "tag": "政治对手"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "liu-jian",
+        "value": -50,
+        "tag": "敌对"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "dong-zhuo",
+        "value": -30,
+        "tag": "敌对谈判"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "guo-jie",
+        "value": 40,
+        "tag": "侠义盟友"
+      },
+      {
+        "a": "cheng-zongyang",
+        "b": "ruan-xiangning",
+        "value": 20,
+        "tag": "旧识"
+      }
+    ],
+    "world_flags": {}
+  }
+}
