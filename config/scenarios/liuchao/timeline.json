@@ -4,43 +4,36 @@
     {
       "id": "liuchao-opening",
       "type": "main",
+      "anchor": true,
+      "mandatory": true,
       "dynasty_id": "qin",
       "trigger": {
         "year": 1,
         "month": 1,
-        "condition": {
-          "always": {}
-        }
+        "condition": { "always": {} }
       },
       "name": "穿越落地",
       "description": "程宗扬与段强从现代坠入异世草原，迎面便是秦军方阵与半兽人大军的战场。",
       "effects": [
-        {
-          "type": "set_flag",
-          "flag": "liuchao_opening_seen"
-        }
+        { "type": "set_flag", "flag": "liuchao_opening_seen" }
       ]
     },
     {
       "id": "duan-qiang-falls",
       "type": "side_event",
+      "anchor": true,
+      "mandatory": true,
       "dynasty_id": "qin",
       "trigger": {
         "year": 1,
         "month": 2,
-        "condition": {
-          "world_flag": {
-            "flag": "liuchao_opening_seen"
-          }
-        }
+        "condition": { "world_flag": { "flag": "liuchao_opening_seen" } }
       },
       "name": "段强之死",
-      "description": "半兽人的突袭夺走段强性命，程宗扬成为开篇两名现代来客中唯一的幸存者。",
+      "description": "半兽人的突袭夺走段强性命，程宗扬成为开篇两名现代来客中唯一的幸存者。此死为定局，原著不可逆。",
       "effects": [
-        {
-          "type": "set_flag",
-          "flag": "duan_qiang_fallen"
-        }
+        { "type": "set_flag", "flag": "duan_qiang_fallen" },
+        { "type": "npc_die", "npc_id": "duan-qiang" }
       ]
     },
     {
@@ -50,48 +43,173 @@
       "trigger": {
         "year": 1,
         "month": 3,
-        "condition": {
-          "world_flag": {
-            "flag": "duan_qiang_fallen"
-          }
-        }
+        "condition": { "world_flag": { "flag": "duan_qiang_fallen" } }
       },
       "name": "被秦军俘获",
-      "description": "程宗扬被卷入交战地带，随后遭秦军发现并俘获，只能先设法在军中活下去。",
+      "description": "程宗扬被卷入交战地带，遭秦军俘获、贬为奴隶，只能先在军中与奴籍间设法活下去。",
       "effects": [
-        {
-          "type": "set_flag",
-          "flag": "cheng_captured_by_qin"
-        }
+        { "type": "set_flag", "flag": "cheng_captured_by_qin" },
+        { "type": "set_var", "name": "cheng_status", "value": "slave" }
       ]
     },
     {
       "id": "first-contact-taiyi",
       "type": "main",
+      "anchor": true,
+      "mandatory": true,
       "dynasty_id": "taiyi",
       "trigger": {
         "year": 1,
         "month": 4,
         "at_region_id": "taiyi_mountain",
-        "condition": {
-          "world_flag": {
-            "flag": "cheng_captured_by_qin"
-          }
-        }
+        "condition": { "world_flag": { "flag": "cheng_captured_by_qin" } }
       },
       "name": "初识太乙真宗",
       "description": "经历战场生死后，程宗扬开始接触王哲与太乙真宗的修行体系，命运由此转向。",
       "effects": [
+        { "type": "set_flag", "flag": "cheng_met_taiyi" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "wang-zhe", "delta": 10 }
+      ]
+    },
+    {
+      "id": "wang-zhe-transmits-gong",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "trigger": {
+        "year": 1,
+        "month": 6,
+        "at_region_id": "taiyi_mountain",
+        "condition": { "world_flag": { "flag": "cheng_met_taiyi" } }
+      },
+      "name": "王哲传功",
+      "description": "太乙真宗掌教王哲将九阳神功与太一经传予程宗扬，奠定其修行根基（原著第5-9章）。",
+      "narrative_fill": true,
+      "narration_fallback": "王哲于太一山静室授功，程宗扬初窥太乙九境门径。",
+      "effects": [
+        { "type": "set_flag", "flag": "cheng_taiyi_initiated" },
+        { "type": "gain_skill", "skill": "九阳神功" },
+        { "type": "gain_stat", "stat": "taiyi_cultivation", "amount": 1 },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "wang-zhe", "delta": 20 }
+      ]
+    },
+    {
+      "id": "cheng-path-branch",
+      "type": "branch",
+      "trigger": {
+        "year": 1,
+        "month": 7,
+        "condition": { "world_flag": { "flag": "cheng_taiyi_initiated" } }
+      },
+      "name": "立身之路",
+      "description": "脱离奴籍后，程宗扬以何道立身——是凭现代商业手腕钻营经商，还是暂且蛰伏、依附强豪？",
+      "branches": [
         {
-          "type": "set_flag",
-          "flag": "cheng_met_taiyi"
+          "id": "merchant",
+          "condition": { "world_flag": { "flag": "cheng_chose_merchant" } },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "path_merchant" },
+            { "type": "set_var", "name": "cheng_path", "value": "merchant" }
+          ]
         },
         {
-          "type": "relation_change",
-          "a": "cheng-zongyang",
-          "b": "wang-zhe",
-          "delta": 10
+          "id": "retainer",
+          "condition": { "always": {} },
+          "effects": [
+            { "type": "activate_storyline", "storyline": "path_retainer" },
+            { "type": "set_var", "name": "cheng_path", "value": "retainer" }
+          ]
         }
+      ],
+      "default_branch": "retainer"
+    },
+    {
+      "id": "path-merchant-rise",
+      "type": "side_event",
+      "storyline": "path_merchant",
+      "trigger": {
+        "year": 1,
+        "month": 9,
+        "at_region_id": "wuyuan_city",
+        "condition": { "var_equals": { "name": "cheng_path", "value": "merchant" } }
+      },
+      "name": "盘江程氏雏形",
+      "description": "程宗扬以现代金融与谈判手腕在五原城起家，钱庄、粮食承兑、纸币之念渐成盘江程氏的雏形。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬在市井间以商道立足，名声渐起。",
+      "effects": [
+        { "type": "set_flag", "flag": "panjiang_cheng_seed" }
+      ]
+    },
+    {
+      "id": "path-retainer-shelter",
+      "type": "side_event",
+      "storyline": "path_retainer",
+      "trigger": {
+        "year": 1,
+        "month": 9,
+        "condition": { "var_equals": { "name": "cheng_path", "value": "retainer" } }
+      },
+      "name": "依附强豪",
+      "description": "程宗扬暂敛锋芒，依附岳武穆旧部一系的网络蛰伏积势，以待时机。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬寄人篱下，隐忍待时。",
+      "effects": [
+        { "type": "set_flag", "flag": "cheng_under_patron" }
+      ]
+    },
+    {
+      "id": "taiyi-shuangxiu-method",
+      "type": "side_event",
+      "trigger": {
+        "year": 1,
+        "month": 10,
+        "at_region_id": "taiyi_mountain",
+        "condition": { "world_flag": { "flag": "cheng_taiyi_initiated" } }
+      },
+      "name": "太乙密传·双修",
+      "description": "程宗扬习得太乙真宗密传的双修法门——原著中纯化真气的核心修行体系。此处仅作修行机制与关系事实记录，不含露骨描写。",
+      "narrative_fill": true,
+      "narration_fallback": "程宗扬循太乙密传双修之法纯化真气，修为渐进。",
+      "effects": [
+        { "type": "set_flag", "flag": "cheng_shuangxiu_learned" },
+        { "type": "gain_stat", "stat": "taiyi_cultivation", "amount": 1 },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "le-mingzhu", "delta": 15 }
+      ]
+    },
+    {
+      "id": "nanhuang-meet-xiaozi",
+      "type": "side_event",
+      "anchor": true,
+      "trigger": {
+        "year": 1,
+        "month": 11,
+        "at_region_id": "nanhuang",
+        "condition": { "world_flag": { "flag": "cheng_taiyi_initiated" } }
+      },
+      "name": "南荒·初遇小紫",
+      "description": "南荒篇，程宗扬初遇巫宗/毒宗背景的神秘少女小紫，亦敌亦友，日后成为重要伙伴。",
+      "narrative_fill": true,
+      "narration_fallback": "南荒瘴雾间，程宗扬与小紫初次交锋又暂时合流。",
+      "effects": [
+        { "type": "set_flag", "flag": "cheng_met_xiaozi" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "xiao-zi", "delta": 5 }
+      ]
+    },
+    {
+      "id": "book-a-finale-onward",
+      "type": "main",
+      "anchor": true,
+      "mandatory": true,
+      "trigger": {
+        "year": 2,
+        "month": 1,
+        "condition": { "world_flag": { "flag": "cheng_taiyi_initiated" } }
+      },
+      "name": "前路",
+      "description": "清羽记终章·前路：程宗扬已立修行与立身之基，太乙传承在身，南荒之识已结，故事转向更广的六朝棋局（衔接《云龙吟》临安篇）。",
+      "effects": [
+        { "type": "set_flag", "flag": "book_a_complete" }
       ]
     }
   ]

@@ -17,28 +17,34 @@ OPENING_EVENT_IDS = [
 ]
 
 
-def test_liuchao_phase_1_timeline_is_minimal_canonical_opening():
+def test_liuchao_timeline_keeps_the_canonical_opening_prefix():
+    # liuchao grew into an L4-ready Book-A spine (backbone + mandatory anchors + a
+    # branch/storyline divergence + narrative_fill); the canonical opening 4 remain the
+    # ordered prefix.
     scenario = load("liuchao")
 
-    assert [event["id"] for event in scenario.timeline] == OPENING_EVENT_IDS
+    assert [event["id"] for event in scenario.timeline[:4]] == OPENING_EVENT_IDS
 
 
-def test_liuchao_phase_1_timeline_references_known_presets():
+def test_liuchao_timeline_references_known_presets():
     scenario = load("liuchao")
     dynasty_ids = get_preset_dynasty_ids("liuchao")
     region_ids = get_preset_region_ids("liuchao")
 
     for event in scenario.timeline:
-        assert event.get("dynasty_id") in dynasty_ids
+        # dynasty_id is optional (loader contract); validate only when present.
+        dynasty_id = event.get("dynasty_id")
+        if dynasty_id is not None:
+            assert dynasty_id in dynasty_ids
         region_id = event.get("trigger", {}).get("at_region_id")
         if region_id is not None:
             assert region_id in region_ids
 
 
-def test_liuchao_phase_1_timeline_loads_without_schema_error():
+def test_liuchao_timeline_loads_without_schema_error():
     scenario = load("liuchao")
 
-    assert len(scenario.timeline) == 4
+    assert len(scenario.timeline) >= 4
 
 
 def test_liuchao_initial_avatar_references_resolve():

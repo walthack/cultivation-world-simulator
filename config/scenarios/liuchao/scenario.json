@@ -22,6 +22,16 @@
     "fallback_to_default": false
   },
   "world_background": "程宗扬与好友段强从现代坠入六朝异世，落在秦军与半兽人交战的草原。段强很快死于突袭，程宗扬被秦军俘获，并由此接触王哲与太乙真宗。此后他将从底层求生者成长为商人，进入宋国与汉国官场，同时卷入太乙真宗、光明观堂、岳家军、殇侯门、黑魔海巫毒二宗及晴州商佣网络的角力。",
+  "backbone": {
+    "prohibited_predicates": [
+      { "world_flag": { "flag": "humanity_overrun", "value": true } },
+      { "world_flag": { "flag": "cheng_dead", "value": true } },
+      { "world_flag": { "flag": "taiyi_destroyed", "value": true } }
+    ],
+    "irreversible_facts": [
+      { "world_flag": { "flag": "duan_qiang_fallen", "value": true } }
+    ]
+  },
   "initial_state": {
     "year": 1,
     "month": 1,
