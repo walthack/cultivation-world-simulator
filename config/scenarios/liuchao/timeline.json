@@ -167,14 +167,16 @@
         "at_region_id": "taiyi_mountain",
         "condition": { "world_flag": { "flag": "cheng_taiyi_initiated" } }
       },
-      "name": "太乙密传·双修",
-      "description": "程宗扬习得太乙真宗密传的双修法门——原著中纯化真气的核心修行体系。此处仅作修行机制与关系事实记录，不含露骨描写。",
+      "name": "太乙密传·采补双修",
+      "description": "程宗扬习得太乙真宗密传的采补双修之法——以阴阳鼎炉为术，借男女合修采纳、纯化真阳，修为疾进；女子被视作可评级的『鼎炉』资质。乐明珠成为其首位侍修鼎炉，程宗扬后宫之制由此发端。此为原著核心修行机制与权力关系的结构事实，含采补/役使等成人黑暗主题，但不含露骨描写。",
       "narrative_fill": true,
-      "narration_fallback": "程宗扬循太乙密传双修之法纯化真气，修为渐进。",
+      "narration_fallback": "程宗扬循太乙采补双修之法，以鼎炉纳补纯化真阳，修为骤进，身边渐拢侍修之人。",
       "effects": [
-        { "type": "set_flag", "flag": "cheng_shuangxiu_learned" },
+        { "type": "set_flag", "flag": "cheng_caibu_shuangxiu" },
+        { "type": "set_flag", "flag": "cheng_harem_formed" },
+        { "type": "set_var", "name": "le_mingzhu_role", "value": "dinglu" },
         { "type": "gain_stat", "stat": "taiyi_cultivation", "amount": 1 },
-        { "type": "relation_change", "a": "cheng-zongyang", "b": "le-mingzhu", "delta": 15 }
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "le-mingzhu", "delta": 20 }
       ]
     },
     {

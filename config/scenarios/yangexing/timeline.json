@@ -50,11 +50,12 @@
         "condition": { "world_flag": { "flag": "liu_jian_revolt" } }
       },
       "name": "手刃伪帝",
-      "description": "程宗扬部属秦桧手刃刘建（原著第601章）——伪帝伏诛，此为定局、不可逆。",
+      "description": "程宗扬部属秦桧手刃刘建（原著第601章）——伪帝伏诛，此为定局、不可逆。同役中吴三桂以分筋错骨手当场废去刘建一系的太子妃成光，摘脱关节、断其武功，以酷烈手段震慑余党。含酷刑致残等成人暴力主题的结构事实，不含露骨描写。",
       "narrative_fill": true,
-      "narration_fallback": "兰台典校秦桧一击致命，伪帝刘建殒于汉宫，乱局骤转。",
+      "narration_fallback": "兰台典校秦桧一击致命、伪帝刘建殒于汉宫，吴三桂分筋错骨废去太子妃成光，乱局骤转。",
       "effects": [
         { "type": "set_flag", "flag": "liu_jian_slain" },
+        { "type": "set_flag", "flag": "chengguang_crippled" },
         { "type": "npc_die", "npc_id": "liu-jian" },
         { "type": "relation_change", "a": "cheng-zongyang", "b": "qin-hui", "delta": 15 }
       ]
@@ -137,9 +138,9 @@
         "condition": { "world_flag": { "flag": "liu_jian_slain" } }
       },
       "name": "凉州挟质",
-      "description": "凉州军董卓、谋士贾文和以定陶王为质、持错刀挟持谈判，索马匹与退路（原著第601-602章）。",
+      "description": "凉州军董卓、谋士贾文和以年仅八岁的幼主定陶王为质、持错刀架其颈侧逼迫谈判，索马匹、时辰与退路；以稚子性命相胁，手段酷烈无忌（原著第601-602章）。含以幼主为人质胁迫等成人黑暗主题的结构事实，不含露骨描写。",
       "narrative_fill": true,
-      "narration_fallback": "董卓拥兵挟质，贾文和错刀相逼，汉宫谈判剑拔弩张。",
+      "narration_fallback": "董卓拥兵挟质，贾文和错刀抵住幼主咽喉相逼，汉宫谈判命悬一线。",
       "effects": [
         { "type": "set_flag", "flag": "dongzhuo_standoff" },
         { "type": "relation_change", "a": "cheng-zongyang", "b": "dong-zhuo", "delta": -15 }

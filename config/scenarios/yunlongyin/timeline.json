@@ -153,14 +153,16 @@
         "month": 9,
         "condition": { "world_flag": { "flag": "cheng_song_office" } }
       },
-      "name": "黑魔海布局",
-      "description": "剑玉姬以御姬瞑寂之术布局（阮香凝被封记忆/修为），黑魔海之谋逼近程宗扬。此处仅作控制机制与势力事实记录，不含露骨描写。",
+      "name": "黑魔海·御姬采补局",
+      "description": "黑魔海以女子为御姬、行采补御姬之术：以瞑寂术封闭其记忆与修为、强令顺服，作双修采纳与情报工具。阮香凝被剑玉姬评为『珍品级木行鼎炉』，长年被采补役使、记忆遭封。剑玉姬以此为饵布局，欲将程宗扬一并纳入黑魔海的鼎炉采补之网。此为原著奴役/采补等成人黑暗主题的结构事实，不含露骨描写。",
       "narrative_fill": true,
-      "narration_fallback": "剑玉姬落子无声，黑魔海的阴影笼上临安。",
+      "narration_fallback": "剑玉姬以御姬采补之术落子无声，阮香凝身陷瞑寂奴役，黑魔海的阴影笼上临安。",
       "effects": [
         { "type": "set_flag", "flag": "heimohai_threat" },
-        { "type": "set_flag", "flag": "ruan_under_mingji" },
-        { "type": "relation_change", "a": "cheng-zongyang", "b": "jian-yuji", "delta": -15 }
+        { "type": "set_flag", "flag": "ruan_yuji_enslaved" },
+        { "type": "set_var", "name": "ruan_xiangning_role", "value": "zhenpin_dinglu" },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "jian-yuji", "delta": -15 },
+        { "type": "relation_change", "a": "cheng-zongyang", "b": "ruan-xiangning", "delta": 10 }
       ]
     },
     {
